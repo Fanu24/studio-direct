@@ -3,7 +3,7 @@ import {
   type QueueMessage,
 } from "@gaming/shared";
 
-import { RateLimitedError } from "../http/public-fetch";
+import { RateLimitedError, retryDelaySeconds } from "../http/public-fetch";
 import { acquireFetchHostLock } from "../locks/kv-lock";
 import { ingestDrafts } from "../pipeline/ingest";
 import { D1JobsRepository } from "../repo/d1";
@@ -141,6 +141,7 @@ export async function handleIndeedMessage(
     return { action: "ack" };
   } catch (error) {
     if (!(error instanceof RateLimitedError)) throw error;
+    const delaySeconds = retryDelaySeconds(error);
 
     await writeRateLimitedRun(env.DB, {
       id: runId,
@@ -149,6 +150,8 @@ export async function handleIndeedMessage(
       finishedAt: now().toISOString(),
       error,
     });
-    throw error;
+    return delaySeconds === null
+      ? { action: "retry" }
+      : { action: "retry", delaySeconds };
   }
 }

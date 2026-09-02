@@ -68,8 +68,11 @@ function repository(): CareerConsumerRepository {
       ok: false,
       finishedAtIso: "2026-09-02T11:59:00.000Z",
       parseableDrafts: 0,
+      okQueryCount: 0,
+      dictionarySize: 12,
     })),
     listLinkedinSightings: vi.fn(async () => []),
+    listCareerJobsForExclusivity: vi.fn(async () => []),
     updateExclusivity: vi.fn(async () => undefined),
   };
 }

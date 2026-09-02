@@ -10,6 +10,8 @@ const freshRun = {
   ok: true,
   finishedAtIso: "2026-09-02T11:00:00.000Z",
   parseableDrafts: 4,
+  okQueryCount: 12,
+  dictionarySize: 12,
 };
 const careerJob = {
   companyName: "Moonshot Games Studio",
@@ -18,10 +20,32 @@ const careerJob = {
 };
 
 describe("linkedinFreshForBadge", () => {
+  it("does not treat a single dictionary query as a fresh LinkedIn index", () => {
+    expect(
+      linkedinFreshForBadge(
+        {
+          ...freshRun,
+          okQueryCount: 1,
+          dictionarySize: 12,
+        },
+        now,
+      ),
+    ).toBe(false);
+  });
+
   it("does not treat an empty successful run as fresh for badges", () => {
     expect(
       linkedinFreshForBadge(
         { ...freshRun, parseableDrafts: 0 },
+        now,
+      ),
+    ).toBe(false);
+  });
+
+  it("does not treat a failed LinkedIn pass as fresh for badges", () => {
+    expect(
+      linkedinFreshForBadge(
+        { ...freshRun, ok: false },
         now,
       ),
     ).toBe(false);
@@ -75,6 +99,22 @@ describe("recomputeExclusivity", () => {
         now,
       }),
     ).toBe("on_boards");
+  });
+
+  it("does not badge unrelated titles from one successful LinkedIn query", () => {
+    expect(
+      recomputeExclusivity({
+        hasCareer: true,
+        careerJob,
+        linkedinSightings: [],
+        linkedinRun: {
+          ...freshRun,
+          okQueryCount: 1,
+          dictionarySize: 12,
+        },
+        now,
+      }),
+    ).toBe("unknown");
   });
 
   it("does not match an identical title from a different company", () => {

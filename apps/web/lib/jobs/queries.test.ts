@@ -346,6 +346,75 @@ describe("listJobs", () => {
     });
   });
 
+  it("resolves two company-prefixed slugs for the same title", async () => {
+    insertJob(sqlite, {
+      id: "moonshot-job",
+      companyId: "studio-a",
+      title: "Senior Software Engineer",
+      remote: "remote",
+    });
+    insertJob(sqlite, {
+      id: "pixelforge-job",
+      companyId: "studio-b",
+      title: "Senior Software Engineer",
+      remote: "hybrid",
+    });
+    sqlite
+      .prepare("UPDATE jobs SET slug = ? WHERE id = ?")
+      .run("alpha-senior-software-engineer", "moonshot-job");
+    sqlite
+      .prepare("UPDATE jobs SET slug = ? WHERE id = ?")
+      .run("betaforge-senior-software-engineer", "pixelforge-job");
+
+    await expect(
+      getJobBySlug(db, "gaming", "alpha-senior-software-engineer"),
+    ).resolves.toMatchObject({
+      id: "moonshot-job",
+      slug: "alpha-senior-software-engineer",
+      companyName: "Alpha Studio",
+    });
+    await expect(
+      getJobBySlug(db, "gaming", "betaforge-senior-software-engineer"),
+    ).resolves.toMatchObject({
+      id: "pixelforge-job",
+      slug: "betaforge-senior-software-engineer",
+      companyName: "Beta Forge",
+    });
+  });
+
+  it("does not load unknown or onsite listed jobs by slug", async () => {
+    insertJob(sqlite, {
+      id: "unknown-detail",
+      companyId: "studio-a",
+      title: "Unknown Role",
+      remote: "unknown",
+    });
+    insertJob(sqlite, {
+      id: "onsite-detail",
+      companyId: "studio-a",
+      title: "Onsite Role",
+      remote: "onsite",
+    });
+    insertJob(sqlite, {
+      id: "remote-detail",
+      companyId: "studio-a",
+      title: "Remote Role",
+      remote: "remote",
+    });
+    sqlite.exec(`
+      UPDATE jobs SET slug = 'unknown-role' WHERE id = 'unknown-detail';
+      UPDATE jobs SET slug = 'onsite-role' WHERE id = 'onsite-detail';
+      UPDATE jobs SET slug = 'remote-role' WHERE id = 'remote-detail';
+    `);
+
+    await expect(getJobBySlug(db, "gaming", "unknown-role")).resolves.toBeNull();
+    await expect(getJobBySlug(db, "gaming", "onsite-role")).resolves.toBeNull();
+    await expect(getJobBySlug(db, "gaming", "remote-role")).resolves.toMatchObject({
+      id: "remote-detail",
+      remote: "remote",
+    });
+  });
+
   it("does not load unlisted jobs or jobs from another tenant", async () => {
     insertJob(sqlite, {
       id: "unlisted-detail",
@@ -417,8 +486,15 @@ describe("listJobs", () => {
       remote: "remote",
     });
 
+    insertJob(sqlite, {
+      id: "unknown-job",
+      companyId: "studio-a",
+      title: "Unknown Engineer",
+      remote: "unknown",
+    });
+
     await expect(listSitemapEntries(db, "gaming")).resolves.toEqual({
-      jobSlugs: ["hybrid-job", "onsite-job", "public-job"],
+      jobSlugs: ["hybrid-job", "public-job"],
       companySlugs: ["alpha", "betaforge"],
     });
   });

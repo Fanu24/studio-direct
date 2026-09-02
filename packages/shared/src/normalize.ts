@@ -31,6 +31,10 @@ export function slugTitle(title: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+export function jobPublicSlug(companyName: string, title: string): string {
+  return `${slugTitle(normalizeCompanyName(companyName))}-${slugTitle(title)}`;
+}
+
 export function canonicalApplyUrl(url: string): string {
   let parsed: URL;
   try {

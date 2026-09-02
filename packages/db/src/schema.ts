@@ -47,6 +47,10 @@ export const jobs = sqliteTable(
       table.tenantId,
       table.canonicalKey,
     ),
+    tenantSlugUnique: uniqueIndex("idx_jobs_tenant_slug_unique").on(
+      table.tenantId,
+      table.slug,
+    ),
   }),
 );
 

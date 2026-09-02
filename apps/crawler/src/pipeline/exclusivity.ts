@@ -2,6 +2,7 @@ import {
   computeExclusivity,
   linkedinTitlesMatch,
   normalizeCompanyName,
+  REMOTE_GAMING_QUERIES,
   type Exclusivity,
 } from "@gaming/shared";
 
@@ -11,6 +12,8 @@ export type LinkedinBadgeRun = {
   ok: boolean;
   finishedAtIso: string;
   parseableDrafts: number;
+  okQueryCount: number;
+  dictionarySize: number;
 };
 
 export type ExclusivityJobIdentity = {
@@ -24,6 +27,7 @@ export function linkedinFreshForBadge(
   now: Date,
 ): boolean {
   if (!run?.ok || run.parseableDrafts <= 0) return false;
+  if (run.okQueryCount < REMOTE_GAMING_QUERIES.length) return false;
 
   const finishedAt = new Date(run.finishedAtIso);
   const ageMs = now.getTime() - finishedAt.getTime();

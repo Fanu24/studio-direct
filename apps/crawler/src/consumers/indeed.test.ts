@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { RateLimitedError } from "../http/public-fetch";
 import type { IndeedConsumerRepository } from "./indeed";
 import { handleIndeedMessage } from "./indeed";
 
@@ -151,11 +150,37 @@ describe("handleIndeedMessage", () => {
     ]);
   });
 
-  it("records a failed run and throws RateLimitedError for a 403", async () => {
+  it("records a failed run and retries using Retry-After for 429 and 403", async () => {
     const repo = repository();
     const { db, bindings } = recordingDb();
 
-    const request = handleIndeedMessage(
+    const limited = await handleIndeedMessage(
+      { kind: "indeed", query: "unity remote" },
+      { DB: db, LOCKS: memoryKv() },
+      {
+        fetchImpl: async () =>
+          new Response("slow down", {
+            status: 429,
+            headers: { "Retry-After": "30" },
+          }),
+        repo,
+        resolveCompany: vi.fn(),
+        now,
+        randomUUID: () => "run:indeed-429",
+      },
+    );
+
+    expect(limited).toEqual({ action: "retry", delaySeconds: 30 });
+    expect(bindings).toContainEqual([
+      "run:indeed-429",
+      "indeed",
+      "2026-09-02T12:00:00.000Z",
+      "2026-09-02T12:00:00.000Z",
+      0,
+      '{"status":429,"retryAfterSeconds":30}',
+    ]);
+
+    const blocked = await handleIndeedMessage(
       { kind: "indeed", query: "unity remote" },
       { DB: db, LOCKS: memoryKv() },
       {
@@ -167,8 +192,7 @@ describe("handleIndeedMessage", () => {
       },
     );
 
-    await expect(request).rejects.toBeInstanceOf(RateLimitedError);
-    await expect(request).rejects.toMatchObject({ status: 403 });
+    expect(blocked).toEqual({ action: "retry" });
     expect(bindings).toContainEqual([
       "run:indeed-403",
       "indeed",

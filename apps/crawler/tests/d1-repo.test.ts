@@ -139,6 +139,8 @@ describe("D1JobsRepository", () => {
       ok: true,
       finishedAtIso: "2026-09-02T01:01:00.000Z",
       parseableDrafts: 0,
+      okQueryCount: 0,
+      dictionarySize: 12,
     });
 
     await insertRun
@@ -153,6 +155,8 @@ describe("D1JobsRepository", () => {
       ok: true,
       finishedAtIso: "2026-09-02T02:01:00.000Z",
       parseableDrafts: 4,
+      okQueryCount: 0,
+      dictionarySize: 12,
     });
 
     await insertRun
@@ -164,7 +168,33 @@ describe("D1JobsRepository", () => {
       )
       .run();
     await expect(repo.getLatestLinkedinRun()).resolves.toMatchObject({
-      parseableDrafts: 2,
+      parseableDrafts: 6,
+      okQueryCount: 0,
+      dictionarySize: 12,
+    });
+  });
+
+  it("does not treat a single LinkedIn query as a complete dictionary window", async () => {
+    const repo = new D1JobsRepository(env.DB);
+    await env.DB.prepare(
+      `INSERT INTO crawl_runs
+        (id, source, started_at, finished_at, ok, stats_json)
+       VALUES (?, 'linkedin', ?, ?, 1, ?)`,
+    )
+      .bind(
+        "run:linkedin-one-query",
+        "2026-09-03T12:00:00.000Z",
+        "2026-09-03T12:01:00.000Z",
+        '{"query":"unity remote","parseableDrafts":3,"fetched":3}',
+      )
+      .run();
+
+    await expect(repo.getLatestLinkedinRun()).resolves.toEqual({
+      ok: true,
+      finishedAtIso: "2026-09-03T12:01:00.000Z",
+      parseableDrafts: 3,
+      okQueryCount: 1,
+      dictionarySize: 12,
     });
   });
 

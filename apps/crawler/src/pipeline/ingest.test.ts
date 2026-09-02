@@ -126,6 +126,42 @@ describe("ingestDrafts", () => {
     expect(repo.sightings).toHaveLength(0);
   });
 
+  it("gives two companies with the same title different public slugs", async () => {
+    const repo = new MemoryJobsRepository();
+    const title = "Senior Software Engineer";
+
+    await ingestDrafts(
+      [
+        draft("career_page", {
+          companyName: "Moonshot Games Studio",
+          title,
+          applyUrl: "https://jobs.moonshot.example/roles/sse",
+          sourceUrl: "https://jobs.moonshot.example/roles/sse",
+        }),
+      ],
+      context(repo),
+    );
+    await ingestDrafts(
+      [
+        draft("career_page", {
+          companyName: "Pixel Forge Studio",
+          title,
+          applyUrl: "https://jobs.pixelforge.example/roles/sse",
+          sourceUrl: "https://jobs.pixelforge.example/roles/sse",
+        }),
+      ],
+      { ...context(repo), companyId: "company-2" },
+    );
+
+    expect(repo.jobs).toHaveLength(2);
+    expect(repo.jobs[0]?.slug).not.toBe(repo.jobs[1]?.slug);
+    expect(repo.jobs.map((job) => job.slug).sort()).toEqual([
+      "moonshot-senior-software-engineer",
+      "pixelforge-senior-software-engineer",
+    ]);
+    expect(new Set(repo.jobs.map((job) => job.canonicalKey)).size).toBe(2);
+  });
+
   it("uses the recent company-title fallback when apply_url is absent", async () => {
     const repo = new MemoryJobsRepository();
 

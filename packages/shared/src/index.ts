@@ -18,6 +18,7 @@ export { isQueueMessage } from "./jobs.ts";
 export {
   canonicalApplyUrl,
   canonicalKeyFromUrls,
+  jobPublicSlug,
   normalizeCompanyName,
   slugTitle,
 } from "./normalize.ts";

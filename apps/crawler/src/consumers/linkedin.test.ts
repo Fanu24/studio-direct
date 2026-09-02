@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { RateLimitedError } from "../http/public-fetch";
 import type { LinkedinConsumerRepository } from "./linkedin";
 import { handleLinkedinMessage } from "./linkedin";
 
@@ -57,6 +56,23 @@ function repository(): LinkedinConsumerRepository {
     unlistJobs: vi.fn(async () => undefined),
     upsertJob: vi.fn(async (job) => job),
     insertSighting: vi.fn(async () => undefined),
+    getLatestLinkedinRun: vi.fn(async () => ({
+      ok: true,
+      finishedAtIso: "2026-09-02T12:00:00.000Z",
+      parseableDrafts: 1,
+      okQueryCount: 1,
+      dictionarySize: 12,
+    })),
+    listLinkedinSightings: vi.fn(async () => []),
+    listCareerJobsForExclusivity: vi.fn(async () => [
+      {
+        id: "job:unrelated-animator",
+        title: "Senior Animator",
+        postedAt: "2026-08-20T10:00:00.000Z",
+        companyName: "Other Worlds Studio",
+      },
+    ]),
+    updateExclusivity: vi.fn(async () => undefined),
   };
 }
 
@@ -140,13 +156,78 @@ describe("handleLinkedinMessage", () => {
       1,
       '{"query":"unity remote","fetched":1,"parseableDrafts":1,"upserted":1,"droppedStaffing":0}',
     ]);
+    expect(repo.updateExclusivity).toHaveBeenCalledWith(
+      "job:unrelated-animator",
+      "unknown",
+      "2026-09-02T12:00:00.000Z",
+    );
+    expect(repo.updateExclusivity).not.toHaveBeenCalledWith(
+      expect.any(String),
+      "hidden_from_linkedin",
+      expect.any(String),
+    );
   });
 
-  it("records a failed run and throws RateLimitedError for a 403", async () => {
+  it("does not count parseable drafts from queries that matched zero known companies", async () => {
     const repo = repository();
     const { db, bindings } = recordingDb();
 
-    const request = handleLinkedinMessage(
+    const result = await handleLinkedinMessage(
+      { kind: "linkedin", query: "unity remote" },
+      { DB: db, LOCKS: memoryKv() },
+      {
+        fetchImpl: async () => new Response(jsonLdHtml, { status: 200 }),
+        repo,
+        resolveCompany: vi.fn(async () => null),
+        now,
+        randomUUID: () => "run:linkedin-unmatched",
+      },
+    );
+
+    expect(result).toEqual({ action: "ack" });
+    expect(repo.upsertJob).not.toHaveBeenCalled();
+    expect(bindings).toContainEqual([
+      "run:linkedin-unmatched",
+      "linkedin",
+      "2026-09-02T12:00:00.000Z",
+      "2026-09-02T12:00:00.000Z",
+      1,
+      '{"query":"unity remote","fetched":1,"parseableDrafts":0,"upserted":0,"droppedStaffing":0}',
+    ]);
+  });
+
+  it("records a failed run and retries using Retry-After for 429 and 403", async () => {
+    const repo = repository();
+    const { db, bindings } = recordingDb();
+
+    const limited = await handleLinkedinMessage(
+      { kind: "linkedin", query: "unity remote" },
+      { DB: db, LOCKS: memoryKv() },
+      {
+        fetchImpl: async () =>
+          new Response("slow down", {
+            status: 429,
+            headers: { "Retry-After": "45" },
+          }),
+        repo,
+        resolveCompany: vi.fn(),
+        now,
+        randomUUID: () => "run:linkedin-429",
+      },
+    );
+
+    expect(limited).toEqual({ action: "retry", delaySeconds: 45 });
+    expect(bindings).toContainEqual([
+      "run:linkedin-429",
+      "linkedin",
+      "2026-09-02T12:00:00.000Z",
+      "2026-09-02T12:00:00.000Z",
+      0,
+      '{"status":429,"retryAfterSeconds":45}',
+    ]);
+    expect(repo.updateExclusivity).not.toHaveBeenCalled();
+
+    const blocked = await handleLinkedinMessage(
       { kind: "linkedin", query: "unity remote" },
       { DB: db, LOCKS: memoryKv() },
       {
@@ -158,8 +239,7 @@ describe("handleLinkedinMessage", () => {
       },
     );
 
-    await expect(request).rejects.toBeInstanceOf(RateLimitedError);
-    await expect(request).rejects.toMatchObject({ status: 403 });
+    expect(blocked).toEqual({ action: "retry" });
     expect(bindings).toContainEqual([
       "run:linkedin-403",
       "linkedin",

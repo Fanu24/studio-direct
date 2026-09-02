@@ -1,4 +1,4 @@
-import type { Source } from "@gaming/shared";
+import { REMOTE_GAMING_QUERIES, type Source } from "@gaming/shared";
 
 import type { CrawlRunSummary } from "../pipeline/close-stale";
 import type {
@@ -38,6 +38,13 @@ export type CareerConsumerCompany = CareerCompany & {
   tenantId: string;
 };
 
+export type CareerJobForExclusivity = {
+  id: string;
+  title: string;
+  postedAt: string | null;
+  companyName: string;
+};
+
 export interface CareerConsumerRepository
   extends JobsRepository,
     CareerCompanyRepo {
@@ -46,6 +53,7 @@ export interface CareerConsumerRepository
   getJobsByIds(jobIds: readonly string[]): Promise<JobRecord[]>;
   getLatestLinkedinRun(): Promise<LinkedinBadgeRun | null>;
   listLinkedinSightings(): Promise<ExclusivityJobIdentity[]>;
+  listCareerJobsForExclusivity(): Promise<CareerJobForExclusivity[]>;
   updateExclusivity(
     jobId: string,
     exclusivity: JobRecord["exclusivity"],
@@ -80,6 +88,30 @@ const JOB_COLUMNS = `id, tenant_id, company_id, canonical_key, title,
   title_norm, slug, location, remote, description_html, apply_url,
   salary_text, exclusivity, seen_on_indeed, posted_at, listed,
   created_at, updated_at`;
+
+function parseLinkedinRunStats(statsJson: string): {
+  query: string | null;
+  parseableDrafts: number;
+} {
+  try {
+    const stats = JSON.parse(statsJson) as {
+      query?: unknown;
+      parseableDrafts?: unknown;
+      fetched?: unknown;
+    };
+    const draftCount =
+      stats.parseableDrafts === undefined ? stats.fetched : stats.parseableDrafts;
+    return {
+      query: typeof stats.query === "string" && stats.query.trim() ? stats.query : null,
+      parseableDrafts:
+        typeof draftCount === "number" && Number.isFinite(draftCount)
+          ? draftCount
+          : 0,
+    };
+  } catch {
+    return { query: null, parseableDrafts: 0 };
+  }
+}
 
 export class D1JobsRepository implements CareerConsumerRepository {
   constructor(private readonly db: D1Database) {}
@@ -283,43 +315,50 @@ export class D1JobsRepository implements CareerConsumerRepository {
   }
 
   async getLatestLinkedinRun(): Promise<LinkedinBadgeRun | null> {
-    const row = await this.db
+    const { results } = await this.db
       .prepare(
         `SELECT started_at, finished_at, ok, stats_json
          FROM crawl_runs
          WHERE source = 'linkedin'
          ORDER BY started_at DESC
-         LIMIT 1`,
+         LIMIT 100`,
       )
-      .first<{
+      .all<{
         started_at: string;
         finished_at: string | null;
         ok: number;
         stats_json: string;
       }>();
-    if (!row) return null;
+    const latest = results[0];
+    if (!latest) return null;
 
+    const latestStarted = new Date(latest.started_at).getTime();
+    const windowStart = latestStarted - 24 * 60 * 60 * 1_000;
+    const queries = new Set<string>();
     let parseableDrafts = 0;
-    try {
-      const stats = JSON.parse(row.stats_json) as {
-        parseableDrafts?: unknown;
-        fetched?: unknown;
-      };
-      const draftCount =
-        stats.parseableDrafts === undefined
-          ? stats.fetched
-          : stats.parseableDrafts;
-      if (typeof draftCount === "number" && Number.isFinite(draftCount)) {
-        parseableDrafts = draftCount;
+
+    for (const row of results) {
+      if (row.ok !== 1) continue;
+      const started = new Date(row.started_at).getTime();
+      if (
+        Number.isNaN(started) ||
+        started < windowStart ||
+        started > latestStarted
+      ) {
+        continue;
       }
-    } catch {
-      parseableDrafts = 0;
+
+      const stats = parseLinkedinRunStats(row.stats_json);
+      if (stats.query) queries.add(stats.query);
+      parseableDrafts += stats.parseableDrafts;
     }
 
     return {
-      ok: row.ok === 1,
-      finishedAtIso: row.finished_at ?? "",
+      ok: latest.ok === 1,
+      finishedAtIso: latest.finished_at ?? "",
       parseableDrafts,
+      okQueryCount: queries.size,
+      dictionarySize: REMOTE_GAMING_QUERIES.length,
     };
   }
 
@@ -342,6 +381,31 @@ export class D1JobsRepository implements CareerConsumerRepository {
       companyName: row.company_name,
       title: row.title,
       postedAtIso: row.posted_at,
+    }));
+  }
+
+  async listCareerJobsForExclusivity(): Promise<CareerJobForExclusivity[]> {
+    const { results } = await this.db
+      .prepare(
+        `SELECT j.id, j.title, j.posted_at, c.name AS company_name
+         FROM jobs j
+         JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
+         JOIN job_sightings s ON s.job_id = j.id AND s.source = 'career_page'
+         WHERE j.listed = 1
+         GROUP BY j.id`,
+      )
+      .all<{
+        id: string;
+        title: string;
+        posted_at: string | null;
+        company_name: string;
+      }>();
+
+    return results.map((row) => ({
+      id: row.id,
+      title: row.title,
+      postedAt: row.posted_at,
+      companyName: row.company_name,
     }));
   }
 

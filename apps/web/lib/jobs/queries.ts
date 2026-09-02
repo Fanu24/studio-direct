@@ -121,6 +121,7 @@ export async function getJobBySlug(
         AND j.slug = ?
         AND j.listed = 1
         AND c.listed = 1
+        AND j.remote IN ('remote', 'hybrid')
       LIMIT 1`,
     )
     .bind(tenantId, slug)
@@ -165,6 +166,7 @@ export async function listSitemapEntries(
       WHERE t.slug = ?
         AND j.listed = 1
         AND c.listed = 1
+        AND j.remote IN ('remote', 'hybrid')
       ORDER BY j.slug`,
     )
     .bind(tenantSlug)

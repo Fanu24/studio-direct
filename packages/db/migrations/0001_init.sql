@@ -49,7 +49,7 @@ CREATE INDEX idx_jobs_remote ON jobs (remote);
 CREATE INDEX idx_jobs_exclusivity ON jobs (exclusivity);
 CREATE INDEX idx_jobs_company ON jobs (company_id);
 CREATE INDEX idx_jobs_posted_at ON jobs (posted_at);
-CREATE INDEX idx_jobs_slug ON jobs (slug);
+CREATE UNIQUE INDEX idx_jobs_tenant_slug_unique ON jobs (tenant_id, slug);
 
 CREATE TABLE job_sightings (
   id TEXT PRIMARY KEY NOT NULL,

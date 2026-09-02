@@ -3,10 +3,18 @@ import {
   type QueueMessage,
 } from "@gaming/shared";
 
-import { RateLimitedError } from "../http/public-fetch";
+import { RateLimitedError, retryDelaySeconds } from "../http/public-fetch";
 import { acquireFetchHostLock } from "../locks/kv-lock";
+import { recomputeExclusivity } from "../pipeline/exclusivity";
 import { ingestDrafts } from "../pipeline/ingest";
-import { D1JobsRepository } from "../repo/d1";
+import {
+  D1JobsRepository,
+  type CareerJobForExclusivity,
+} from "../repo/d1";
+import type {
+  ExclusivityJobIdentity,
+  LinkedinBadgeRun,
+} from "../pipeline/exclusivity";
 import type { JobsRepository } from "../repo/types";
 import { writeRateLimitedRun } from "../runs";
 import { LinkedinJobSource } from "../sources/linkedin";
@@ -18,7 +26,16 @@ type LinkedinCompany = {
   tenantId: string;
 };
 
-export interface LinkedinConsumerRepository extends JobsRepository {}
+export interface LinkedinConsumerRepository extends JobsRepository {
+  getLatestLinkedinRun(): Promise<LinkedinBadgeRun | null>;
+  listLinkedinSightings(): Promise<ExclusivityJobIdentity[]>;
+  listCareerJobsForExclusivity(): Promise<CareerJobForExclusivity[]>;
+  updateExclusivity(
+    jobId: string,
+    exclusivity: "hidden_from_linkedin" | "on_boards" | "unknown",
+    updatedAt: string,
+  ): Promise<void>;
+}
 
 type LinkedinDependencies = {
   fetchImpl?: typeof fetch;
@@ -109,10 +126,12 @@ export async function handleLinkedinMessage(
     const drafts = await source.fetch(message);
     let upserted = 0;
     let droppedStaffing = 0;
+    let parseableDrafts = 0;
 
     for (const draft of drafts) {
       const company = await findCompany(draft.companyName);
       if (!company) continue;
+      parseableDrafts += 1;
 
       const ingest = await ingestDrafts([draft], {
         repo,
@@ -132,15 +151,36 @@ export async function handleLinkedinMessage(
       stats: {
         query: message.query,
         fetched: drafts.length,
-        parseableDrafts: drafts.length,
+        parseableDrafts,
         upserted,
         droppedStaffing,
       },
     });
 
+    const [linkedinRun, linkedinSightings, careerJobs] = await Promise.all([
+      repo.getLatestLinkedinRun(),
+      repo.listLinkedinSightings(),
+      repo.listCareerJobsForExclusivity(),
+    ]);
+    for (const job of careerJobs) {
+      const exclusivity = recomputeExclusivity({
+        hasCareer: true,
+        careerJob: {
+          companyName: job.companyName,
+          title: job.title,
+          postedAtIso: job.postedAt,
+        },
+        linkedinSightings,
+        linkedinRun,
+        now: startedAtDate,
+      });
+      await repo.updateExclusivity(job.id, exclusivity, startedAt);
+    }
+
     return { action: "ack" };
   } catch (error) {
     if (!(error instanceof RateLimitedError)) throw error;
+    const delaySeconds = retryDelaySeconds(error);
 
     await writeRateLimitedRun(env.DB, {
       id: runId,
@@ -149,6 +189,8 @@ export async function handleLinkedinMessage(
       finishedAt: now().toISOString(),
       error,
     });
-    throw error;
+    return delaySeconds === null
+      ? { action: "retry" }
+      : { action: "retry", delaySeconds };
   }
 }
