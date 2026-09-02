@@ -1,0 +1,1304 @@
+/* Product theaters: CSS-animated mini versions of the real Studio Direct UI.
+   Every size is in em so a theater scales with its stage (font-size set on .theater).
+   Rule for every animated element: the base style IS the poster frame. Keyframes start
+   and end at that poster (0% and 100%), dissolve briefly, then rebuild the scene.
+   Prefix: t- for shared primitives, thN- for a specific theater. */
+
+/* Shared primitives */
+
+.t-window {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 1em;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  box-shadow: 0 2em 5em -2.5em rgb(0 0 0 / 0.9);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.t-window__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.75em 1em;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: var(--dim);
+}
+
+.t-window__url {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35em 1em;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.t-window__body {
+  position: relative;
+  padding: 1.3em;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.t-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.t-brand::before {
+  content: "";
+  width: 0.9em;
+  height: 0.9em;
+  border-radius: 50%;
+  border: 0.24em solid var(--accent);
+  box-sizing: border-box;
+}
+
+.t-label {
+  font-family: var(--mono);
+  font-size: 0.8em;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+  margin-bottom: 0.9em;
+  white-space: nowrap;
+}
+
+.t-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 0.9em;
+  padding: 1em 1.1em;
+  display: grid;
+  gap: 0.4em;
+  min-width: 0;
+}
+
+.t-card__studio {
+  font-size: 0.9em;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+}
+
+.t-card__studio span:last-child {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: var(--dim);
+}
+
+.t-card__title {
+  font-weight: 600;
+  font-size: 1.15em;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.t-card__meta {
+  font-size: 0.9em;
+  color: var(--muted);
+}
+
+.t-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+  margin-top: 0.2em;
+  min-height: 1.9em;
+}
+
+.t-card__salary {
+  font-family: var(--mono);
+  font-size: 0.8em;
+  color: var(--muted);
+}
+
+.t-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 0.28em 0.8em;
+  font-size: 0.8em;
+  font-weight: 600;
+  white-space: nowrap;
+  transform-origin: center;
+}
+
+.t-input {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0.8em;
+  padding: 0.75em 1em;
+  color: var(--text);
+  font-size: 1.05em;
+  min-width: 0;
+}
+
+.t-input--active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2em rgb(196 163 90 / 0.25);
+}
+
+.t-input__icon {
+  width: 0.95em;
+  height: 0.95em;
+  border: 0.15em solid var(--muted);
+  border-radius: 50%;
+  position: relative;
+  flex: none;
+}
+
+.t-input__icon::after {
+  content: "";
+  position: absolute;
+  width: 0.15em;
+  height: 0.45em;
+  background: var(--muted);
+  right: -0.28em;
+  bottom: -0.32em;
+  transform: rotate(-45deg);
+}
+
+.t-input__placeholder {
+  color: var(--dim);
+}
+
+.t-caret {
+  display: inline-block;
+  width: 0.12em;
+  height: 1.1em;
+  background: var(--accent);
+  vertical-align: text-bottom;
+  animation: t-blink 1s steps(1) infinite;
+}
+
+.t-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.32em 0.9em;
+  font-size: 0.85em;
+  color: var(--muted);
+  white-space: nowrap;
+  background: var(--bg-elev);
+}
+
+.t-chip--on {
+  border-color: var(--accent-line);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.t-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+
+.t-cursor {
+  position: absolute;
+  width: 1.3em;
+  height: 1.3em;
+  border-radius: 50%;
+  background: rgb(236 234 228 / 0.95);
+  box-shadow:
+    0 0 0 0.3em rgb(236 234 228 / 0.22),
+    0 0.4em 1em rgb(0 0 0 / 0.5);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.t-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  padding: 0.65em 1.25em;
+  font-size: 1em;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2);
+  width: fit-content;
+}
+
+.t-button--ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  box-shadow: none;
+}
+
+.t-list {
+  display: grid;
+  gap: 0.7em;
+}
+
+.t-log {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: var(--muted);
+  display: grid;
+  gap: 0.4em;
+}
+
+.t-log__line {
+  white-space: nowrap;
+  overflow: hidden;
+  display: flex;
+  gap: 1.2em;
+}
+
+.t-log__line strong {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.t-log__line em {
+  font-style: normal;
+  color: var(--text);
+}
+
+.t-count {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.t-site {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.7em 0.9em;
+  border: 1px solid var(--line);
+  border-radius: 0.8em;
+  background: var(--bg-elev);
+  color: var(--muted);
+  min-width: 0;
+}
+
+.t-site__mark {
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 0.45em;
+  background: var(--bg-hover);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.85em;
+  flex: none;
+}
+
+.t-site__domain {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.t-site__count {
+  font-family: var(--mono);
+  font-size: 0.78em;
+  white-space: nowrap;
+}
+
+.t-mail {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 0.9em;
+  overflow: hidden;
+}
+
+.t-mail__head {
+  padding: 0.9em 1.1em;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 0.25em;
+}
+
+.t-mail__subject {
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.t-mail__from {
+  font-family: var(--mono);
+  font-size: 0.8em;
+  color: var(--dim);
+}
+
+.t-mail__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 0.8em 1.1em;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+
+.t-mail__row:last-child {
+  border-bottom: 0;
+}
+
+.t-mail__row strong {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.98em;
+}
+
+.t-mail__row span {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+@keyframes t-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Theater 1: career pages first (hero). Three studio career pages feed one board. */
+
+.th1 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 2em;
+  height: 100%;
+  align-content: start;
+}
+
+.th1__sources,
+.th1__board {
+  min-width: 0;
+}
+
+.th1__sources .t-list {
+  gap: 0.6em;
+}
+
+.th1__board .t-list {
+  gap: 0.65em;
+}
+
+.th1 .t-site {
+  animation: th1-site 11s linear infinite;
+}
+
+.th1 .t-site--2 {
+  animation-name: th1-site-2;
+}
+
+.th1 .t-site--3 {
+  animation-name: th1-site-3;
+}
+
+.th1 .t-card {
+  animation: th1-card 11s var(--ease-out) infinite;
+}
+
+.th1 .t-card--2 {
+  animation-name: th1-card-2;
+}
+
+.th1 .t-card--3 {
+  animation-name: th1-card-3;
+}
+
+.th1__flow {
+  position: absolute;
+  left: 50%;
+  top: 4em;
+  bottom: 2.4em;
+  width: 1px;
+  background: var(--line);
+  transform: translateX(-50%);
+}
+
+.th1__flow::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 3em;
+  background: linear-gradient(180deg, transparent, var(--accent), transparent);
+  animation: th1-flow 11s linear infinite;
+  opacity: 0;
+}
+
+@keyframes th1-site {
+  0%,
+  100% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+  4%,
+  9% {
+    border-color: var(--line);
+    color: var(--muted);
+  }
+  12% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+}
+
+@keyframes th1-site-2 {
+  0%,
+  100% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+  4%,
+  33% {
+    border-color: var(--line);
+    color: var(--muted);
+  }
+  36% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+}
+
+@keyframes th1-site-3 {
+  0%,
+  100% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+  4%,
+  57% {
+    border-color: var(--line);
+    color: var(--muted);
+  }
+  60% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+}
+
+@keyframes th1-card {
+  0%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+  4%,
+  13% {
+    opacity: 0;
+    transform: translateX(1.6em);
+  }
+  19% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes th1-card-2 {
+  0%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+  4%,
+  37% {
+    opacity: 0;
+    transform: translateX(1.6em);
+  }
+  43% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes th1-card-3 {
+  0%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+  4%,
+  61% {
+    opacity: 0;
+    transform: translateX(1.6em);
+  }
+  67% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes th1-flow {
+  0%,
+  9% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  12% {
+    opacity: 1;
+  }
+  18% {
+    opacity: 0;
+    transform: translateY(12em);
+  }
+  33% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  36% {
+    opacity: 1;
+  }
+  42% {
+    opacity: 0;
+    transform: translateY(12em);
+  }
+  57% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  60% {
+    opacity: 1;
+  }
+  66%,
+  100% {
+    opacity: 0;
+    transform: translateY(12em);
+  }
+}
+
+/* Theater 2: the honest badge. An index pass compares the listing with LinkedIn and stamps the badge. */
+
+.th2 .t-window__body {
+  display: grid;
+  gap: 1.2em;
+  align-content: start;
+}
+
+.th2 .t-card__title {
+  font-size: 1.35em;
+}
+
+.th2 .t-badge {
+  animation: th2-badge 10s var(--ease-out) infinite;
+}
+
+.th2 .t-log__line {
+  animation: th2-line 10s linear infinite;
+}
+
+.th2 .t-log__line--2 {
+  animation-name: th2-line-2;
+}
+
+.th2 .t-log__line--3 {
+  animation-name: th2-line-3;
+}
+
+@keyframes th2-badge {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  5%,
+  56% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+  63% {
+    opacity: 1;
+    transform: scale(0.96);
+  }
+  67% {
+    transform: scale(1);
+  }
+}
+
+@keyframes th2-line {
+  0%,
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+  5%,
+  12% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  13% {
+    opacity: 1;
+    clip-path: inset(0 100% 0 0);
+    animation-timing-function: steps(28);
+  }
+  22% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes th2-line-2 {
+  0%,
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+  5%,
+  30% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  31% {
+    opacity: 1;
+    clip-path: inset(0 100% 0 0);
+    animation-timing-function: steps(28);
+  }
+  42% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes th2-line-3 {
+  0%,
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+  5%,
+  50% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  51% {
+    opacity: 1;
+    clip-path: inset(0 100% 0 0);
+    animation-timing-function: steps(28);
+  }
+  58% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Compact row card, used where a stage is short and wide. */
+
+.t-card--row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.15em 0.9em;
+  padding: 0.7em 0.95em;
+}
+
+.t-card--row .t-card__title {
+  grid-column: 1;
+  font-size: 1.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.t-card--row .t-card__meta {
+  grid-column: 1;
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.t-card--row .t-badge {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+/* Theater 3: search and filters. Typing narrows five roles to one. */
+
+.th3 .t-window__body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.55fr);
+  gap: 1.6em;
+  align-content: start;
+}
+
+.th3__toolbar {
+  display: grid;
+  gap: 0.85em;
+  align-content: start;
+  min-width: 0;
+}
+
+.th3__toolbar .t-label {
+  margin: 0;
+}
+
+.th3__input {
+  overflow: hidden;
+}
+
+.th3__typed {
+  white-space: nowrap;
+  clip-path: inset(0 0 0 0);
+  animation: th3-type 10s linear infinite;
+}
+
+.th3__caret {
+  /* The typed text is revealed by clip-path, so the caret would sit ahead of the letters.
+     Hide it while typing and let it blink again once the query is complete. */
+  animation:
+    t-blink 1s steps(1) infinite,
+    th3-caret 10s steps(1) infinite;
+}
+
+@keyframes th3-caret {
+  0%,
+  15% {
+    visibility: visible;
+  }
+  16%,
+  29% {
+    visibility: hidden;
+  }
+  30%,
+  100% {
+    visibility: visible;
+  }
+}
+
+.th3__chips {
+  row-gap: 0.4em;
+}
+
+.th3__count {
+  position: relative;
+  height: 1.3em;
+}
+
+.th3__count-all,
+.th3__count-one {
+  position: absolute;
+  inset: 0 auto auto 0;
+}
+
+.th3__count-all {
+  opacity: 0;
+  animation: th3-count-all 10s linear infinite;
+}
+
+.th3__count-one {
+  opacity: 1;
+  animation: th3-count-one 10s linear infinite;
+}
+
+.th3__list {
+  display: grid;
+  gap: 0.55em;
+  align-content: start;
+  min-width: 0;
+}
+
+.th3__row {
+  opacity: 0.16;
+  transform: scale(0.985);
+  transform-origin: left center;
+  animation: th3-row 10s var(--ease-out) infinite;
+}
+
+.th3__row--match {
+  opacity: 1;
+  transform: none;
+  border-color: var(--accent-line);
+  animation: th3-row-match 10s var(--ease-out) infinite;
+}
+
+.th3__row--3 {
+  animation-name: th3-row-3;
+}
+
+.th3__row--4 {
+  animation-name: th3-row-4;
+}
+
+.th3__row--5 {
+  animation-name: th3-row-5;
+}
+
+@keyframes th3-type {
+  0%,
+  4% {
+    clip-path: inset(0 0 0 0);
+  }
+  5%,
+  15% {
+    clip-path: inset(0 100% 0 0);
+  }
+  16% {
+    clip-path: inset(0 100% 0 0);
+    animation-timing-function: steps(8);
+  }
+  30%,
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes th3-count-all {
+  0%,
+  4% {
+    opacity: 0;
+  }
+  5%,
+  33% {
+    opacity: 1;
+  }
+  36%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes th3-count-one {
+  0%,
+  4% {
+    opacity: 1;
+  }
+  5%,
+  33% {
+    opacity: 0;
+  }
+  36%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes th3-row {
+  0%,
+  4% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+  6%,
+  32% {
+    opacity: 1;
+    transform: none;
+  }
+  38%,
+  100% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes th3-row-3 {
+  0%,
+  4% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+  6%,
+  33% {
+    opacity: 1;
+    transform: none;
+  }
+  40%,
+  100% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes th3-row-4 {
+  0%,
+  4% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+  6%,
+  34% {
+    opacity: 1;
+    transform: none;
+  }
+  42%,
+  100% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes th3-row-5 {
+  0%,
+  4% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+  6%,
+  35% {
+    opacity: 1;
+    transform: none;
+  }
+  44%,
+  100% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes th3-row-match {
+  0%,
+  4% {
+    border-color: var(--accent-line);
+  }
+  6%,
+  32% {
+    border-color: var(--line);
+  }
+  40%,
+  100% {
+    border-color: var(--accent-line);
+  }
+}
+
+/* Theater 4: unlock. The cursor presses the button, the quota drops, the masked link appears. */
+
+.th4 .t-window__body {
+  display: grid;
+  gap: 1.1em;
+  align-content: start;
+}
+
+.th4__panel {
+  display: grid;
+  gap: 0.8em;
+  padding: 1em 1.1em;
+  border: 1px solid var(--line);
+  border-radius: 0.9em;
+  background: var(--bg-elev);
+}
+
+.th4__panel .t-label {
+  margin: 0;
+}
+
+.th4__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  flex-wrap: wrap;
+}
+
+.th4__button-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.th4__button {
+  transform-origin: center;
+  animation: th4-press 11s var(--ease-out) infinite;
+}
+
+.th4__quota {
+  position: relative;
+  display: inline-flex;
+  min-width: 11.5em;
+  height: 2em;
+}
+
+.th4__quota-before,
+.th4__quota-after {
+  position: absolute;
+  inset: 0 auto auto 0;
+}
+
+.th4__quota-before {
+  opacity: 0;
+  animation: th4-quota-before 11s linear infinite;
+}
+
+.th4__quota-after {
+  opacity: 1;
+  animation: th4-quota-after 11s linear infinite;
+}
+
+.th4__result {
+  justify-self: start;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 1;
+  animation: th4-result 11s var(--ease-out) infinite;
+}
+
+/* The cursor rests on the button it just pressed, then the loop sends it away and back. */
+.th4__cursor {
+  right: 1.1em;
+  bottom: -0.35em;
+  animation: th4-cursor 11s var(--ease-out) infinite;
+}
+
+@keyframes th4-press {
+  0%,
+  23% {
+    transform: none;
+  }
+  25% {
+    transform: scale(0.965);
+  }
+  28%,
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes th4-quota-before {
+  0%,
+  4% {
+    opacity: 0;
+  }
+  6%,
+  25% {
+    opacity: 1;
+  }
+  29%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes th4-quota-after {
+  0%,
+  4% {
+    opacity: 1;
+  }
+  6%,
+  25% {
+    opacity: 0;
+  }
+  29%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes th4-result {
+  0%,
+  4% {
+    opacity: 1;
+    transform: none;
+  }
+  5%,
+  30% {
+    opacity: 0;
+    transform: translateY(0.5em);
+  }
+  38%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes th4-cursor {
+  0%,
+  4% {
+    transform: none;
+  }
+  6% {
+    transform: translate(4.5em, 3.2em);
+  }
+  22% {
+    transform: none;
+  }
+  24% {
+    transform: translateY(0.18em);
+  }
+  27%,
+  100% {
+    transform: none;
+  }
+}
+
+/* Theater 5: hidden digest. Three roles land in the mail card, one after another. */
+
+.th5 {
+  display: grid;
+  align-content: center;
+  height: 100%;
+}
+
+.th5__mail {
+  width: 100%;
+}
+
+.th5__row {
+  opacity: 1;
+  transform: none;
+  animation: th5-row 10s var(--ease-out) infinite;
+}
+
+.th5__row--2 {
+  animation-name: th5-row-2;
+}
+
+.th5__row--3 {
+  animation-name: th5-row-3;
+}
+
+@keyframes th5-row {
+  0%,
+  4% {
+    opacity: 1;
+    transform: none;
+  }
+  5%,
+  12% {
+    opacity: 0;
+    transform: translateY(0.9em);
+  }
+  20%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes th5-row-2 {
+  0%,
+  4% {
+    opacity: 1;
+    transform: none;
+  }
+  5%,
+  22% {
+    opacity: 0;
+    transform: translateY(0.9em);
+  }
+  30%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes th5-row-3 {
+  0%,
+  4% {
+    opacity: 1;
+    transform: none;
+  }
+  5%,
+  32% {
+    opacity: 0;
+    transform: translateY(0.9em);
+  }
+  40%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Theater 6: one board. The hidden filter toggles and the role without a badge fades back. */
+
+.th6 .t-window__body {
+  display: grid;
+  gap: 1em;
+  align-content: start;
+}
+
+.th6__head {
+  display: grid;
+  gap: 0.7em;
+}
+
+.th6__title {
+  font-weight: 700;
+  font-size: 1.25em;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.th6__chip-hidden {
+  animation: th6-chip 11s var(--ease-out) infinite;
+}
+
+.th6__card--plain {
+  opacity: 0.15;
+  transform: scale(0.985);
+  transform-origin: left center;
+  animation: th6-plain 11s var(--ease-out) infinite;
+}
+
+@keyframes th6-chip {
+  0%,
+  5% {
+    border-color: var(--accent-line);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  9%,
+  42% {
+    border-color: var(--line);
+    color: var(--muted);
+    background: var(--bg-elev);
+  }
+  48%,
+  100% {
+    border-color: var(--accent-line);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+}
+
+@keyframes th6-plain {
+  0%,
+  5% {
+    opacity: 0.15;
+    transform: scale(0.985);
+  }
+  12%,
+  45% {
+    opacity: 1;
+    transform: none;
+  }
+  54%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.985);
+  }
+}

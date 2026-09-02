@@ -10,6 +10,7 @@ type TestElement = ReactElement<
 const mocks = vi.hoisted(() => ({
   getCloudflareContext: vi.fn(),
   listJobs: vi.fn(),
+  listCompanies: vi.fn(),
 }));
 
 vi.mock("@opennextjs/cloudflare", () => ({
@@ -18,6 +19,7 @@ vi.mock("@opennextjs/cloudflare", () => ({
 
 vi.mock("../lib/jobs/queries", () => ({
   listJobs: mocks.listJobs,
+  listCompanies: mocks.listCompanies,
 }));
 
 vi.stubGlobal("React", React);
@@ -49,6 +51,9 @@ describe("HomePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCloudflareContext.mockResolvedValue({ env: { DB: db } });
+    mocks.listCompanies.mockResolvedValue([
+      { id: "studio-a", name: "Alpha Studio", slug: "alpha", jobCount: 1 },
+    ]);
     mocks.listJobs.mockResolvedValue({
       jobs: [
         {

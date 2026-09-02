@@ -1,7 +1,9 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { AccountShell } from "../_components/account-shell";
 import { createAuth, type AuthEnv } from "../../lib/auth/index";
 import {
   loadTalentPoolOptIn,
@@ -9,6 +11,14 @@ import {
 } from "../../lib/profile/talent-pool";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Settings",
+  description:
+    "Studio Direct account settings: profile visibility to verified studios, data export, and account deletion.",
+  robots: { index: false, follow: false },
+  alternates: { canonical: "/settings" },
+};
 
 type SettingsEnv = AuthEnv & {
   DB: TalentPoolDatabase;
@@ -37,32 +47,83 @@ export default async function SettingsPage() {
   const optedIn = await loadTalentPoolOptIn(env.DB, userId);
 
   return (
-    <main className="stack">
-      <h1>Settings</h1>
-      <p>
-        Applying for jobs does not require this. You can change this anytime.
-      </p>
-      <form action="/api/account/talent-pool" method="post">
-        <label>
-          <input
-            defaultChecked={optedIn === 1}
-            name="talent_pool_opt_in"
-            type="checkbox"
-            value="1"
-          />
-          Show my profile to verified studios and recruiters
-        </label>
-        <button type="submit">Save</button>
-      </form>
-      <section>
-        <h2>Your data</h2>
+    <AccountShell
+      active="settings"
+      lead="Who can see your profile, your data, and what is coming next."
+      title="Settings"
+    >
+      <section aria-labelledby="visibility" className="panel acct-panel">
+        <div className="acct-panel__head">
+          <h2 id="visibility">Profile visibility</h2>
+          <span className={optedIn === 1 ? "chip chip--on" : "chip"}>
+            {optedIn === 1 ? "On" : "Off"}
+          </span>
+        </div>
         <p>
-          <a href="/api/account/export">Download my data</a>
+          Off by default. Applying for jobs does not require this. You can change it
+          anytime.
         </p>
-        <form action="/api/account/delete" method="post">
-          <button type="submit">Delete my account</button>
+        <form action="/api/account/talent-pool" className="acct-form" method="post">
+          <label className="check">
+            <input
+              defaultChecked={optedIn === 1}
+              name="talent_pool_opt_in"
+              type="checkbox"
+              value="1"
+            />
+            Show my profile to verified studios and recruiters
+          </label>
+          <div className="acct-actions">
+            <button className="button" type="submit">
+              Save
+            </button>
+          </div>
         </form>
       </section>
-    </main>
+
+      <section aria-labelledby="your-data" className="panel acct-panel">
+        <div className="acct-panel__head">
+          <h2 id="your-data">Your data</h2>
+        </div>
+        <p>Download everything we store about you as a JSON file.</p>
+        <div className="acct-actions">
+          <a className="button button--secondary" href="/api/account/export">
+            Download my data
+          </a>
+        </div>
+        <div className="acct-danger">
+          <p>
+            Deleting your account removes your profile, CV and unlock history. This
+            cannot be undone.
+          </p>
+          <form action="/api/account/delete" method="post">
+            <button className="button button--danger" type="submit">
+              Delete my account
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <div className="acct-soon">
+        <section aria-labelledby="digest-title" className="panel acct-soon__panel">
+          <h3 id="digest-title">
+            Email digest <span className="tag">Paid plan, not live yet</span>
+          </h3>
+          <p>
+            A short email when the index finds new roles that are not on LinkedIn.
+            Digest settings will appear here once billing is live.
+          </p>
+        </section>
+        <section aria-labelledby="alerts-title" className="panel acct-soon__panel">
+          <h3 id="alerts-title">
+            Job alerts <span className="tag">Not available yet</span>
+          </h3>
+          <p>
+            Alerts for new roles that match your target role. Alert settings will
+            appear here when alerts launch.
+          </p>
+        </section>
+      </div>
+    </AccountShell>
   );
 }

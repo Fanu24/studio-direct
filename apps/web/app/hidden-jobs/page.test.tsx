@@ -1,6 +1,8 @@
 import React, { type ReactElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { LINKEDIN_EXCLUSIVITY_TOOLTIP } from "../../lib/copy";
+
 const mocks = vi.hoisted(() => ({
   getCloudflareContext: vi.fn(),
   listJobs: vi.fn(),
@@ -52,5 +54,15 @@ describe("HiddenJobsPage", () => {
       hidden: true,
     });
     expect(text(page)).toContain("Jobs not posted on LinkedIn");
+  });
+
+  it("explains the badge with the locked tooltip and the no-realtime-LinkedIn sentence", async () => {
+    const { default: HiddenJobsPage } = await import("./page");
+    const page = await HiddenJobsPage();
+    const content = text(page);
+
+    expect(content).toContain("How the badge works");
+    expect(content).toContain(LINKEDIN_EXCLUSIVITY_TOOLTIP);
+    expect(content).toContain("We do not provide real-time LinkedIn coverage.");
   });
 });

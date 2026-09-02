@@ -59,7 +59,7 @@ function formatJobLine(job: DigestJob, siteUrl?: string): string {
   const url = jobUrl(job.slug, siteUrl);
   const location = job.location ? ` · ${job.location}` : "";
   const line = `${job.title} at ${job.companyName} (${job.remote}${location})`;
-  return url ? `${line} — ${url}` : line;
+  return url ? `${line}: ${url}` : line;
 }
 
 function formatJobHtml(job: DigestJob, siteUrl?: string): string {

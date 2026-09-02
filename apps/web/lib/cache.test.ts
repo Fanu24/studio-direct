@@ -21,6 +21,10 @@ describe("cacheControlForRequest", () => {
 
   it("recognizes only public catalog routes as revalidated pages", () => {
     expect(isPublicRevalidatedPath("/hidden-jobs")).toBe(true);
+    expect(isPublicRevalidatedPath("/companies")).toBe(true);
+    expect(isPublicRevalidatedPath("/roles")).toBe(true);
+    expect(isPublicRevalidatedPath("/about")).toBe(true);
+    expect(isPublicRevalidatedPath("/dashboard")).toBe(false);
     expect(isPublicRevalidatedPath("/jobs/gameplay-engineer")).toBe(true);
     expect(isPublicRevalidatedPath("/profile")).toBe(false);
     expect(isPublicRevalidatedPath("/settings")).toBe(false);

@@ -7,6 +7,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { Breadcrumbs } from "../../_components/breadcrumbs";
+import { HubLinks } from "../../_components/hub-links";
+import { ArrowRightIcon } from "../../_components/icons";
 import { JobHubList } from "../../_components/job-hub-list";
 import { listHubJobs, type JobsDatabase } from "../../../lib/jobs/queries";
 
@@ -23,8 +26,9 @@ export async function generateMetadata({
   if (!isHubRoleSlug(slug)) notFound();
   const label = hubSlugLabel(slug);
   return {
-    title: `${label} jobs | Studio Direct`,
-    description: `Browse listed remote and hybrid gaming jobs matching the ${label} skill.`,
+    title: `${label} jobs`,
+    description: `Gaming jobs that match the ${label} skill, remote and hybrid, collected from studio career pages and listed with the full description.`,
+    alternates: { canonical: `/skills/${slug}` },
   };
 }
 
@@ -49,18 +53,55 @@ export default async function SkillPage({
 
   return (
     <main>
-      <header>
-        <Link href="/jobs">All jobs</Link>
+      <header className="page-header">
+        <Breadcrumbs
+          items={[
+            { href: "/jobs", label: "Jobs" },
+            { href: "/roles", label: "Roles" },
+            { label: `${label} jobs` },
+          ]}
+        />
         <h1>{label} jobs</h1>
-        <p>Remote and hybrid gaming jobs matching the {label} skill.</p>
+        <p className="lead">
+          Remote and hybrid gaming jobs matching the {label} skill, from studio career
+          pages.
+        </p>
       </header>
-      <JobHubList
-        emptyMessage={`No jobs matching ${label} are listed right now.`}
-        jobs={result.jobs}
-      />
-      <nav aria-label="Related pages">
-        <Link href={`/remote-${slug}-jobs`}>Remote {label} jobs</Link>
-      </nav>
+
+      <section aria-label={`${label} jobs`} className="jobs-results">
+        <div className="jobs-results__head">
+          <p className="count">
+            <span className="jobs-num">{result.total}</span>{" "}
+            {result.total === 1 ? "role" : "roles"}
+          </p>
+          <div className="jobs-results__aside">
+            <Link href={`/remote-${slug}-jobs`}>Remote {label} jobs</Link>
+          </div>
+        </div>
+        <JobHubList
+          emptyActions={
+            <Link className="button button--secondary" href="/jobs">
+              Browse all jobs
+            </Link>
+          }
+          emptyMessage={`No jobs matching ${label} are listed right now. New roles land here as studios post them.`}
+          jobs={result.jobs}
+        />
+      </section>
+
+      <section aria-labelledby="skill-other-roles" className="jobs-more">
+        <div className="jobs-more__head">
+          <div>
+            <h2 id="skill-other-roles">Other skills</h2>
+            <p>The same board, filtered by another discipline.</p>
+          </div>
+          <Link className="text-link" href="/roles">
+            All roles
+            <ArrowRightIcon size={16} />
+          </Link>
+        </div>
+        <HubLinks exclude={slug} limit={9} variant="skill" />
+      </section>
     </main>
   );
 }

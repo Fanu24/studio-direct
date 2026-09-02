@@ -19,6 +19,9 @@ export function isPublicRevalidatedPath(pathname: string) {
   return pathname === "/"
     || pathname === "/jobs"
     || pathname === "/hidden-jobs"
+    || pathname === "/companies"
+    || pathname === "/roles"
+    || pathname === "/about"
     || /^\/jobs\/[^/]+$/.test(pathname)
     || /^\/companies\/[^/]+$/.test(pathname)
     || /^\/skills\/[^/]+$/.test(pathname)

@@ -308,3 +308,42 @@ export async function listHubJobs(
     totalPages: matchingJobs.length === 0 ? 0 : 1,
   };
 }
+
+export interface CompanyListItem {
+  id: string;
+  name: string;
+  slug: string;
+  jobCount: number;
+}
+
+export async function listCompanies(
+  db: JobsDatabase,
+  tenantId: string,
+): Promise<CompanyListItem[]> {
+  const rows = await db
+    .prepare(
+      `SELECT
+        c.id,
+        c.name,
+        c.name_norm AS nameNorm,
+        COUNT(j.id) AS jobCount
+      FROM companies c
+      LEFT JOIN jobs j
+        ON j.company_id = c.id
+        AND j.tenant_id = c.tenant_id
+        AND j.listed = 1
+        AND j.remote IN ('remote', 'hybrid')
+      WHERE c.tenant_id = ? AND c.listed = 1
+      GROUP BY c.id, c.name, c.name_norm
+      ORDER BY jobCount DESC, c.name ASC`,
+    )
+    .bind(tenantId)
+    .all<{ id: string; name: string; nameNorm: string; jobCount: number | null }>();
+
+  return rows.results.map((row) => ({
+    id: row.id,
+    name: row.name,
+    slug: slugTitle(row.nameNorm),
+    jobCount: Number(row.jobCount ?? 0),
+  }));
+}

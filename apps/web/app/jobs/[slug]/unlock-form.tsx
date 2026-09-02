@@ -2,14 +2,16 @@
 
 import { useState, type FormEvent } from "react";
 
+import { LockIcon } from "../../_components/icons";
 import { shouldShowCompletenessNudge } from "../../../lib/profile/completeness";
 import { consumeUnlockResponse } from "../../../lib/unlocks/client";
 
 export const QUOTA_MESSAGE =
   "You've used your 5 free unlocks this week. Come back next Monday (UTC) for more.";
 
+/* Studios do not receive a profile when you apply, so this cannot promise that they will read it. */
 export const COMPLETENESS_NUDGE_MESSAGE =
-  "Your profile is under 80% complete. Add experience and skills so studios can learn more about you.";
+  "Your profile is under 80% complete. Add experience and skills so it is ready before you apply.";
 
 export async function submitUnlockForm(
   formData: FormData,
@@ -50,6 +52,7 @@ export function UnlockApplyForm({
 }) {
   const [quota, setQuota] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
   const [nudge, setNudge] = useState<{
     applyUrl: string;
     completeness: number;
@@ -58,11 +61,13 @@ export function UnlockApplyForm({
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setPending(true);
     const result = await submitUnlockForm(new FormData(event.currentTarget));
 
     if (result.kind === "apply") {
       const nextView = applyUnlockResult(result);
       if (nextView.action === "nudge") {
+        setPending(false);
         setNudge({
           applyUrl: nextView.applyUrl,
           completeness: nextView.completeness,
@@ -78,6 +83,8 @@ export function UnlockApplyForm({
       return;
     }
 
+    setPending(false);
+
     if (result.kind === "quota") {
       setQuota(true);
       return;
@@ -87,33 +94,52 @@ export function UnlockApplyForm({
   }
 
   return (
-    <>
+    <div className="jd-unlock">
+      <form
+        action="/api/unlock"
+        className="jd-unlock__form"
+        method="post"
+        onSubmit={onSubmit}
+      >
+        <input name="jobId" type="hidden" value={jobId} />
+        <input name="next" type="hidden" value={next} />
+        <button
+          aria-busy={pending || undefined}
+          className="button button--lg button--block jd-unlock__button"
+          disabled={pending}
+          type="submit"
+        >
+          <LockIcon size={18} />
+          Unlock application link
+        </button>
+      </form>
       {quota ? (
-        <p className="alert" role="alert">
+        <p className="notice notice--accent jd-unlock__notice" role="alert">
           {QUOTA_MESSAGE}
         </p>
       ) : null}
       {error ? (
-        <p className="alert" role="alert">
+        <p className="notice notice--danger jd-unlock__notice" role="alert">
           {error}
         </p>
       ) : null}
       {nudge ? (
-        <p role="status">
-          {COMPLETENESS_NUDGE_MESSAGE}
-          {" "}
-          Your profile is {nudge.completeness}% complete.
-          {" "}
-          <a href="/profile">Finish your profile</a>
-          {" · "}
-          <a href={nudge.applyUrl}>Continue to application</a>
-        </p>
+        <div className="notice jd-unlock__notice jd-unlock__nudge" role="status">
+          <p>
+            {COMPLETENESS_NUDGE_MESSAGE}
+            {" "}
+            Your profile is {nudge.completeness}% complete.
+          </p>
+          <div className="jd-unlock__actions">
+            <a className="button button--sm" href={nudge.applyUrl}>
+              Continue to application
+            </a>
+            <a className="button button--secondary button--sm" href="/profile">
+              Finish your profile
+            </a>
+          </div>
+        </div>
       ) : null}
-      <form action="/api/unlock" method="post" onSubmit={onSubmit}>
-        <input name="jobId" type="hidden" value={jobId} />
-        <input name="next" type="hidden" value={next} />
-        <button type="submit">Unlock application link</button>
-      </form>
-    </>
+    </div>
   );
 }

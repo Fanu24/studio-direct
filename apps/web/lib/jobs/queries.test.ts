@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   getCompanyBySlug,
   getJobBySlug,
+  listCompanies,
   listHubJobs,
   listJobs,
   listSitemapEntries,
@@ -497,5 +498,84 @@ describe("listJobs", () => {
       jobSlugs: ["hybrid-job", "public-job"],
       companySlugs: ["alpha", "betaforge"],
     });
+  });
+});
+
+describe("listCompanies", () => {
+  let sqlite: MemoryDatabase;
+  let db: JobsDatabase;
+
+  beforeEach(() => {
+    sqlite = new DatabaseSync(":memory:");
+    sqlite.exec(`
+      CREATE TABLE companies (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        name_norm TEXT NOT NULL,
+        listed INTEGER NOT NULL DEFAULT 1
+      );
+      CREATE TABLE jobs (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        company_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        location TEXT,
+        remote TEXT NOT NULL,
+        description_html TEXT NOT NULL DEFAULT '',
+        apply_url TEXT NOT NULL DEFAULT '',
+        salary_text TEXT,
+        exclusivity TEXT NOT NULL DEFAULT 'unknown',
+        posted_at TEXT,
+        listed INTEGER NOT NULL DEFAULT 1
+      );
+      CREATE VIRTUAL TABLE jobs_fts USING fts5 (
+        title, description, company_name
+      );
+      INSERT INTO companies VALUES
+        ('studio-a', 'gaming', 'Alpha Studio', 'alpha', 1),
+        ('studio-b', 'gaming', 'Beta Forge', 'betaforge', 1),
+        ('studio-c', 'gaming', 'Closed Studio', 'closed', 0),
+        ('studio-other', 'other', 'Other Studio', 'other', 1);
+    `);
+    db = createD1(sqlite);
+  });
+
+  it("lists listed studios for the tenant with their remote and hybrid job counts", async () => {
+    insertJob(sqlite, { id: "a1", companyId: "studio-a", title: "Artist", remote: "remote" });
+    insertJob(sqlite, { id: "a2", companyId: "studio-a", title: "Onsite", remote: "onsite" });
+    insertJob(sqlite, {
+      id: "a3",
+      companyId: "studio-a",
+      title: "Closed",
+      remote: "remote",
+      listed: 0,
+    });
+    insertJob(sqlite, { id: "b1", companyId: "studio-b", title: "Engineer", remote: "hybrid" });
+    insertJob(sqlite, { id: "b2", companyId: "studio-b", title: "Producer", remote: "remote" });
+    insertJob(sqlite, {
+      id: "o1",
+      tenantId: "other",
+      companyId: "studio-other",
+      title: "Other",
+      remote: "remote",
+    });
+
+    const companies = await listCompanies(db, "gaming");
+
+    expect(companies).toEqual([
+      { id: "studio-b", name: "Beta Forge", slug: "betaforge", jobCount: 2 },
+      { id: "studio-a", name: "Alpha Studio", slug: "alpha", jobCount: 1 },
+    ]);
+  });
+
+  it("keeps studios with zero listed jobs so the index stays visible", async () => {
+    const companies = await listCompanies(db, "gaming");
+
+    expect(companies.map((company) => [company.slug, company.jobCount])).toEqual([
+      ["alpha", 0],
+      ["betaforge", 0],
+    ]);
   });
 });
