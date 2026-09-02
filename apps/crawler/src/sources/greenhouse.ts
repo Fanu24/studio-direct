@@ -1,5 +1,10 @@
 import type { JobDraft } from "@gaming/shared";
 
+import { fetchPublicText } from "../http/public-fetch";
+
+const PRODUCT_USER_AGENT =
+  "StudioDirectBot/1.0 (+https://studio-direct.example/bot; jobs@studio-direct.example)";
+
 interface GreenhouseJob {
   absolute_url: string;
   id: number;
@@ -60,11 +65,15 @@ export async function fetchGreenhouseBoard(
   companyName: string,
   fetchImpl: typeof fetch,
 ): Promise<JobDraft[]> {
-  const response = await fetchImpl(greenhouseBoardUrl(atsSlug));
+  const response = await fetchPublicText(
+    greenhouseBoardUrl(atsSlug),
+    fetchImpl,
+    PRODUCT_USER_AGENT,
+  );
 
-  if (!response.ok) {
+  if (response.status < 200 || response.status >= 300) {
     throw new Error(`Greenhouse board request failed with status ${response.status}`);
   }
 
-  return parseGreenhouseBoard(await response.text(), companyName);
+  return parseGreenhouseBoard(response.body, companyName);
 }

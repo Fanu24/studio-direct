@@ -30,3 +30,56 @@ Implemented the Greenhouse career-page adapter and Greenhouse-only career dispat
 ## Concern
 
 The Worker-pool portion of the full test command emitted pre-existing Vitest/workerd environment-teardown warnings while still exiting 0 with all tests passing.
+
+## QA Data Important Fix
+
+- Routed Greenhouse board requests through `fetchPublicText` with the product User-Agent.
+- Added coverage for GET headers and 429 `RateLimitedError` propagation, including `Retry-After`.
+
+### Targeted test evidence
+
+Command:
+
+```text
+pnpm --dir apps/crawler exec vitest run --config vitest.node.config.ts src/sources/greenhouse.test.ts
+```
+
+Output:
+
+```text
+RUN  v4.1.0 C:/Users/dotat/Desktop/Saas JOBS/apps/crawler
+
+✓ src/sources/greenhouse.test.ts > parseGreenhouseBoard > maps Greenhouse jobs to career-page drafts
+✓ src/sources/greenhouse.test.ts > parseGreenhouseBoard > does not classify an onsite location as remote
+✓ src/sources/greenhouse.test.ts > CareerJobSource > dispatches a career message to Greenhouse with injected fetch
+✓ src/sources/greenhouse.test.ts > fetchGreenhouseBoard > propagates RateLimitedError for a 429 response
+
+Test Files  1 passed (1)
+Tests       4 passed (4)
+Exit code: 0
+```
+
+### Full crawler test evidence
+
+Command:
+
+```text
+pnpm --filter @gaming/crawler test
+```
+
+Output:
+
+```text
+> @gaming/crawler@0.0.0 test
+> vitest run --config vitest.wrangler.config.ts && vitest run --config vitest.config.ts && vitest run --config vitest.node.config.ts
+
+Test Files  1 passed (1)
+Tests       3 passed (3)
+
+Test Files  3 passed (3)
+Tests       3 passed (3)
+
+Test Files  5 passed (5)
+Tests       12 passed (12)
+Exit code: 0
+```
