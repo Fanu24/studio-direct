@@ -1,6 +1,7 @@
 import type { JobDraft, JobSource, QueueMessage } from "@gaming/shared";
 
 import { fetchGreenhouseBoard } from "./greenhouse";
+import { fetchLeverPostings } from "./lever";
 
 export interface CareerCompany {
   id: string;
@@ -35,6 +36,18 @@ export class CareerJobSource implements JobSource {
       }
 
       return fetchGreenhouseBoard(
+        company.ats_slug,
+        company.name,
+        this.fetchImpl,
+      );
+    }
+
+    if (company.ats_type === "lever") {
+      if (!company.ats_slug) {
+        throw new Error(`Lever company has no ATS slug: ${company.id}`);
+      }
+
+      return fetchLeverPostings(
         company.ats_slug,
         company.name,
         this.fetchImpl,

@@ -1,0 +1,27 @@
+[
+  {
+    "id": "lever-101",
+    "text": "Senior Backend Engineer",
+    "hostedUrl": "https://jobs.lever.co/pixelworks/lever-101",
+    "applyUrl": "https://jobs.lever.co/pixelworks/lever-101/apply",
+    "createdAt": 1788167700000,
+    "categories": {
+      "location": "Remote - Europe",
+      "team": "Engineering",
+      "commitment": "Full-time"
+    },
+    "description": "<p>Build reliable services for our online games.</p>"
+  },
+  {
+    "id": "lever-102",
+    "text": "Environment Artist",
+    "hostedUrl": "https://jobs.lever.co/pixelworks/lever-102",
+    "applyUrl": "https://jobs.lever.co/pixelworks/lever-102/apply",
+    "categories": {
+      "location": "Montreal, Quebec, Canada",
+      "team": "Art",
+      "commitment": "Full-time"
+    },
+    "description": "<p>Create worlds with our Montreal studio.</p>"
+  }
+]
