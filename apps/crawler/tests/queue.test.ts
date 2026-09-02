@@ -23,6 +23,18 @@ describe("crawler queue", () => {
         body: { kind: "career_page", url: "https://example.test/jobs" },
         attempts: 1,
       },
+      {
+        id: "crawl-3",
+        timestamp: new Date(),
+        body: { kind: "linkedin", query: "unity remote" },
+        attempts: 1,
+      },
+      {
+        id: "crawl-4",
+        timestamp: new Date(),
+        body: { kind: "indeed", query: "unreal remote" },
+        attempts: 1,
+      },
     ]);
     const ctx = createExecutionContext();
 
