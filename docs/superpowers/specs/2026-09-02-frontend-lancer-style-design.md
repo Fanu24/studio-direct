@@ -218,9 +218,11 @@ Differences from the plan above, all deliberate:
 - New public routes `/companies`, `/roles`, `/about` were added to `app/sitemap.ts` and to the public revalidated
   paths in `lib/cache.ts`, each with a test.
 
-### Open question for the founder
+### Apply URL and JSON-LD (resolved)
 
-`buildJobPostingJsonLd` publishes the studio apply URL in the page's JSON-LD as `directApply.target`. That predates
-this pass (commit 938f7d5) and its test asserts it, so it was left alone. It does mean the apply link is readable in
-the page source without an unlock, which is in tension with the brief's rule about `apply_url` and anonymous users.
-Removing it would cost the JobPosting rich result its apply target. This needs a product decision, not a visual one.
+`buildJobPostingJsonLd` used to publish the studio apply URL as `directApply.target`, so the gated link was
+readable in the page source without an unlock. Two independent reviews flagged it against the brief rule that
+`apply_url` never reaches anonymous HTML. It now emits `directApply: false`, which is what Google's JobPosting
+spec actually expects there (a boolean, not an ApplyAction), so no rich result is lost. `url` still points at the
+Studio Direct job page. A production build serves the job page with zero occurrences of the apply URL, and both
+`lib/jobs/jsonld.test.ts` and the job page test now assert its absence.

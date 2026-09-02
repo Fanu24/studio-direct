@@ -92,7 +92,10 @@ export default async function CompanyPage({
             {hidden > 0 ? `, ${hidden} not on LinkedIn` : ""}
           </p>
           <div className="jobs-results__aside">
-            <Link href="/companies">All studios</Link>
+            <Link className="text-link" href="/companies">
+              All studios
+              <ArrowRightIcon size={15} />
+            </Link>
           </div>
         </div>
         <JobHubList

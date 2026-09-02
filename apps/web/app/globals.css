@@ -11,7 +11,7 @@
   --line-strong: #3b4150;
   --text: #eceae4;
   --muted: #9b978c;
-  --dim: #6d6a62;
+  --dim: #8a857b;
   --accent: #c4a35a;
   --accent-strong: #d9b96a;
   --accent-soft: rgb(196 163 90 / 0.14);
@@ -493,7 +493,7 @@ main.marketing {
   align-content: start;
 }
 
-.site-footer nav h4 {
+.site-footer nav h2 {
   font-size: 0.78rem;
   font-family: var(--mono);
   font-weight: 500;
@@ -512,8 +512,25 @@ main.marketing {
   color: var(--text);
 }
 
+/* The rule is drawn by a pseudo-element inset by the gutter, so it ends where the text ends
+   instead of running the full padded width of the container. */
+.site-footer__roles,
+.site-footer__legal {
+  position: relative;
+}
+
+.site-footer__roles::before,
+.site-footer__legal::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--gutter);
+  right: var(--gutter);
+  height: 1px;
+  background: var(--line);
+}
+
 .site-footer__roles {
-  border-top: 1px solid var(--line);
   padding-top: 20px;
   padding-bottom: 20px;
   display: flex;
@@ -540,7 +557,6 @@ main.marketing {
 }
 
 .site-footer__legal {
-  border-top: 1px solid var(--line);
   padding-top: 20px;
   padding-bottom: 32px;
   display: flex;
@@ -888,9 +904,14 @@ select {
   transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
 }
 
-a.chip:hover {
+a.chip:not(.chip--on):hover {
   color: var(--text);
   border-color: var(--line-strong);
+}
+
+a.chip--on:hover {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .chip--on {
@@ -1032,6 +1053,12 @@ a.chip:hover {
   outline: none;
 }
 
+.job-card:has(.job-card__title a:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-color: var(--accent-line);
+}
+
 .job-card__meta {
   margin: 0;
   color: var(--muted);
@@ -1046,6 +1073,11 @@ a.chip:hover {
   gap: 12px;
   margin-top: 2px;
   min-height: 24px;
+}
+
+.job-card__foot .badge {
+  position: relative;
+  z-index: 1;
 }
 
 .job-card__salary {
@@ -1205,7 +1237,7 @@ a.chip:hover {
 
 .marquee__group {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: var(--marquee-gap);
   padding-right: var(--marquee-gap);
   flex: none;
@@ -1387,7 +1419,8 @@ a.chip:hover {
   line-height: 1.35;
   color: var(--text);
   overflow: hidden;
-  padding: 2.4em;
+  /* The extra bottom padding is the safe area for the playing play/pause control. */
+  padding: 2.4em 2.4em 3.6em;
 }
 
 .pv[data-state="poster"] .theater,
@@ -1601,6 +1634,13 @@ button.secondary {
 
   main {
     padding: 28px var(--gutter) 72px;
+  }
+
+  /* The theater font floors at 7px, so a 21:9 stage stops being tall enough to hold the
+     content on a phone. The wide frame turns portrait, where the stacked toolbar and all
+     five result rows fit without being sliced. */
+  .pv--wide {
+    --pv-aspect: 4 / 5;
   }
 
   .job-grid,

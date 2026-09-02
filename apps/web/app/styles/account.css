@@ -94,7 +94,7 @@ main.acct-main {
   flex-wrap: wrap;
 }
 
-.acct-panel__head p {
+.acct-panel__head > p:not(.count) {
   margin: 6px 0 0;
   width: 100%;
 }
@@ -260,13 +260,13 @@ main.acct-main {
   color: var(--muted);
 }
 
-.dash-tile__value--text {
+.dash-tile .dash-tile__value--text {
   font-size: clamp(1.5rem, 2.6vw, 1.9rem);
   letter-spacing: -0.03em;
   line-height: 1.15;
 }
 
-.dash-tile p {
+.dash-tile > p:not([class]) {
   margin: 0;
   font-size: 0.95rem;
 }
@@ -326,7 +326,7 @@ main.acct-main {
 
 /* Login */
 
-.login {
+main.acct-main.login {
   padding: clamp(40px, 6vw, 80px) 0 clamp(64px, 8vw, 112px);
   position: relative;
   overflow: hidden;
@@ -672,7 +672,7 @@ main.acct-main {
     grid-row: auto;
   }
 
-  .login {
+  main.acct-main.login {
     padding-top: 28px;
   }
 

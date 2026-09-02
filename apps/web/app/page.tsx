@@ -100,7 +100,7 @@ export default async function HomePage() {
             <span className="kicker">Remote and hybrid gaming jobs</span>
             <h1 className="hero__title">
               Gaming jobs, straight{" "}
-              <em className="display-accent">from the studio.</em>
+              <span className="display-accent">from the studio.</span>
             </h1>
             <p className="hero__claim">{HOMEPAGE_CLAIM}</p>
             <form action="/jobs" className="hero__search" method="get" role="search">
@@ -223,7 +223,7 @@ export default async function HomePage() {
             </div>
             <ProductVideo
               aspect="tall"
-              caption="hidden digest, email"
+              caption="hidden digest"
               tag="Paid plan, not live yet"
               title="Hidden digest: a short email listing new roles not on LinkedIn"
             >

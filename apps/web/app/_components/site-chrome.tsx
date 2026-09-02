@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { MobileMenu } from "./mobile-menu";
+import { NavLinks } from "./nav-links";
 import { NavAccount } from "./nav-account";
 import { RevealObserver } from "./reveal-observer";
 
@@ -36,13 +37,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
             <span aria-hidden="true" className="wordmark__mark" />
             Studio Direct
           </Link>
-          <nav aria-label="Primary" className="nav-links">
-            {NAV_LINKS.map((link) => (
-              <Link href={link.href} key={link.href}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <NavLinks links={NAV_LINKS} />
           <div className="nav-actions">
             <NavAccount />
             <MobileMenu links={NAV_LINKS} />
@@ -64,20 +59,20 @@ export function SiteChrome({ children }: { children: ReactNode }) {
             </p>
           </div>
           <nav aria-label="Browse">
-            <h4>Browse</h4>
+            <h2>Browse</h2>
             <Link href="/jobs">All jobs</Link>
             <Link href="/hidden-jobs">Not on LinkedIn</Link>
             <Link href="/companies">Studios</Link>
             <Link href="/roles">Roles</Link>
           </nav>
           <nav aria-label="Account">
-            <h4>Account</h4>
+            <h2>Account</h2>
             <Link href="/login">Sign in</Link>
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/pricing">Pricing</Link>
           </nav>
           <nav aria-label="Company">
-            <h4>Company</h4>
+            <h2>Company</h2>
             <Link href="/about">How it works</Link>
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>

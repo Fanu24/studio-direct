@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { CloseIcon, MenuIcon } from "./icons";
+import { isCurrent } from "./nav-links";
 
 export function MobileMenu({
   links,
@@ -32,7 +33,11 @@ export function MobileMenu({
       </button>
       <nav aria-label="Mobile" className="mobile-menu" hidden={!open} id="mobile-menu">
         {links.map((link) => (
-          <Link href={link.href} key={link.href}>
+          <Link
+            aria-current={isCurrent(pathname, link.href) ? "page" : undefined}
+            href={link.href}
+            key={link.href}
+          >
             {link.label}
           </Link>
         ))}

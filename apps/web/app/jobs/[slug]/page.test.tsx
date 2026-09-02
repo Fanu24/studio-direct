@@ -93,7 +93,15 @@ describe("Job page apply control", () => {
         && element.type.name === "UnlockApplyForm",
     );
 
+    // Nothing rendered for an anonymous visitor may carry the gated URL, JSON-LD included.
+    const serialized = JSON.stringify(
+      tree.map((element) => element.props),
+      (_key, value) => (typeof value === "function" ? undefined : value),
+    );
+
     expect(anchors.map((anchor) => anchor.props.href)).not.toContain(applyUrl);
+    expect(serialized).not.toContain(applyUrl);
+    expect(serialized).not.toContain("studio.example");
     expect(applyControl?.props).toMatchObject({
       jobId: "job-1",
       next: "/jobs/gameplay-engineer",

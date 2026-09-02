@@ -75,7 +75,10 @@ export default async function SkillPage({
             {result.total === 1 ? "role" : "roles"}
           </p>
           <div className="jobs-results__aside">
-            <Link href={`/remote-${slug}-jobs`}>Remote {label} jobs</Link>
+            <Link className="text-link" href={`/remote-${slug}-jobs`}>
+              Remote {label} jobs
+              <ArrowRightIcon size={15} />
+            </Link>
           </div>
         </div>
         <JobHubList

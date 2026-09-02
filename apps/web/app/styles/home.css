@@ -178,6 +178,11 @@
   align-items: center;
 }
 
+/* Mirror the tracks too, so the theater keeps the same width in both directions. */
+.feature--reverse {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+}
+
 .feature--reverse .feature__copy {
   order: 2;
 }

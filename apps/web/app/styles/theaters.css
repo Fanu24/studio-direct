@@ -1302,3 +1302,20 @@
     transform: scale(0.985);
   }
 }
+
+/* Narrow stages: the search theater stacks its toolbar over the list instead of sitting
+   beside it. Driven by the frame width, since .pv__stage is a size container. */
+@container (max-width: 520px) {
+  .th3 .t-window__body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.9em;
+  }
+
+  .th3__toolbar {
+    gap: 0.6em;
+  }
+
+  .th3__list {
+    gap: 0.45em;
+  }
+}

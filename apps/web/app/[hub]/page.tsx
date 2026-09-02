@@ -75,7 +75,10 @@ export default async function RoleHubPage({ params }: { params: HubParams }) {
             {hidden > 0 ? `, ${hidden} not on LinkedIn` : ""}
           </p>
           <div className="jobs-results__aside">
-            <Link href={`/skills/${role}`}>{label} skill jobs</Link>
+            <Link className="text-link" href={`/skills/${role}`}>
+              {label} skill jobs
+              <ArrowRightIcon size={15} />
+            </Link>
           </div>
         </div>
         <JobHubList

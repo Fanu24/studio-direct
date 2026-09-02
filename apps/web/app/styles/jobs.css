@@ -144,13 +144,18 @@
   color: var(--muted);
 }
 
-.jobs-results__aside a {
+/* .text-link keeps its own bone colour and arrow, so it reads as a link next to the caption. */
+.jobs-results__aside a:not(.text-link) {
   text-decoration: none;
   color: var(--muted);
 }
 
-.jobs-results__aside a:hover {
+.jobs-results__aside a:not(.text-link):hover {
   color: var(--text);
+}
+
+.jobs-results__aside .text-link {
+  font-size: 0.9rem;
 }
 
 .jobs-num {

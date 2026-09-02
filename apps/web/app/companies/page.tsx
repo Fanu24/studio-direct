@@ -66,7 +66,10 @@ export default async function CompaniesPage() {
             {roles === 1 ? "listed role" : "listed roles"}
           </p>
           <div className="jobs-results__aside">
-            <Link href="/jobs">Browse every role</Link>
+            <Link className="text-link" href="/jobs">
+              Browse every role
+              <ArrowRightIcon size={15} />
+            </Link>
           </div>
         </div>
 

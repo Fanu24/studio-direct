@@ -69,7 +69,10 @@ export default function RolesPage() {
             <span className="jobs-num">{HUB_ROLE_SLUGS.length}</span> role hubs
           </p>
           <div className="jobs-results__aside">
-            <Link href="/jobs">Search every role</Link>
+            <Link className="text-link" href="/jobs">
+              Search every role
+              <ArrowRightIcon size={15} />
+            </Link>
           </div>
         </div>
 
