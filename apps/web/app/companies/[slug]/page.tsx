@@ -10,7 +10,7 @@ import {
   type JobsDatabase,
 } from "../../../lib/jobs/queries";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type CompanyParams = Promise<{ slug: string }>;
 

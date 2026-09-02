@@ -6,6 +6,7 @@ import {
   getJobBySlug,
   listHubJobs,
   listJobs,
+  listSitemapEntries,
   type JobsDatabase,
 } from "./queries";
 
@@ -97,6 +98,10 @@ describe("listJobs", () => {
   beforeEach(() => {
     sqlite = new DatabaseSync(":memory:");
     sqlite.exec(`
+      CREATE TABLE tenants (
+        id TEXT PRIMARY KEY,
+        slug TEXT NOT NULL
+      );
       CREATE TABLE companies (
         id TEXT PRIMARY KEY,
         tenant_id TEXT NOT NULL,
@@ -127,6 +132,7 @@ describe("listJobs", () => {
       CREATE VIRTUAL TABLE jobs_fts USING fts5 (
         title, description, company_name
       );
+      INSERT INTO tenants VALUES ('gaming', 'gaming'), ('other', 'other');
       INSERT INTO companies VALUES
         ('studio-a', 'gaming', 'Alpha Studio', 'alpha', 1),
         ('studio-b', 'gaming', 'Beta Forge', 'betaforge', 1),
@@ -373,5 +379,25 @@ describe("listJobs", () => {
     });
     await expect(getCompanyBySlug(db, "gaming", "hidden")).resolves.toBeNull();
     await expect(getCompanyBySlug(db, "gaming", "other")).resolves.toBeNull();
+  });
+
+  it("returns public job and normalized company slugs for the sitemap", async () => {
+    insertJob(sqlite, {
+      id: "public-job",
+      companyId: "studio-a",
+      title: "Remote Engineer",
+      remote: "remote",
+    });
+    insertJob(sqlite, {
+      id: "onsite-job",
+      companyId: "studio-b",
+      title: "Onsite Engineer",
+      remote: "onsite",
+    });
+
+    await expect(listSitemapEntries(db, "gaming")).resolves.toEqual({
+      jobSlugs: ["public-job"],
+      companySlugs: ["alpha", "betaforge"],
+    });
   });
 });

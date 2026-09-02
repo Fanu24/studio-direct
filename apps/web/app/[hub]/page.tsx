@@ -10,7 +10,7 @@ import { notFound } from "next/navigation";
 import { JobHubList } from "../_components/job-hub-list";
 import { listHubJobs, type JobsDatabase } from "../../lib/jobs/queries";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type HubParams = Promise<{ hub: string }>;
 

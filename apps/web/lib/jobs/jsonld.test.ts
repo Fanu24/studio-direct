@@ -4,13 +4,12 @@ import { showBadge } from "./exclusivity";
 import { buildJobPostingJsonLd } from "./jsonld";
 
 describe("buildJobPostingJsonLd", () => {
-  it("uses the public job URL and preferred application URL", () => {
+  it("uses the public job URL without exposing the locked application URL", () => {
     const result = buildJobPostingJsonLd(
       {
         slug: "senior-gameplay-engineer",
         title: "Senior Gameplay Engineer",
         descriptionHtml: "<p>Build combat systems for our unannounced game.</p>",
-        applyUrl: "https://studio.example/careers/123",
         companyName: "Example Studio",
       },
       "https://jobs.example.com",
@@ -26,10 +25,6 @@ describe("buildJobPostingJsonLd", () => {
         "@type": "Organization",
         name: "Example Studio",
       },
-      directApply: {
-        "@type": "ApplyAction",
-        target: "https://studio.example/careers/123",
-      },
     });
   });
 
@@ -42,7 +37,6 @@ describe("buildJobPostingJsonLd", () => {
         slug: "technical-artist",
         title: "Technical Artist",
         descriptionHtml,
-        applyUrl: "https://studio.example/jobs/artist",
         companyName: "Example Studio",
       },
       "https://jobs.example.com/",
@@ -58,7 +52,6 @@ describe("buildJobPostingJsonLd", () => {
         title: "Security Engineer",
         descriptionHtml:
           '<h2>The role</h2><script>alert("xss")</script><p><img src="x" onerror="alert(1)">Keep this text.</p>',
-        applyUrl: "https://studio.example/jobs/security",
         companyName: "Example Studio",
       },
       "https://jobs.example.com",

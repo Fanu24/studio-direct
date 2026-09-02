@@ -13,7 +13,7 @@ import {
 } from "../../../lib/jobs/queries";
 import { sanitizeJobDescriptionHtml } from "../../../lib/jobs/sanitize-description";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 function requestOrigin(requestHeaders: Headers) {
   const forwardedHost = requestHeaders.get("x-forwarded-host")?.split(",")[0]?.trim();

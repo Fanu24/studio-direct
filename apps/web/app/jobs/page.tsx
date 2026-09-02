@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: "Browse listed remote and hybrid jobs from gaming studio career pages.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type SearchValue = string | string[] | undefined;
 type JobsSearchParams = Record<string, SearchValue>;

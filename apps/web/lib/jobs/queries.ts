@@ -68,6 +68,11 @@ export interface CompanyHub {
   slug: string;
 }
 
+export interface SitemapEntries {
+  jobSlugs: string[];
+  companySlugs: string[];
+}
+
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
@@ -145,6 +150,42 @@ export async function getCompanyBySlug(
   return company
     ? { id: company.id, name: company.name, slug: slugTitle(company.nameNorm) }
     : null;
+}
+
+export async function listSitemapEntries(
+  db: JobsDatabase,
+  tenantSlug: string,
+): Promise<SitemapEntries> {
+  const jobs = await db
+    .prepare(
+      `SELECT j.slug
+      FROM jobs j
+      JOIN tenants t ON t.id = j.tenant_id
+      JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
+      WHERE t.slug = ?
+        AND j.listed = 1
+        AND c.listed = 1
+        AND j.remote IN ('remote', 'hybrid')
+      ORDER BY j.slug`,
+    )
+    .bind(tenantSlug)
+    .all<{ slug: string }>();
+
+  const companies = await db
+    .prepare(
+      `SELECT c.name_norm AS nameNorm
+      FROM companies c
+      JOIN tenants t ON t.id = c.tenant_id
+      WHERE t.slug = ? AND c.listed = 1
+      ORDER BY c.name_norm`,
+    )
+    .bind(tenantSlug)
+    .all<{ nameNorm: string }>();
+
+  return {
+    jobSlugs: jobs.results.map(({ slug }) => slug),
+    companySlugs: companies.results.map(({ nameNorm }) => slugTitle(nameNorm)),
+  };
 }
 
 export async function listJobs(

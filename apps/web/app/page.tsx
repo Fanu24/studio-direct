@@ -8,6 +8,7 @@ import {
 import { showBadge } from "../lib/jobs/exclusivity";
 import { listJobs, type JobsDatabase } from "../lib/jobs/queries";
 
+export const revalidate = 300;
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
@@ -67,7 +68,7 @@ export default async function HomePage() {
             ))}
           </ul>
         )}
-        <Link href="/jobs?hidden=1">View all jobs not on LinkedIn</Link>
+        <Link href="/hidden-jobs">View all jobs not on LinkedIn</Link>
       </section>
     </main>
   );
