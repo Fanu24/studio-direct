@@ -23,13 +23,13 @@ describe("parseLeverPostings", () => {
   it("maps Lever postings to career-page drafts", () => {
     const drafts = parseLeverPostings(fixture, "Pixel Works");
 
-    expect(drafts).toHaveLength(2);
+    expect(drafts).toHaveLength(3);
     expect(drafts[0]).toMatchObject({
       source: "career_page",
       sourceUrl: "https://jobs.lever.co/pixelworks/lever-101",
       companyName: "Pixel Works",
       title: "Senior Backend Engineer",
-      location: "Remote - Europe",
+      location: "United States",
       remote: "remote",
       descriptionHtml:
         "<p>Build reliable services for our online games.</p>",
@@ -38,8 +38,15 @@ describe("parseLeverPostings", () => {
     });
   });
 
-  it("maps missing timestamps to null and onsite locations correctly", () => {
-    const [, onsite] = parseLeverPostings(fixture, "Pixel Works");
+  it("maps structured hybrid workplace types", () => {
+    const [, hybrid] = parseLeverPostings(fixture, "Pixel Works");
+
+    expect(hybrid.remote).toBe("hybrid");
+    expect(hybrid.location).toBe("Berlin");
+  });
+
+  it("maps missing timestamps to null and structured onsite types", () => {
+    const [, , onsite] = parseLeverPostings(fixture, "Pixel Works");
 
     expect(onsite.remote).toBe("onsite");
     expect(onsite.location).toBe("Montreal, Quebec, Canada");
@@ -76,7 +83,7 @@ describe("CareerJobSource", () => {
       method: "GET",
       headers: { "User-Agent": PRODUCT_USER_AGENT },
     });
-    expect(drafts).toHaveLength(2);
+    expect(drafts).toHaveLength(3);
   });
 });
 

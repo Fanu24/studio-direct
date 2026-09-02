@@ -11,6 +11,7 @@ interface LeverPosting {
   hostedUrl: string;
   applyUrl: string;
   createdAt?: number;
+  workplaceType?: "unspecified" | "on-site" | "remote" | "hybrid";
   categories?: {
     location?: string;
   };
@@ -21,7 +22,22 @@ export function leverPostingsUrl(atsSlug: string): string {
   return `https://api.lever.co/v0/postings/${encodeURIComponent(atsSlug)}?mode=json`;
 }
 
-function remoteType(location: string | null): JobDraft["remote"] {
+function remoteType(
+  location: string | null,
+  workplaceType: LeverPosting["workplaceType"],
+): JobDraft["remote"] {
+  if (workplaceType === "remote" || workplaceType === "hybrid") {
+    return workplaceType;
+  }
+
+  if (workplaceType === "on-site") {
+    return "onsite";
+  }
+
+  if (workplaceType !== undefined && workplaceType !== "unspecified") {
+    return "unknown";
+  }
+
   if (location === null) {
     return "unknown";
   }
@@ -48,7 +64,7 @@ export function parseLeverPostings(
       companyName,
       title: posting.text,
       location,
-      remote: remoteType(location),
+      remote: remoteType(location, posting.workplaceType),
       descriptionHtml: posting.description ?? "",
       applyUrl: posting.applyUrl,
       postedAt:

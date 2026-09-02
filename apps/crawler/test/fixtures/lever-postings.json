@@ -5,8 +5,9 @@
     "hostedUrl": "https://jobs.lever.co/pixelworks/lever-101",
     "applyUrl": "https://jobs.lever.co/pixelworks/lever-101/apply",
     "createdAt": 1788167700000,
+    "workplaceType": "remote",
     "categories": {
-      "location": "Remote - Europe",
+      "location": "United States",
       "team": "Engineering",
       "commitment": "Full-time"
     },
@@ -17,11 +18,25 @@
     "text": "Environment Artist",
     "hostedUrl": "https://jobs.lever.co/pixelworks/lever-102",
     "applyUrl": "https://jobs.lever.co/pixelworks/lever-102/apply",
+    "workplaceType": "hybrid",
     "categories": {
-      "location": "Montreal, Quebec, Canada",
+      "location": "Berlin",
       "team": "Art",
       "commitment": "Full-time"
     },
-    "description": "<p>Create worlds with our Montreal studio.</p>"
+    "description": "<p>Create worlds with our Berlin studio.</p>"
+  },
+  {
+    "id": "lever-103",
+    "text": "Gameplay Engineer",
+    "hostedUrl": "https://jobs.lever.co/pixelworks/lever-103",
+    "applyUrl": "https://jobs.lever.co/pixelworks/lever-103/apply",
+    "workplaceType": "on-site",
+    "categories": {
+      "location": "Montreal, Quebec, Canada",
+      "team": "Engineering",
+      "commitment": "Full-time"
+    },
+    "description": "<p>Build gameplay systems with our Montreal studio.</p>"
   }
 ]
