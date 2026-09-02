@@ -31,12 +31,19 @@ export type JobSighting = {
   seenAt: string;
 };
 
+export type CareerJobCandidate = {
+  jobId: string;
+  lastSeenAt: string;
+};
+
 export interface JobsRepository {
   findJobByCanonicalKey(
     tenantId: string,
     canonicalKey: string,
   ): Promise<JobRecord | null>;
   hasSighting(jobId: string, source: Source): Promise<boolean>;
+  listListedCareerJobs(companyId: string): Promise<CareerJobCandidate[]>;
+  unlistJobs(jobIds: readonly string[], updatedAt: string): Promise<void>;
   upsertJob(job: JobUpsert): Promise<JobRecord>;
   insertSighting(sighting: JobSighting): Promise<void>;
 }

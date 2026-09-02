@@ -28,6 +28,36 @@ export class MemoryJobsRepository implements JobsRepository {
     );
   }
 
+  async listListedCareerJobs(companyId: string) {
+    return this.jobs
+      .filter((job) => job.companyId === companyId && job.listed === 1)
+      .flatMap((job) => {
+        const lastSeenAt = this.sightings
+          .filter(
+            (sighting) =>
+              sighting.jobId === job.id && sighting.source === "career_page",
+          )
+          .map((sighting) => sighting.seenAt)
+          .sort()
+          .at(-1);
+
+        return lastSeenAt ? [{ jobId: job.id, lastSeenAt }] : [];
+      });
+  }
+
+  async unlistJobs(
+    jobIds: readonly string[],
+    updatedAt: string,
+  ): Promise<void> {
+    const ids = new Set(jobIds);
+    for (const job of this.jobs) {
+      if (ids.has(job.id)) {
+        job.listed = 0;
+        job.updatedAt = updatedAt;
+      }
+    }
+  }
+
   async upsertJob(input: JobUpsert): Promise<JobRecord> {
     const index = this.jobs.findIndex(
       (job) =>
