@@ -303,12 +303,14 @@ export class D1JobsRepository implements CareerConsumerRepository {
     try {
       const stats = JSON.parse(row.stats_json) as {
         parseableDrafts?: unknown;
+        fetched?: unknown;
       };
-      if (
-        typeof stats.parseableDrafts === "number" &&
-        Number.isFinite(stats.parseableDrafts)
-      ) {
-        parseableDrafts = stats.parseableDrafts;
+      const draftCount =
+        stats.parseableDrafts === undefined
+          ? stats.fetched
+          : stats.parseableDrafts;
+      if (typeof draftCount === "number" && Number.isFinite(draftCount)) {
+        parseableDrafts = draftCount;
       }
     } catch {
       parseableDrafts = 0;

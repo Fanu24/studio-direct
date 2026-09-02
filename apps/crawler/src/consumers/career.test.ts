@@ -81,6 +81,26 @@ describe("handleCareerMessage", () => {
 
   it("ingests a Greenhouse fixture and records career success despite failed LinkedIn", async () => {
     const repo = repository();
+    vi.mocked(repo.listCareerRuns).mockResolvedValue([
+      {
+        source: "career_page",
+        startedAt: "2026-09-02T00:00:00.000Z",
+        finishedAt: "2026-09-02T00:01:00.000Z",
+        ok: 1,
+      },
+      {
+        source: "career_page",
+        startedAt: "2026-09-02T06:00:00.000Z",
+        finishedAt: "2026-09-02T06:01:00.000Z",
+        ok: 1,
+      },
+    ]);
+    vi.mocked(repo.listListedCareerJobs).mockResolvedValue([
+      {
+        jobId: "job:stale",
+        lastSeenAt: "2026-09-01T23:59:00.000Z",
+      },
+    ]);
     const { db, bindings } = recordingDb();
     const fetchImpl = vi.fn(async () =>
       new Response(JSON.stringify(greenhouseBoard), { status: 200 }),
@@ -106,6 +126,11 @@ describe("handleCareerMessage", () => {
       "unknown",
       "2026-09-02T12:00:00.000Z",
     );
+    expect(repo.listCareerRuns).toHaveBeenCalledWith(company.id);
+    expect(repo.unlistJobs).toHaveBeenCalledWith(
+      ["job:stale"],
+      "2026-09-02T12:00:00.000Z",
+    );
     expect(bindings).toContainEqual([
       expect.any(String),
       "career_page",
@@ -114,6 +139,30 @@ describe("handleCareerMessage", () => {
       1,
       expect.stringContaining('"companyId":"company:pixelworks"'),
     ]);
+  });
+
+  it("does not record success when close-stale fails", async () => {
+    const repo = repository();
+    vi.mocked(repo.listListedCareerJobs).mockRejectedValue(
+      new Error("close-stale failed"),
+    );
+    const { db, bindings } = recordingDb();
+
+    await expect(
+      handleCareerMessage(
+        { kind: "career", companyId: company.id },
+        { DB: db, LOCKS: memoryKv() },
+        {
+          fetchImpl: async () =>
+            new Response(JSON.stringify(greenhouseBoard), { status: 200 }),
+          repo,
+          now: () => new Date("2026-09-02T12:00:00.000Z"),
+          randomUUID: () => "run:close-stale-failure",
+        },
+      ),
+    ).rejects.toThrow("close-stale failed");
+
+    expect(bindings).toEqual([]);
   });
 
   it("retries without fetching when the ATS host lock is held", async () => {

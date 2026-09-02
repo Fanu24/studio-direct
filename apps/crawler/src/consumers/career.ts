@@ -131,6 +131,23 @@ export async function handleCareerMessage(
     }
 
     const finishedAt = now().toISOString();
+    const crawlRuns = await repo.listCareerRuns(company.id);
+    await closeStaleCareerJobs({
+      repo,
+      companyId: company.id,
+      seenJobIds: ingest.jobIds,
+      crawlRuns: [
+        ...crawlRuns,
+        {
+          source: "career_page",
+          startedAt,
+          finishedAt,
+          ok: 1,
+        },
+      ],
+      now: startedAtDate,
+    });
+
     await writeSuccessfulRun(env.DB, {
       id: runId,
       startedAt,
@@ -141,15 +158,6 @@ export async function handleCareerMessage(
         upserted: ingest.upserted,
         droppedStaffing: ingest.droppedStaffing,
       },
-    });
-
-    const crawlRuns = await repo.listCareerRuns(company.id);
-    await closeStaleCareerJobs({
-      repo,
-      companyId: company.id,
-      seenJobIds: ingest.jobIds,
-      crawlRuns,
-      now: startedAtDate,
     });
 
     return { action: "ack" };

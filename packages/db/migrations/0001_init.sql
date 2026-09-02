@@ -79,13 +79,11 @@ CREATE TRIGGER jobs_fts_ai AFTER INSERT ON jobs BEGIN
 END;
 
 CREATE TRIGGER jobs_fts_ad AFTER DELETE ON jobs BEGIN
-  INSERT INTO jobs_fts (jobs_fts, rowid, title, description, company_name)
-  VALUES ('delete', OLD.rowid, OLD.title, OLD.description_html, '');
+  DELETE FROM jobs_fts WHERE rowid = OLD.rowid;
 END;
 
 CREATE TRIGGER jobs_fts_au AFTER UPDATE ON jobs BEGIN
-  INSERT INTO jobs_fts (jobs_fts, rowid, title, description, company_name)
-  VALUES ('delete', OLD.rowid, OLD.title, OLD.description_html, '');
+  DELETE FROM jobs_fts WHERE rowid = OLD.rowid;
   INSERT INTO jobs_fts (rowid, title, description, company_name)
   VALUES (
     NEW.rowid,
