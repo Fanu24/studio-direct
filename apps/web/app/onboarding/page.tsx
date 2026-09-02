@@ -3,13 +3,13 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createAuth, type AuthEnv } from "../../lib/auth/index";
+import { submitOnboarding } from "./actions";
 import {
   loadOnboardingProfile,
   needsOnboarding,
   type ProfileQueryDatabase,
   type ProfileWriteDatabase,
   safeNextPath,
-  saveOnboardingProfile,
 } from "../../lib/profile/gate";
 
 export const dynamic = "force-dynamic";
@@ -28,30 +28,6 @@ async function sessionUserId(env: OnboardingEnv): Promise<string | null> {
     headers: await headers(),
   });
   return session?.user?.id ?? null;
-}
-
-export async function submitOnboarding(formData: FormData) {
-  "use server";
-  const env = await onboardingEnv();
-  const userId = await sessionUserId(env);
-  const next = safeNextPath(String(formData.get("next") ?? "")) ?? "/";
-
-  if (!userId) {
-    redirect("/login");
-  }
-
-  const profile = {
-    display_name: String(formData.get("display_name") ?? "").trim(),
-    target_role: String(formData.get("target_role") ?? "").trim(),
-    remote_pref: String(formData.get("remote_pref") ?? "").trim(),
-  };
-
-  if (needsOnboarding(profile)) {
-    redirect(`/onboarding?next=${encodeURIComponent(next)}`);
-  }
-
-  await saveOnboardingProfile(env.DB, userId, profile);
-  redirect(next);
 }
 
 export default async function OnboardingPage({

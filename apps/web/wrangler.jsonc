@@ -2,8 +2,18 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "gaming-web",
   "account_id": "ff222c50c538a09ccd8d08f7d47e82e8",
+  "main": ".open-next/worker.js",
   "compatibility_date": "2026-09-02",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
   "d1_databases": [
     {
       "binding": "DB",
@@ -25,7 +35,8 @@
   "vars": {
     "TURNSTILE_SITE_KEY": "",
     "EMAIL_FROM": "noreply@studio-direct.example",
-    "STRIPE_ENABLED": "false"
+    "STRIPE_ENABLED": "false",
+    "SITE_URL": "https://gaming-web.xavier-ff2.workers.dev"
   },
   "secrets": {
     "required": [

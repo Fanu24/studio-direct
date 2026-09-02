@@ -5,13 +5,15 @@ import { redirect } from "next/navigation";
 
 import { createAuth, type AuthEnv } from "../../lib/auth/index";
 import {
-  addExperienceEntry,
+  submitExperience,
+  submitSkills,
+  submitWorkPreferences,
+} from "./actions";
+import {
   listExperienceEntries,
   listProfileSkills,
   loadProfileCompleteness,
   loadProfileDetails,
-  saveProfileSkills,
-  saveWorkPreferences,
   type CompletenessDatabase,
 } from "../../lib/profile/completeness";
 
@@ -31,49 +33,6 @@ async function sessionUserId(env: ProfileEnv): Promise<string | null> {
     headers: await headers(),
   });
   return session?.user?.id ?? null;
-}
-
-export async function submitWorkPreferences(formData: FormData) {
-  "use server";
-  const env = await profileEnv();
-  const userId = await sessionUserId(env);
-  if (!userId) redirect("/login");
-
-  await saveWorkPreferences(env.DB, userId, {
-    location: String(formData.get("location") ?? ""),
-    remotePref: String(formData.get("remote_pref") ?? ""),
-  });
-  redirect("/profile");
-}
-
-export async function submitExperience(formData: FormData) {
-  "use server";
-  const env = await profileEnv();
-  const userId = await sessionUserId(env);
-  if (!userId) redirect("/login");
-
-  await addExperienceEntry(env.DB, userId, {
-    company: String(formData.get("company") ?? ""),
-    title: String(formData.get("title") ?? ""),
-    startDate: String(formData.get("start_date") ?? ""),
-    endDate: String(formData.get("end_date") ?? ""),
-    description: String(formData.get("description") ?? ""),
-  });
-  redirect("/profile");
-}
-
-export async function submitSkills(formData: FormData) {
-  "use server";
-  const env = await profileEnv();
-  const userId = await sessionUserId(env);
-  if (!userId) redirect("/login");
-
-  await saveProfileSkills(
-    env.DB,
-    userId,
-    formData.getAll("skill").map((value) => String(value)),
-  );
-  redirect("/profile");
 }
 
 export default async function ProfilePage() {

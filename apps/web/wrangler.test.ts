@@ -7,13 +7,21 @@ describe("web wrangler", () => {
 
   it("defines only the web binding contract", () => {
     const bindings = [
+      config.assets.binding,
       ...config.d1_databases,
       ...config.r2_buckets,
       ...config.send_email,
-    ].map(({ binding, name }: { binding?: string; name?: string }) => binding ?? name);
+    ].map((entry) =>
+      typeof entry === "string"
+        ? entry
+        : ((entry as { binding?: string; name?: string }).binding ??
+          (entry as { name?: string }).name),
+    );
 
-    expect(bindings).toEqual(["DB", "FILES", "EMAIL"]);
+    expect(bindings).toEqual(["ASSETS", "DB", "FILES", "EMAIL"]);
     expect(config.queues).toBeUndefined();
+    expect(config.main).toBe(".open-next/worker.js");
+    expect(config.workers_dev).toBe(true);
   });
 
   it("excludes crawler and browser bindings", () => {
@@ -47,6 +55,10 @@ describe("web wrangler", () => {
 
   it("keeps Checkout behind STRIPE_ENABLED=false", () => {
     expect(config.vars.STRIPE_ENABLED).toBe("false");
+  });
+
+  it("points SITE_URL at the workers.dev demo origin", () => {
+    expect(config.vars.SITE_URL).toBe("https://gaming-web.xavier-ff2.workers.dev");
   });
 
   it("does not ship Cloudflare always-pass Turnstile site key", () => {
