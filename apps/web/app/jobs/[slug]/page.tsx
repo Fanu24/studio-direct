@@ -104,6 +104,7 @@ export default async function JobPage({
 
       <form action="/api/unlock" method="post">
         <input name="jobId" type="hidden" value={job.id} />
+        <input name="next" type="hidden" value={`/jobs/${job.slug}`} />
         <button type="submit">Unlock application link</button>
       </form>
     </main>
