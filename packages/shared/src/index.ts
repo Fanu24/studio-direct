@@ -8,5 +8,7 @@ export {
   normalizeCompanyName,
   slugTitle,
 } from "./normalize.ts";
+export { acquireHostLock } from "./host-lock.ts";
+export type { HostLockKv } from "./host-lock.ts";
 
 
