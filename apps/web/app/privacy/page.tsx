@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main>
+    <main className="stack">
       <h1>{PRIVACY_COPY.title}</h1>
       <p>{PRIVACY_COPY.legalEntity}</p>
       <p>{PRIVACY_COPY.jobProductPurpose}</p>

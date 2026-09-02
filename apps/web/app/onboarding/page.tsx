@@ -50,7 +50,7 @@ export default async function OnboardingPage({
   }
 
   return (
-    <main>
+    <main className="stack">
       <h1>Finish your profile</h1>
       <p>
         Add your display name, target role, and remote preference before you

@@ -1,0 +1,514 @@
+:root {
+  --bg: #14161c;
+  --bg-elev: #1c1f28;
+  --bg-hover: #242833;
+  --line: #2c3140;
+  --text: #eceae4;
+  --muted: #9b978c;
+  --accent: #c4a35a;
+  --accent-ink: #16140f;
+  --danger: #d46a6a;
+  --ok: #7d9a72;
+  --radius: 12px;
+  --nav-h: 64px;
+  --font: var(--font-sans), "Segoe UI", sans-serif;
+  --mono: var(--font-mono), ui-monospace, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgb(196 163 90 / 0.09), transparent 55%),
+    radial-gradient(900px 500px at -10% 110%, rgb(90 110 140 / 0.12), transparent 50%),
+    var(--bg);
+  color: var(--text);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.skip {
+  position: absolute;
+  left: -999px;
+}
+
+.skip:focus {
+  left: 12px;
+  top: 12px;
+  z-index: 80;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 24px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  background: rgb(20 22 28 / 0.86);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+
+.wordmark {
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  font-size: 1.05rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.wordmark:hover {
+  color: var(--text);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.nav-links a,
+.nav-links .ghost {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.92rem;
+  padding: 8px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.nav-links a:hover,
+.nav-links .ghost:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.nav-links .cta {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+.nav-links .cta:hover {
+  color: var(--accent-ink);
+  filter: brightness(1.06);
+}
+
+.site-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  padding: 28px 24px 40px;
+  max-width: 1400px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.site-footer nav {
+  display: flex;
+  gap: 16px;
+}
+
+.site-footer a {
+  text-decoration: none;
+}
+
+main {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 24px 72px;
+  flex: 1;
+}
+
+main > header {
+  margin-bottom: 28px;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+  font-weight: 650;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  margin: 0 0 12px;
+}
+
+h2 {
+  font-size: 1.25rem;
+  margin: 0 0 12px;
+}
+
+h3 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+p {
+  color: var(--muted);
+  max-width: 65ch;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 40px;
+  align-items: end;
+  margin-bottom: 48px;
+  padding-bottom: 8px;
+}
+
+.hero form {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.kicker {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 10px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 12px;
+  width: 100%;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid rgb(196 163 90 / 0.45);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+button,
+.button {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 16px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+button:hover,
+.button:hover {
+  filter: brightness(1.05);
+  color: var(--accent-ink);
+}
+
+button:active,
+.button:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+button.secondary,
+.button.secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 22px;
+}
+
+.filters label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  grid-column: 1 / -2;
+}
+
+.filters label:has(input[type="checkbox"]) input {
+  width: auto;
+}
+
+.filters button {
+  grid-column: -2 / -1;
+  align-self: end;
+}
+
+.job-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.job-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px 18px 16px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.job-card:hover {
+  border-color: rgb(196 163 90 / 0.35);
+  background: var(--bg-hover);
+}
+
+.job-card h2 a,
+.job-card h3 a {
+  text-decoration: none;
+}
+
+.job-card h2 a:hover,
+.job-card h3 a:hover {
+  color: var(--accent);
+}
+
+.job-meta {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.job-meta a {
+  text-decoration: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin: 0;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgb(196 163 90 / 0.35);
+  color: var(--accent);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+.count {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.pager {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.job-hero {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 28px;
+}
+
+.job-body {
+  color: var(--text);
+  max-width: 70ch;
+}
+
+.job-body p,
+.job-body li {
+  color: var(--muted);
+}
+
+.job-body a {
+  color: var(--accent);
+}
+
+.related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 28px 0;
+  font-size: 0.9rem;
+}
+
+.related a {
+  color: var(--muted);
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.price-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+}
+
+.price-card h2 {
+  font-size: 1.8rem;
+  letter-spacing: -0.05em;
+  color: var(--text);
+}
+
+.stack {
+  display: grid;
+  gap: 14px;
+}
+
+.alert {
+  color: var(--danger);
+}
+
+.legal main p,
+.stack p {
+  max-width: 70ch;
+}
+
+@media (max-width: 900px) {
+  .hero,
+  .pricing-grid,
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .filters label:has(input[type="checkbox"]),
+  .filters button {
+    grid-column: auto;
+  }
+
+  .nav-links a:not(.cta) {
+    display: none;
+  }
+
+  .site-nav {
+    padding: 0 16px;
+  }
+
+  main {
+    padding: 24px 16px 56px;
+  }
+
+  .site-footer {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .button,
+  .job-card {
+    transition: none;
+  }
+}

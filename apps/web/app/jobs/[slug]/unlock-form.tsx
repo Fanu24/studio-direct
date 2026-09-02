@@ -88,8 +88,16 @@ export function UnlockApplyForm({
 
   return (
     <>
-      {quota ? <p role="alert">{QUOTA_MESSAGE}</p> : null}
-      {error ? <p role="alert">{error}</p> : null}
+      {quota ? (
+        <p className="alert" role="alert">
+          {QUOTA_MESSAGE}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="alert" role="alert">
+          {error}
+        </p>
+      ) : null}
       {nudge ? (
         <p role="status">
           {COMPLETENESS_NUDGE_MESSAGE}

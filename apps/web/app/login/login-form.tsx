@@ -93,6 +93,7 @@ export function LoginForm({
 export function GoogleSignInButton({ children }: { children: ReactNode }) {
   return (
     <button
+      className="secondary"
       type="button"
       onClick={() => {
         void authClient.signIn.social({

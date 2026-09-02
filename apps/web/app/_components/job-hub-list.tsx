@@ -14,22 +14,23 @@ export function JobHubList({
   if (jobs.length === 0) return <p>{emptyMessage}</p>;
 
   return (
-    <ul>
+    <ul className="job-list">
       {jobs.map((job) => (
         <li key={job.id}>
-          <article>
+          <article className="job-card">
             <h2>
               <Link href={`/jobs/${job.slug}`}>{job.title}</Link>
             </h2>
-            <p>
+            <p className="job-meta">
               <Link href={`/companies/${job.companySlug}`}>{job.companyName}</Link>
-              {" · "}
-              {job.remote}
-              {job.location ? ` · ${job.location}` : ""}
+              {job.location ? ` / ${job.location}` : ""}
             </p>
+            <p className="job-meta">{job.remote}</p>
             {job.salaryText ? <p>{job.salaryText}</p> : null}
             {showBadge(job.exclusivity) ? (
-              <p title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>Not on LinkedIn</p>
+              <p className="badge" title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>
+                Not on LinkedIn
+              </p>
             ) : null}
           </article>
         </li>

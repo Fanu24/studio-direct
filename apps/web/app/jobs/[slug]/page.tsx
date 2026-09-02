@@ -69,34 +69,40 @@ export default async function JobPage({
         type="application/ld+json"
       />
 
-      <header>
+      <header className="job-hero">
         <Link href="/jobs">All jobs</Link>
         <h1>{job.title}</h1>
-        <p>
+        <p className="job-meta">
           <Link href={`/companies/${job.companySlug}`}>{job.companyName}</Link>
-          {" · "}
+        </p>
+        <p className="job-meta">
           {job.remote}
-          {job.location ? ` · ${job.location}` : ""}
+          {job.location ? `, ${job.location}` : ""}
         </p>
         {job.salaryText ? <p>{job.salaryText}</p> : null}
         {showBadge(job.exclusivity) ? (
-          <p title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>Not on LinkedIn</p>
+          <p className="badge" title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>
+            Not on LinkedIn
+          </p>
         ) : null}
       </header>
 
       <section aria-labelledby="job-description">
         <h2 id="job-description">Job description</h2>
-        <div dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+        <div
+          className="job-body"
+          dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+        />
       </section>
 
       {matchingHubs.length > 0 ? (
-        <nav aria-label="Related job hubs">
+        <nav aria-label="Related job hubs" className="related">
           {matchingHubs.map((role) => (
             <span key={role}>
               <Link href={`/remote-${role}-jobs`}>
                 Remote {hubSlugLabel(role)} jobs
               </Link>
-              {" · "}
+              {" / "}
               <Link href={`/skills/${role}`}>{hubSlugLabel(role)} skill jobs</Link>
             </span>
           ))}

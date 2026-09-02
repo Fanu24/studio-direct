@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <main>
+    <main className="stack">
       <h1>{TERMS_COPY.title}</h1>
       <p>{TERMS_COPY.legalEntity}</p>
       <p>{TERMS_COPY.thirdParties}</p>

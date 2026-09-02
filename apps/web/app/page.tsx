@@ -30,10 +30,12 @@ export default async function HomePage() {
 
   return (
     <main>
-      <header>
-        <h1>Studio Direct</h1>
-        <p>{HOMEPAGE_CLAIM}</p>
-
+      <div className="hero">
+        <header>
+          <p className="kicker">Gaming studios, first-party listings</p>
+          <h1>Studio Direct</h1>
+          <p>{HOMEPAGE_CLAIM}</p>
+        </header>
         <form action="/jobs" method="get">
           <label>
             Search jobs
@@ -41,34 +43,41 @@ export default async function HomePage() {
           </label>
           <button type="submit">Search</button>
         </form>
-      </header>
+      </div>
 
       <section aria-labelledby="latest-hidden-jobs">
         <h2 id="latest-hidden-jobs">Latest jobs not on LinkedIn</h2>
         {jobs.length === 0 ? (
           <p>No confirmed hidden jobs are available right now.</p>
         ) : (
-          <ul>
+          <ul className="job-list">
             {jobs.map((job) => (
               <li key={job.id}>
-                <article>
+                <article className="job-card">
                   <h3>
                     <Link href={`/jobs/${job.slug}`}>{job.title}</Link>
                   </h3>
-                  <p>
-                    {job.companyName} · {job.remote}
-                    {job.location ? ` · ${job.location}` : ""}
+                  <p className="job-meta">
+                    {job.companyName}
+                    {job.location ? ` / ${job.location}` : ""}
                   </p>
+                  <p className="job-meta">{job.remote}</p>
                   {job.salaryText ? <p>{job.salaryText}</p> : null}
                   {showBadge(job.exclusivity) ? (
-                    <p title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>Not on LinkedIn</p>
+                    <p className="badge" title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>
+                      Not on LinkedIn
+                    </p>
                   ) : null}
                 </article>
               </li>
             ))}
           </ul>
         )}
-        <Link href="/hidden-jobs">View all jobs not on LinkedIn</Link>
+        <p>
+          <Link className="button secondary" href="/hidden-jobs">
+            View all jobs not on LinkedIn
+          </Link>
+        </p>
       </section>
     </main>
   );

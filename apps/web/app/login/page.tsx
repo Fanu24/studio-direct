@@ -11,7 +11,7 @@ export default async function LoginPage({
   const siteKey = process.env.TURNSTILE_SITE_KEY ?? "";
 
   return (
-    <main>
+    <main className="stack">
       <h1>Sign in to Studio Direct</h1>
       <p>Send a magic link to your email, or continue with Google.</p>
       <p>
@@ -22,7 +22,11 @@ export default async function LoginPage({
           Check your email for a sign-in link. You can send another magic link below.
         </p>
       ) : null}
-      {error ? <p role="alert">{error}</p> : null}
+      {error ? (
+        <p className="alert" role="alert">
+          {error}
+        </p>
+      ) : null}
       <LoginForm siteKey={siteKey}>
         <label>
           Email

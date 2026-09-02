@@ -73,12 +73,11 @@ export default async function JobsPage({
   return (
     <main>
       <header>
-        <Link href="/">Studio Direct</Link>
         <h1>Remote and hybrid gaming jobs</h1>
         <p>Public, listed roles collected from studio career pages.</p>
       </header>
 
-      <form action="/jobs" method="get">
+      <form action="/jobs" className="filters" method="get">
         <label>
           Search
           <input defaultValue={filters.q} name="q" placeholder="Gameplay engineer" />
@@ -112,27 +111,30 @@ export default async function JobsPage({
         <button type="submit">Filter jobs</button>
       </form>
 
-      <p aria-live="polite">
+      <p aria-live="polite" className="count">
         {result.total} {result.total === 1 ? "job" : "jobs"}
       </p>
 
       {result.jobs.length === 0 ? (
         <p>No jobs match these filters.</p>
       ) : (
-        <ul>
+        <ul className="job-list">
           {result.jobs.map((job) => (
             <li key={job.id}>
-              <article>
+              <article className="job-card">
                 <h2>
                   <Link href={`/jobs/${job.slug}`}>{job.title}</Link>
                 </h2>
-                <p>
-                  {job.companyName} · {job.remote}
-                  {job.location ? ` · ${job.location}` : ""}
+                <p className="job-meta">
+                  {job.companyName}
+                  {job.location ? ` / ${job.location}` : ""}
                 </p>
+                <p className="job-meta">{job.remote}</p>
                 {job.salaryText ? <p>{job.salaryText}</p> : null}
                 {job.exclusivity === "hidden_from_linkedin" ? (
-                  <p title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>Not posted on LinkedIn</p>
+                  <p className="badge" title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>
+                    Not posted on LinkedIn
+                  </p>
                 ) : null}
               </article>
             </li>
@@ -141,7 +143,7 @@ export default async function JobsPage({
       )}
 
       {result.totalPages > 1 ? (
-        <nav aria-label="Jobs pagination">
+        <nav aria-label="Jobs pagination" className="pager">
           {result.page > 1 ? <Link href={pageHref(params, result.page - 1)}>Previous</Link> : null}
           <span>
             Page {result.page} of {result.totalPages}

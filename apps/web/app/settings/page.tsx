@@ -37,7 +37,7 @@ export default async function SettingsPage() {
   const optedIn = await loadTalentPoolOptIn(env.DB, userId);
 
   return (
-    <main>
+    <main className="stack">
       <h1>Settings</h1>
       <p>
         Applying for jobs does not require this. You can change this anytime.

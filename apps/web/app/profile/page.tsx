@@ -52,7 +52,7 @@ export default async function ProfilePage() {
   const selected = new Set(selectedSkills);
 
   return (
-    <main>
+    <main className="stack">
       <h1>Your profile</h1>
       <p>Profile completeness: {completeness}%</p>
       <p>

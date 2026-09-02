@@ -21,24 +21,26 @@ export default async function PricingPage() {
     <main>
       <h1>{PRICING_COPY.title}</h1>
       <p>{billingLive ? PRICING_COPY.billingLive : PRICING_COPY.billingNotLive}</p>
-      <section>
-        <h2>{PRICING_COPY.monthly}</h2>
-        {billingLive ? (
-          <form action="/api/stripe/checkout" method="post">
-            <input name="plan" type="hidden" value="monthly" />
-            <button type="submit">Continue to checkout</button>
-          </form>
-        ) : null}
-      </section>
-      <section>
-        <h2>{PRICING_COPY.yearly}</h2>
-        {billingLive ? (
-          <form action="/api/stripe/checkout" method="post">
-            <input name="plan" type="hidden" value="yearly" />
-            <button type="submit">Continue to checkout</button>
-          </form>
-        ) : null}
-      </section>
+      <div className="pricing-grid">
+        <section className="price-card">
+          <h2>{PRICING_COPY.monthly}</h2>
+          {billingLive ? (
+            <form action="/api/stripe/checkout" method="post">
+              <input name="plan" type="hidden" value="monthly" />
+              <button type="submit">Continue to checkout</button>
+            </form>
+          ) : null}
+        </section>
+        <section className="price-card">
+          <h2>{PRICING_COPY.yearly}</h2>
+          {billingLive ? (
+            <form action="/api/stripe/checkout" method="post">
+              <input name="plan" type="hidden" value="yearly" />
+              <button type="submit">Continue to checkout</button>
+            </form>
+          ) : null}
+        </section>
+      </div>
     </main>
   );
 }
