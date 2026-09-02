@@ -4,6 +4,7 @@ export interface JobPostingJsonLdInput {
   slug: string;
   title: string;
   descriptionHtml: string;
+  applyUrl: string;
   companyName: string;
 }
 
@@ -17,6 +18,10 @@ export function buildJobPostingJsonLd(job: JobPostingJsonLdInput, origin: string
     hiringOrganization: {
       "@type": "Organization",
       name: job.companyName,
+    },
+    directApply: {
+      "@type": "ApplyAction",
+      target: job.applyUrl,
     },
   };
 }

@@ -381,7 +381,10 @@ describe("listJobs", () => {
     await expect(getCompanyBySlug(db, "gaming", "other")).resolves.toBeNull();
   });
 
-  it("returns public job and normalized company slugs for the sitemap", async () => {
+  it("returns every listed job slug at listed companies for the sitemap", async () => {
+    sqlite.exec(
+      "INSERT INTO companies VALUES ('studio-hidden', 'gaming', 'Hidden Studio', 'hiddenstudio', 0)",
+    );
     insertJob(sqlite, {
       id: "public-job",
       companyId: "studio-a",
@@ -394,9 +397,28 @@ describe("listJobs", () => {
       title: "Onsite Engineer",
       remote: "onsite",
     });
+    insertJob(sqlite, {
+      id: "hybrid-job",
+      companyId: "studio-a",
+      title: "Hybrid Engineer",
+      remote: "hybrid",
+    });
+    insertJob(sqlite, {
+      id: "unlisted-job",
+      companyId: "studio-a",
+      title: "Closed Engineer",
+      remote: "remote",
+      listed: 0,
+    });
+    insertJob(sqlite, {
+      id: "unlisted-company-job",
+      companyId: "studio-hidden",
+      title: "Hidden Company Engineer",
+      remote: "remote",
+    });
 
     await expect(listSitemapEntries(db, "gaming")).resolves.toEqual({
-      jobSlugs: ["public-job"],
+      jobSlugs: ["hybrid-job", "onsite-job", "public-job"],
       companySlugs: ["alpha", "betaforge"],
     });
   });

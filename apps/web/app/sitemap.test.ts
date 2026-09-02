@@ -15,7 +15,10 @@ vi.mock("../lib/jobs/queries", () => ({
 
 describe("sitemap", () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
+    vi.stubEnv("SITE_URL", "https://jobs.example.com");
     mocks.getCloudflareContext.mockResolvedValue({ env: { DB: {} } });
     mocks.listSitemapEntries.mockResolvedValue({
       companySlugs: ["alpha-studio"],
@@ -40,5 +43,44 @@ describe("sitemap", () => {
     expect(paths).not.toContain("/profile");
     expect(paths).not.toContain("/login");
     expect(paths.some((path) => path === "/talent" || path.startsWith("/talent/"))).toBe(false);
+  });
+
+  it("uses the injected SITE_URL origin for every sitemap URL", async () => {
+    const { default: sitemap } = await import("./sitemap");
+    const entries = await sitemap();
+
+    expect(entries.map(({ url }) => url)).toEqual(
+      expect.arrayContaining([
+        "https://jobs.example.com/",
+        "https://jobs.example.com/jobs",
+        "https://jobs.example.com/hidden-jobs",
+        "https://jobs.example.com/jobs/gameplay-engineer",
+        "https://jobs.example.com/companies/alpha-studio",
+      ]),
+    );
+    expect(entries.every(({ url }) => url.startsWith("https://jobs.example.com"))).toBe(true);
+    expect(entries.some(({ url }) => url.includes("studio-direct.example"))).toBe(false);
+  });
+
+  it("fails clearly when SITE_URL is missing", async () => {
+    vi.unstubAllEnvs();
+    delete process.env.SITE_URL;
+    const { default: sitemap } = await import("./sitemap");
+
+    await expect(sitemap()).rejects.toThrow(/SITE_URL/);
+  });
+
+  it("fails clearly when SITE_URL is empty", async () => {
+    vi.stubEnv("SITE_URL", "   ");
+    const { default: sitemap } = await import("./sitemap");
+
+    await expect(sitemap()).rejects.toThrow(/SITE_URL/);
+  });
+
+  it("rejects the reserved example origin", async () => {
+    vi.stubEnv("SITE_URL", "https://studio-direct.example");
+    const { default: sitemap } = await import("./sitemap");
+
+    await expect(sitemap()).rejects.toThrow(/SITE_URL/);
   });
 });
