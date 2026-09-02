@@ -21,5 +21,17 @@
     {
       "name": "EMAIL"
     }
-  ]
+  ],
+  "vars": {
+    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    "EMAIL_FROM": "noreply@studio-direct.example"
+  },
+  "secrets": {
+    "required": [
+      "BETTER_AUTH_SECRET",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "TURNSTILE_SECRET_KEY"
+    ]
+  }
 }

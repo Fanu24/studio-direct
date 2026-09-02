@@ -26,4 +26,16 @@ describe("web wrangler", () => {
     expect(config.compatibility_flags).toContain("nodejs_compat");
     expect(existsSync(new URL("./wrangler.toml", import.meta.url))).toBe(false);
   });
+
+  it("names Better Auth, Google, and Turnstile secrets without values", () => {
+    expect(config.secrets.required).toEqual([
+      "BETTER_AUTH_SECRET",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "TURNSTILE_SECRET_KEY",
+    ]);
+    expect(raw).not.toMatch(/BETTER_AUTH_SECRET"\s*:/);
+    expect(raw).not.toMatch(/GOOGLE_CLIENT_SECRET"\s*:/);
+    expect(raw).not.toMatch(/TURNSTILE_SECRET_KEY"\s*:/);
+  });
 });
