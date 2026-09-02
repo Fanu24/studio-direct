@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Riot Games",
+    "domain": "riotgames.com",
+    "career_url": "https://boards-api.greenhouse.io/v1/boards/riotgames/jobs",
+    "ats_type": "greenhouse",
+    "ats_slug": "riotgames",
+    "listed": 1
+  },
+  {
+    "name": "Dream Games",
+    "domain": "dreamgames.com",
+    "career_url": "https://boards-api.greenhouse.io/v1/boards/dreamgames/jobs",
+    "ats_type": "greenhouse",
+    "ats_slug": "dreamgames",
+    "listed": 1
+  },
+  {
+    "name": "Scopely",
+    "domain": "scopely.com",
+    "career_url": "https://boards-api.greenhouse.io/v1/boards/scopely/jobs",
+    "ats_type": "greenhouse",
+    "ats_slug": "scopely",
+    "listed": 1
+  },
+  {
+    "name": "Epic Games",
+    "domain": "epicgames.com",
+    "career_url": "https://boards-api.greenhouse.io/v1/boards/epicgames/jobs",
+    "ats_type": "greenhouse",
+    "ats_slug": "epicgames",
+    "listed": 1
+  },
+  {
+    "name": "Roblox",
+    "domain": "roblox.com",
+    "career_url": "https://boards-api.greenhouse.io/v1/boards/roblox/jobs",
+    "ats_type": "greenhouse",
+    "ats_slug": "roblox",
+    "listed": 1
+  }
+]
