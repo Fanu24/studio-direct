@@ -23,6 +23,7 @@ describe("cacheControlForRequest", () => {
     expect(isPublicRevalidatedPath("/hidden-jobs")).toBe(true);
     expect(isPublicRevalidatedPath("/jobs/gameplay-engineer")).toBe(true);
     expect(isPublicRevalidatedPath("/profile")).toBe(false);
+    expect(isPublicRevalidatedPath("/settings")).toBe(false);
     expect(isPublicRevalidatedPath("/login")).toBe(false);
     expect(isPublicRevalidatedPath("/onboarding")).toBe(false);
     expect(isPublicRevalidatedPath("/talent/candidate")).toBe(false);

@@ -41,6 +41,7 @@ describe("sitemap", () => {
       "/companies/alpha-studio",
     ]));
     expect(paths).not.toContain("/profile");
+    expect(paths).not.toContain("/settings");
     expect(paths).not.toContain("/login");
     expect(paths).not.toContain("/onboarding");
     expect(paths.some((path) => path === "/talent" || path.startsWith("/talent/"))).toBe(false);
