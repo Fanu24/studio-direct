@@ -35,6 +35,7 @@ describe("crawler wrangler", () => {
   });
 
   it("uses node compatibility without forbidden configuration", () => {
+    expect(config.account_id).toBe("ff222c50c538a09ccd8d08f7d47e82e8");
     expect(config.compatibility_flags).toContain("nodejs_compat");
     expect(raw).not.toContain("BROWSER");
     expect(existsSync(new URL("./wrangler.toml", import.meta.url))).toBe(false);

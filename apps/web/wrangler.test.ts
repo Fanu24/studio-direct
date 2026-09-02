@@ -22,6 +22,7 @@ describe("web wrangler", () => {
   });
 
   it("uses node compatibility without wrangler.toml", () => {
+    expect(config.account_id).toBe("ff222c50c538a09ccd8d08f7d47e82e8");
     expect(config.compatibility_flags).toContain("nodejs_compat");
     expect(existsSync(new URL("./wrangler.toml", import.meta.url))).toBe(false);
   });

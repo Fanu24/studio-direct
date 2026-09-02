@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "gaming-crawler",
+  "account_id": "ff222c50c538a09ccd8d08f7d47e82e8",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-02",
   "compatibility_flags": ["nodejs_compat"],
@@ -11,13 +12,13 @@
     {
       "binding": "DB",
       "database_name": "gaming-jobs",
-      "database_id": "c512cf6e-570d-4743-b0c6-91cc874e4bf5"
+      "database_id": "83a17a11-c365-4d1b-a52e-86fb44817f3c"
     }
   ],
   "kv_namespaces": [
     {
       "binding": "LOCKS",
-      "id": "76e73b2289cd44a9ac25919dcfdae0e1"
+      "id": "19e0b11e2bc8449a97b121bb740e7d2c"
     }
   ],
   "r2_buckets": [
