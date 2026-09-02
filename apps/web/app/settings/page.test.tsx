@@ -118,6 +118,37 @@ describe("SettingsPage", () => {
     );
   });
 
+  it("offers English export download and account delete without public talent URLs", async () => {
+    const { default: SettingsPage } = await import("./page");
+    const page = await SettingsPage();
+    const copy = text(page);
+    const hrefs = elements(page)
+      .filter((element) => typeof element.props.href === "string")
+      .map((element) => element.props.href as string);
+    const exportLink = elements(page).find(
+      (element) =>
+        element.type === "a" && element.props.href === "/api/account/export",
+    );
+    const deleteForm = elements(page).find(
+      (element) =>
+        element.type === "form" && element.props.action === "/api/account/delete",
+    );
+    const deleteButton = deleteForm
+      ? elements(deleteForm).find(
+          (element) => element.type === "button" && element.props.type === "submit",
+        )
+      : undefined;
+
+    expect(copy).toMatch(/download my data/i);
+    expect(copy).toMatch(/delete my account/i);
+    expect(exportLink).toBeTruthy();
+    expect(deleteForm?.props.method).toMatch(/post/i);
+    expect(text(deleteButton)).toMatch(/delete my account/i);
+    expect(hrefs.some((href) => href === "/talent" || href.startsWith("/talent/"))).toBe(
+      false,
+    );
+  });
+
   it("checks the talent-pool box only when the stored value is 1", async () => {
     mocks.first.mockResolvedValue({ talent_pool_opt_in: 1 });
     const { default: SettingsPage } = await import("./page");

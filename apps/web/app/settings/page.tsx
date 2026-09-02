@@ -54,6 +54,15 @@ export default async function SettingsPage() {
         </label>
         <button type="submit">Save</button>
       </form>
+      <section>
+        <h2>Your data</h2>
+        <p>
+          <a href="/api/account/export">Download my data</a>
+        </p>
+        <form action="/api/account/delete" method="post">
+          <button type="submit">Delete my account</button>
+        </form>
+      </section>
     </main>
   );
 }
