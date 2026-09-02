@@ -34,5 +34,16 @@ export type {
   ComputeExclusivityInput,
   Exclusivity,
 } from "./exclusivity.ts";
+export {
+  buildDigestEmail,
+  filterDigestRecipients,
+  isDigestRecipient,
+} from "./digest.ts";
+export type {
+  DigestEmail,
+  DigestJob,
+  DigestRecipient,
+  DigestRecipientRow,
+} from "./digest.ts";
 
 

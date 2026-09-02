@@ -6,6 +6,7 @@ import { handleCareerMessage } from "./consumers/career";
 import { handleIndeedMessage } from "./consumers/indeed";
 import { handleLinkedinMessage } from "./consumers/linkedin";
 import { enqueueCronWork } from "./cron";
+import { sendHiddenDigest } from "./digest";
 
 type QueueHandlerResult =
   | { action: "ack" }
@@ -113,7 +114,8 @@ export default {
   },
 
   async scheduled(_controller, env) {
-    const now = new Date().toISOString();
+    const now = new Date();
+    const nowIso = now.toISOString();
     const stats = await enqueueCronWork(env);
 
     await env.DB.prepare(
@@ -124,11 +126,26 @@ export default {
       .bind(
         crypto.randomUUID(),
         "career_page",
-        now,
-        now,
+        nowIso,
+        nowIso,
         1,
         JSON.stringify(stats),
       )
       .run();
+
+    try {
+      const extra = env as Env & { EMAIL_FROM?: string; SITE_URL?: string };
+      await sendHiddenDigest(
+        {
+          DB: env.DB,
+          EMAIL: env.EMAIL,
+          EMAIL_FROM: extra.EMAIL_FROM,
+          SITE_URL: extra.SITE_URL,
+        },
+        now,
+      );
+    } catch (error) {
+      console.error("Hidden digest send failed", error);
+    }
   },
 } satisfies ExportedHandler<Env>;

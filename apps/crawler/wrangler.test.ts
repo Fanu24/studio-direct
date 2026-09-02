@@ -40,4 +40,10 @@ describe("crawler wrangler", () => {
     expect(raw).not.toContain("BROWSER");
     expect(existsSync(new URL("./wrangler.toml", import.meta.url))).toBe(false);
   });
+
+  it("names EMAIL_FROM without a digest service secret", () => {
+    expect(config.vars.EMAIL_FROM).toBe("noreply@studio-direct.example");
+    expect(raw).not.toMatch(/DIGEST_SECRET/);
+    expect(config.secrets).toBeUndefined();
+  });
 });

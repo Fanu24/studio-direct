@@ -32,6 +32,9 @@
       "name": "EMAIL"
     }
   ],
+  "vars": {
+    "EMAIL_FROM": "noreply@studio-direct.example"
+  },
   "queues": {
     "producers": [
       {
