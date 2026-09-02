@@ -1,10 +1,6 @@
+import type { QueueMessage } from "@gaming/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { enqueueCronWork } from "./cron";
-
-type QueueMessage =
-  | { kind: "career"; companyId: string }
-  | { kind: "linkedin"; query: string }
-  | { kind: "indeed"; query: string };
 
 const companyIds = [
   "company:riot",

@@ -1,16 +1,13 @@
-const ROLE_QUERIES = ["unity remote", "unreal remote"] as const;
+import type { QueueMessage } from "@gaming/shared";
 
-type CronQueueMessage =
-  | { kind: "career"; companyId: string }
-  | { kind: "linkedin"; query: string }
-  | { kind: "indeed"; query: string };
+const ROLE_QUERIES = ["unity remote", "unreal remote"] as const;
 
 type CronEnv = Pick<
   Env,
   "DB" | "CRAWL_CAREER" | "CRAWL_LINKEDIN" | "CRAWL_INDEED"
 >;
 
-async function send(queue: Queue, message: CronQueueMessage): Promise<void> {
+async function send(queue: Queue, message: QueueMessage): Promise<void> {
   await queue.send(message);
 }
 

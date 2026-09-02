@@ -4,8 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest run --config vitest.wrangler.config.ts && vitest run --config vitest.config.ts",
+    "test": "vitest run --config vitest.wrangler.config.ts && vitest run --config vitest.config.ts && vitest run --config vitest.node.config.ts",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gaming/shared": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.22.0",

@@ -9,6 +9,10 @@ importers:
   .: {}
 
   apps/crawler:
+    dependencies:
+      '@gaming/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: 0.22.0
