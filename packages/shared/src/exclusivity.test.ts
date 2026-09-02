@@ -20,11 +20,20 @@ describe("jaccard", () => {
 });
 
 describe("linkedinTitlesMatch", () => {
-  it("matches the same job with a different title at the threshold", () => {
+  it("matches the same job with a different title above the threshold", () => {
     expect(
       linkedinTitlesMatch(
         "Senior Gameplay Software Engineer",
         "Senior Gameplay Engineer",
+      ),
+    ).toBe(true);
+  });
+
+  it("matches identical non-Latin titles", () => {
+    expect(
+      linkedinTitlesMatch(
+        "ゲームプレイエンジニア",
+        "ゲームプレイエンジニア",
       ),
     ).toBe(true);
   });

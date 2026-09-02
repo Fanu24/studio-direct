@@ -15,12 +15,15 @@ export type ComputeExclusivityInput = {
 };
 
 function titleTokens(title: string): string[] {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
+  return normalizeTitle(title)
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim()
     .split(/\s+/)
     .filter(Boolean);
+}
+
+function normalizeTitle(title: string): string {
+  return title.normalize("NFKC").toLocaleLowerCase().trim().replace(/\s+/gu, " ");
 }
 
 export function jaccard(a: string[], b: string[]): number {
@@ -38,7 +41,15 @@ export function jaccard(a: string[], b: string[]): number {
 }
 
 export function linkedinTitlesMatch(a: string, b: string): boolean {
-  return jaccard(titleTokens(a), titleTokens(b)) >= LINKEDIN_TITLE_MATCH_THRESHOLD;
+  const leftTokens = titleTokens(a);
+  const rightTokens = titleTokens(b);
+
+  if (leftTokens.length === 0 || rightTokens.length === 0) {
+    const leftTitle = normalizeTitle(a);
+    return leftTitle.length > 0 && leftTitle === normalizeTitle(b);
+  }
+
+  return jaccard(leftTokens, rightTokens) >= LINKEDIN_TITLE_MATCH_THRESHOLD;
 }
 
 export function computeExclusivity({

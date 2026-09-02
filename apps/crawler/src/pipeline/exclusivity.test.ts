@@ -56,6 +56,27 @@ describe("recomputeExclusivity", () => {
     ).toBe("on_boards");
   });
 
+  it("matches the same job when both titles are non-Latin", () => {
+    expect(
+      recomputeExclusivity({
+        hasCareer: true,
+        careerJob: {
+          ...careerJob,
+          title: "ゲームプレイエンジニア",
+        },
+        linkedinSightings: [
+          {
+            companyName: careerJob.companyName,
+            title: "ゲームプレイエンジニア",
+            postedAtIso: "2026-08-20T10:00:00.000Z",
+          },
+        ],
+        linkedinRun: freshRun,
+        now,
+      }),
+    ).toBe("on_boards");
+  });
+
   it("does not match an identical title from a different company", () => {
     expect(
       recomputeExclusivity({
