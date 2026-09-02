@@ -1,0 +1,27 @@
+{
+  "jobs": [
+    {
+      "absolute_url": "https://job-boards.greenhouse.io/pixelworks/jobs/101",
+      "id": 101,
+      "updated_at": "2026-08-30T10:15:00-04:00",
+      "title": "Senior Gameplay Engineer",
+      "location": {
+        "name": "Remote - US"
+      },
+      "content": "<p>Build responsive gameplay systems for our next title.</p>"
+    },
+    {
+      "absolute_url": "https://job-boards.greenhouse.io/pixelworks/jobs/102",
+      "id": 102,
+      "updated_at": "2026-08-31T09:00:00-04:00",
+      "title": "Technical Artist",
+      "location": {
+        "name": "Los Angeles, California, United States"
+      },
+      "content": "<p>Join our studio team in Los Angeles.</p>"
+    }
+  ],
+  "meta": {
+    "total": 2
+  }
+}
