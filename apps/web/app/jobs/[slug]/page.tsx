@@ -1,4 +1,4 @@
-import { HUB_ROLE_SLUGS, hubSlugLabel } from "@gaming/shared";
+import { hubSlugLabel, jobHubSlugs } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -57,10 +57,7 @@ export default async function JobPage({
 
   const descriptionHtml = sanitizeJobDescriptionHtml(job.descriptionHtml);
   const jsonLd = buildJobPostingJsonLd(job, requestOrigin(await headers()));
-  const normalizedTitle = job.title.toLowerCase().replace(/[^a-z0-9]+/g, " ");
-  const matchingHubs = HUB_ROLE_SLUGS.filter((role) =>
-    role.split("-").every((term) => normalizedTitle.includes(term)),
-  );
+  const matchingHubs = jobHubSlugs(job.title);
 
   return (
     <main>

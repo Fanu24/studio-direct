@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   getCompanyBySlug,
   getJobBySlug,
+  listHubJobs,
   listJobs,
   type JobsDatabase,
 } from "./queries";
@@ -58,6 +59,7 @@ function insertJob(
     listed?: number;
     exclusivity?: string;
     postedAt?: string;
+    description?: string;
   },
 ) {
   database
@@ -85,7 +87,7 @@ function insertJob(
     .prepare(
       "INSERT INTO jobs_fts(rowid, title, description, company_name) SELECT rowid, title, ?, (SELECT name FROM companies WHERE id = company_id) FROM jobs WHERE id = ?",
     )
-    .run(`${job.title} game development`, job.id);
+    .run(job.description ?? `${job.title} game development`, job.id);
 }
 
 describe("listJobs", () => {
@@ -256,6 +258,27 @@ describe("listJobs", () => {
     const result = await listJobs(db, "gaming", { companyId: "studio-a" });
 
     expect(result.jobs.map((job) => job.id)).toEqual(["alpha"]);
+  });
+
+  it("uses title classification for hub membership in both directions", async () => {
+    insertJob(sqlite, {
+      id: "description-only",
+      companyId: "studio-a",
+      title: "Software Engineer",
+      description: "Build gameplay systems with Unity.",
+      remote: "remote",
+    });
+    insertJob(sqlite, {
+      id: "title-match",
+      companyId: "studio-a",
+      title: "Unity Software Engineer",
+      description: "Build proprietary engine systems.",
+      remote: "remote",
+    });
+
+    const result = await listHubJobs(db, "gaming", "unity");
+
+    expect(result.jobs.map((job) => job.id)).toEqual(["title-match"]);
   });
 
   it("paginates results and reports page metadata", async () => {

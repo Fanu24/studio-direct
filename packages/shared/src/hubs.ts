@@ -41,3 +41,16 @@ export function hubSlugLabel(slug: HubRoleSlug): string {
     .map((word) => word[0]!.toUpperCase() + word.slice(1))
     .join(" ");
 }
+
+export function jobHubSlugs(title: string): HubRoleSlug[] {
+  const titleTokens = new Set(
+    title
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean),
+  );
+
+  return HUB_ROLE_SLUGS.filter((slug) =>
+    slug.split("-").every((token) => titleTokens.has(token)),
+  );
+}

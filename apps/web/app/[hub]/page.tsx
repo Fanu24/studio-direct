@@ -8,7 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { JobHubList } from "../_components/job-hub-list";
-import { listJobs, type JobsDatabase } from "../../lib/jobs/queries";
+import { listHubJobs, type JobsDatabase } from "../../lib/jobs/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -41,9 +41,7 @@ export default async function RoleHubPage({ params }: { params: HubParams }) {
   if (!tenantId) throw new Error("Gaming tenant was not found");
 
   const label = hubSlugLabel(role);
-  const result = await listJobs(db, tenantId, {
-    q: role.replaceAll("-", " "),
-  });
+  const result = await listHubJobs(db, tenantId, role);
 
   return (
     <main>

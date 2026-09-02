@@ -1,4 +1,8 @@
-import { slugTitle } from "@gaming/shared";
+import {
+  jobHubSlugs,
+  slugTitle,
+  type HubRoleSlug,
+} from "@gaming/shared";
 
 export interface JobListFilters {
   hidden?: boolean;
@@ -235,5 +239,30 @@ export async function listJobs(
     pageSize,
     total,
     totalPages: total === 0 ? 0 : Math.ceil(total / pageSize),
+  };
+}
+
+export async function listHubJobs(
+  db: JobsDatabase,
+  tenantId: string,
+  hub: HubRoleSlug,
+): Promise<JobListResult> {
+  const pageSize = MAX_PAGE_SIZE;
+  const q = hub.replaceAll("-", " ");
+  const firstPage = await listJobs(db, tenantId, { pageSize, q });
+  const jobs = [...firstPage.jobs];
+
+  for (let page = 2; page <= firstPage.totalPages; page += 1) {
+    const result = await listJobs(db, tenantId, { page, pageSize, q });
+    jobs.push(...result.jobs);
+  }
+
+  const matchingJobs = jobs.filter((job) => jobHubSlugs(job.title).includes(hub));
+  return {
+    jobs: matchingJobs,
+    page: 1,
+    pageSize: matchingJobs.length,
+    total: matchingJobs.length,
+    totalPages: matchingJobs.length === 0 ? 0 : 1,
   };
 }

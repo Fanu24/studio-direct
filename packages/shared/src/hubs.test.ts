@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   HUB_ROLE_SLUGS,
+  jobHubSlugs,
   isHubRoleSlug,
   parseRoleHubSegment,
 } from "./hubs.ts";
@@ -39,5 +40,19 @@ describe("hub role allowlist", () => {
     expect(parseRoleHubSegment("remote-unity-jobs")).toBe("unity");
     expect(parseRoleHubSegment("remote-accountant-jobs")).toBeUndefined();
     expect(parseRoleHubSegment("unity")).toBeUndefined();
+  });
+
+  it("classifies hubs from complete title tokens only", () => {
+    expect(jobHubSlugs("Senior Unity Gameplay Programmer")).toEqual([
+      "gameplay-programmer",
+      "unity",
+    ]);
+    expect(jobHubSlugs("Community Manager")).toEqual(["community"]);
+    expect(jobHubSlugs("Quality Assurance Engineer")).toEqual([]);
+  });
+
+  it("does not match partial title tokens", () => {
+    expect(jobHubSlugs("Audio Producer")).toEqual(["producer", "audio"]);
+    expect(jobHubSlugs("Audiovisual Production Assistant")).toEqual([]);
   });
 });

@@ -4,6 +4,7 @@ export {
   HUB_ROLE_SLUGS,
   hubSlugLabel,
   isHubRoleSlug,
+  jobHubSlugs,
   parseRoleHubSegment,
 } from "./hubs.ts";
 export type { HubRoleSlug } from "./hubs.ts";
