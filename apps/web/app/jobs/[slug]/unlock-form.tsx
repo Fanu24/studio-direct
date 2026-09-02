@@ -14,7 +14,6 @@ export async function submitUnlockForm(
   const response = await fetchImpl("/api/unlock", {
     method: "POST",
     body: formData,
-    redirect: "manual",
     credentials: "same-origin",
   });
   return consumeUnlockResponse(response);

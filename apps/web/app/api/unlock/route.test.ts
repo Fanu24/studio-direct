@@ -53,8 +53,10 @@ function createD1(database: MemoryDatabase) {
           return column ? (row[column] ?? null) : (row as T);
         },
         async run() {
-          database.prepare(query).run(...bindings);
-          return { success: true };
+          const result = database.prepare(query).run(...bindings) as {
+            changes?: number | bigint;
+          };
+          return { success: true, meta: { changes: Number(result.changes ?? 0) } };
         },
       };
     },
@@ -115,12 +117,12 @@ describe("POST /api/unlock onboarding gate", () => {
     const { POST } = await import("./route");
     const response = await POST(unlockRequest());
     const location = response.headers.get("location");
-    const body = await response.text();
+    const body = await response.json();
 
-    expect(response.status).toBe(303);
-    expect(location).toMatch(/\/login$/);
-    expect(location).not.toContain(applyUrl);
-    expect(body).not.toContain(applyUrl);
+    expect(response.status).toBe(401);
+    expect(location).toBeNull();
+    expect(body).toEqual({ redirect: "/login" });
+    expect(JSON.stringify(body)).not.toContain(applyUrl);
   });
 
   it("redirects to /onboarding?next= when the session user needs onboarding", async () => {
@@ -135,14 +137,15 @@ describe("POST /api/unlock onboarding gate", () => {
     const { POST } = await import("./route");
     const response = await POST(unlockRequest());
     const location = response.headers.get("location");
-    const redirected = new URL(location!, "http://localhost");
-    const body = await response.text();
+    const body = await response.json() as { redirect: string };
+    const redirected = new URL(body.redirect, "http://localhost");
 
-    expect(response.status).toBe(303);
+    expect(response.status).toBe(403);
+    expect(location).toBeNull();
     expect(redirected.pathname).toBe("/onboarding");
     expect(redirected.searchParams.get("next")).toBe("/jobs/gameplay-engineer");
-    expect(location).not.toContain(applyUrl);
-    expect(body).not.toContain(applyUrl);
+    expect(JSON.stringify(body)).not.toContain(applyUrl);
+    expect(body).not.toHaveProperty("applyUrl");
   });
 });
 

@@ -22,24 +22,34 @@ describe("consumeUnlockResponse", () => {
     expect(JSON.stringify(result)).not.toContain(applyUrl);
   });
 
-  it("follows login and onboarding 303 Location without leaking applyUrl", async () => {
+  it("follows login and onboarding JSON redirect without leaking applyUrl", async () => {
     const login = await consumeUnlockResponse(
-      new Response(null, {
-        status: 303,
-        headers: { location: "http://localhost/login" },
-      }),
+      Response.json({ redirect: "/login" }, { status: 401 }),
     );
-    expect(login).toEqual({ kind: "redirect", url: "http://localhost/login" });
+    expect(login).toEqual({ kind: "redirect", url: "/login" });
+    expect(JSON.stringify(login)).not.toContain(applyUrl);
 
     const onboarding = await consumeUnlockResponse(
-      new Response(null, {
-        status: 303,
-        headers: { location: "http://localhost/onboarding?next=%2Fjobs%2Fgameplay-engineer" },
-      }),
+      Response.json(
+        { redirect: "/onboarding?next=%2Fjobs%2Fgameplay-engineer" },
+        { status: 403 },
+      ),
     );
     expect(onboarding).toEqual({
       kind: "redirect",
-      url: "http://localhost/onboarding?next=%2Fjobs%2Fgameplay-engineer",
+      url: "/onboarding?next=%2Fjobs%2Fgameplay-engineer",
     });
+    expect(JSON.stringify(onboarding)).not.toContain(applyUrl);
+  });
+
+  it("does not treat a 303 Location header as a browser-visible gate", async () => {
+    const result = await consumeUnlockResponse(
+      new Response(null, {
+        status: 303,
+        headers: { location: "/login" },
+      }),
+    );
+
+    expect(result).toEqual({ kind: "error" });
   });
 });

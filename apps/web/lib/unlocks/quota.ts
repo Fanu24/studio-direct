@@ -11,6 +11,23 @@ export type UnlockDatabase = {
   };
 };
 
+function isUniqueConflict(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /unique constraint failed/i.test(message);
+}
+
+function rowsChanged(result: unknown): number | null {
+  if (!result || typeof result !== "object") return null;
+  const record = result as { meta?: { changes?: unknown }; changes?: unknown };
+  if (record.meta && typeof record.meta === "object" && "changes" in record.meta) {
+    return Number(record.meta.changes ?? 0);
+  }
+  if (record.changes != null) {
+    return Number(record.changes);
+  }
+  return null;
+}
+
 export function canUnlock({
   isPaid,
   existingUnlockSameJob,
@@ -101,18 +118,79 @@ export async function unlockJob(
   }
 
   if (!existing) {
-    try {
-      await db
-        .prepare(
-          `INSERT INTO unlocks (id, user_id, job_id, week_id, created_at)
-           VALUES (?, ?, ?, ?, ?)`,
-        )
-        .bind(crypto.randomUUID(), userId, jobId, weekId, now.toISOString())
-        .run();
-    } catch {
-      // Unique (user_id, job_id, week_id): treat as a free repeat unlock.
+    const recorded = await insertUnlock(db, {
+      userId,
+      jobId,
+      weekId,
+      now,
+      isPaid: isPaidSubscription(subscription, now),
+    });
+    if (recorded === "quota") {
+      return Response.json({ code: "quota" }, { status: 402 });
+    }
+    if (recorded === "error") {
+      return Response.json({ code: "error" }, { status: 500 });
     }
   }
 
   return Response.json({ applyUrl: job.apply_url });
+}
+
+async function insertUnlock(
+  db: UnlockDatabase,
+  {
+    userId,
+    jobId,
+    weekId,
+    now,
+    isPaid,
+  }: {
+    userId: string;
+    jobId: string;
+    weekId: string;
+    now: Date;
+    isPaid: boolean;
+  },
+): Promise<"ok" | "quota" | "error"> {
+  try {
+    const result = await db
+      .prepare(
+        `INSERT INTO unlocks (id, user_id, job_id, week_id, created_at)
+         SELECT ?, ?, ?, ?, ?
+         WHERE ? = 1
+            OR (
+              SELECT COUNT(*) FROM unlocks
+              WHERE user_id = ? AND week_id = ?
+            ) < ?`,
+      )
+      .bind(
+        crypto.randomUUID(),
+        userId,
+        jobId,
+        weekId,
+        now.toISOString(),
+        isPaid ? 1 : 0,
+        userId,
+        weekId,
+        FREE_UNLOCKS_PER_WEEK,
+      )
+      .run();
+
+    if (rowsChanged(result) === 0) {
+      const racedSameJob = await db
+        .prepare(
+          `SELECT id
+           FROM unlocks
+           WHERE user_id = ? AND job_id = ? AND week_id = ?`,
+        )
+        .bind(userId, jobId, weekId)
+        .first<{ id: string }>();
+      return racedSameJob ? "ok" : "quota";
+    }
+
+    return "ok";
+  } catch (error) {
+    if (isUniqueConflict(error)) return "ok";
+    return "error";
+  }
 }

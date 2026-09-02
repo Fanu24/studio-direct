@@ -20,9 +20,21 @@ describe("submitUnlockForm", () => {
     expect(fetchImpl).toHaveBeenCalledWith("/api/unlock", {
       method: "POST",
       body: form,
-      redirect: "manual",
       credentials: "same-origin",
     });
+    expect(fetchImpl.mock.calls[0]?.[1]).not.toHaveProperty("redirect");
+  });
+
+  it("follows JSON login and onboarding redirects from fetch without opaque-redirect", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      Response.json({ redirect: "/login" }, { status: 401 }),
+    );
+
+    await expect(submitUnlockForm(new FormData(), fetchImpl)).resolves.toEqual({
+      kind: "redirect",
+      url: "/login",
+    });
+    expect(fetchImpl.mock.calls[0]?.[1]).not.toHaveProperty("redirect");
   });
 
   it("surfaces 402 quota without following a studio URL", async () => {

@@ -77,10 +77,11 @@ describe("unlockGateResponse", () => {
     });
 
     const { status, location, body } = await bodyAndLocation(response!);
+    const json = JSON.parse(body) as { redirect: string };
 
-    expect(status).toBe(303);
-    expect(location).toMatch(/\/login$/);
-    expect(location).not.toContain(applyUrl);
+    expect(status).toBe(401);
+    expect(location).toBeNull();
+    expect(json).toEqual({ redirect: "/login" });
     expect(body).not.toContain(applyUrl);
   });
 
@@ -98,13 +99,15 @@ describe("unlockGateResponse", () => {
     });
 
     const { status, location, body } = await bodyAndLocation(response!);
-    const redirected = new URL(location!, "http://localhost");
+    const json = JSON.parse(body) as { redirect: string };
+    const redirected = new URL(json.redirect, "http://localhost");
 
-    expect(status).toBe(303);
+    expect(status).toBe(403);
+    expect(location).toBeNull();
     expect(redirected.pathname).toBe("/onboarding");
     expect(redirected.searchParams.get("next")).toBe("/jobs/gameplay-engineer");
-    expect(location).not.toContain(applyUrl);
     expect(body).not.toContain(applyUrl);
+    expect(json).not.toHaveProperty("applyUrl");
   });
 
   it("does not consume quota when the session user is already onboarded", () => {

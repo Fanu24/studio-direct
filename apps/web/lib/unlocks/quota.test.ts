@@ -34,8 +34,10 @@ function createD1(database: MemoryDatabase) {
           return column ? (row[column] ?? null) : (row as T);
         },
         async run() {
-          database.prepare(query).run(...bindings);
-          return { success: true };
+          const result = database.prepare(query).run(...bindings) as {
+            changes?: number | bigint;
+          };
+          return { success: true, meta: { changes: Number(result.changes ?? 0) } };
         },
       };
     },
@@ -248,5 +250,90 @@ describe("unlockJob", () => {
     );
     expect(sixth.status).toBe(200);
     expect(sixth.json).toEqual({ applyUrl });
+  });
+
+  it("does not reveal applyUrl when insert fails for a reason other than unique conflict", async () => {
+    insertJob("job-1");
+    const failingDb = {
+      prepare(query: string) {
+        const stmt = db.prepare(query);
+        if (!/INSERT INTO unlocks/i.test(query)) return stmt;
+        return {
+          bind(...values: unknown[]) {
+            stmt.bind(...values);
+            return {
+              first: stmt.first.bind(stmt),
+              async run() {
+                throw new Error("D1_ERROR: database is locked");
+              },
+            };
+          },
+          first: stmt.first.bind(stmt),
+          run: stmt.run.bind(stmt),
+        };
+      },
+    };
+
+    const failed = await bodyOf(
+      await unlockJob(failingDb, { userId: "user-1", jobId: "job-1", now }),
+    );
+    expect(failed.status).toBe(500);
+    expect(failed.location).toBeNull();
+    expect(JSON.stringify(failed.json)).not.toContain(applyUrl);
+    expect(failed.json).not.toEqual({ applyUrl });
+  });
+
+  it("treats unique (user_id, job_id, week_id) insert conflict as a free repeat", async () => {
+    insertJob("job-1");
+    const uniqueDb = {
+      prepare(query: string) {
+        const stmt = db.prepare(query);
+        if (!/INSERT INTO unlocks/i.test(query)) return stmt;
+        return {
+          bind(...values: unknown[]) {
+            stmt.bind(...values);
+            return {
+              first: stmt.first.bind(stmt),
+              async run() {
+                throw new Error(
+                  "UNIQUE constraint failed: unlocks.user_id, unlocks.job_id, unlocks.week_id",
+                );
+              },
+            };
+          },
+          first: stmt.first.bind(stmt),
+          run: stmt.run.bind(stmt),
+        };
+      },
+    };
+
+    const repeat = await bodyOf(
+      await unlockJob(uniqueDb, { userId: "user-1", jobId: "job-1", now }),
+    );
+    expect(repeat.status).toBe(200);
+    expect(repeat.json).toEqual({ applyUrl });
+  });
+
+  it("holds the free cap when two distinct jobs race for the 5th slot", async () => {
+    for (const id of ["job-1", "job-2", "job-3", "job-4", "job-5", "job-6"]) {
+      insertJob(id);
+    }
+    for (const id of ["job-1", "job-2", "job-3", "job-4"]) {
+      insertUnlock(id);
+    }
+
+    const [first, second] = await Promise.all([
+      unlockJob(db, { userId: "user-1", jobId: "job-5", now }).then(bodyOf),
+      unlockJob(db, { userId: "user-1", jobId: "job-6", now }).then(bodyOf),
+    ]);
+    const statuses = [first.status, second.status].sort();
+    const count = sqlite
+      .prepare("SELECT COUNT(*) AS count FROM unlocks WHERE user_id = ? AND week_id = ?")
+      .get("user-1", "2026-W36") as { count: number };
+
+    expect(statuses).toEqual([200, 402]);
+    expect(count.count).toBe(5);
+    const leaked = [first, second].filter((row) => row.status === 402);
+    expect(JSON.stringify(leaked)).not.toContain(applyUrl);
   });
 });

@@ -96,7 +96,6 @@ export async function saveOnboardingProfile(
 }
 
 export function unlockGateResponse({
-  request,
   sessionUserId,
   profile,
   next,
@@ -107,14 +106,12 @@ export function unlockGateResponse({
   next?: string | null;
   applyUrl?: string | null;
 }): Response | null {
-  const origin = new URL(request.url).origin;
-
   if (!sessionUserId) {
-    return Response.redirect(new URL("/login", origin), 303);
+    return Response.json({ redirect: "/login" }, { status: 401 });
   }
 
   if (needsOnboarding(profile)) {
-    return Response.redirect(new URL(onboardingLocation(next), origin), 303);
+    return Response.json({ redirect: onboardingLocation(next) }, { status: 403 });
   }
 
   return null;
