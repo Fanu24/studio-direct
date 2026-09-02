@@ -2,6 +2,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { LINKEDIN_EXCLUSIVITY_TOOLTIP } from "../../lib/copy";
 import {
   listJobs,
   type JobListFilters,
@@ -131,7 +132,7 @@ export default async function JobsPage({
                 </p>
                 {job.salaryText ? <p>{job.salaryText}</p> : null}
                 {job.exclusivity === "hidden_from_linkedin" ? (
-                  <p>Not posted on LinkedIn</p>
+                  <p title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>Not posted on LinkedIn</p>
                 ) : null}
               </article>
             </li>
