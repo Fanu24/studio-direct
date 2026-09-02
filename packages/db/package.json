@@ -6,7 +6,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "seed": "pnpm --filter @gaming/crawler exec wrangler d1 execute gaming-jobs --local --file ../../packages/db/seed/studio-direct.sql --cwd \"c:\\Users\\dotat\\Desktop\\Saas JOBS\\apps\\crawler\"",
+    "seed": "pnpm --filter @gaming/crawler exec wrangler d1 execute gaming-jobs --local --file ../../packages/db/seed/studio-direct.sql --cwd ../../apps/crawler",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

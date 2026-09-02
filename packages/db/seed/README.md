@@ -22,6 +22,9 @@ Before adding a row:
    for the JSON-LD fallback.
 5. Deduplicate by normalized company name and careers URL.
 
+Build the seed only from each company's own public careers endpoint. Do not
+scrape or copy Hitmarker, or any other third-party job board, to build it.
+
 The repository does not currently import CSV directly. Review the CSV, then add
 each accepted row to `companies.json` with `domain` derived from the company
 site and `listed: 1`; convert empty ATS fields to JSON `null`. Add the
