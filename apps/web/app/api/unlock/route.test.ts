@@ -161,7 +161,21 @@ describe("POST /api/unlock quota", () => {
         user_id TEXT PRIMARY KEY,
         display_name TEXT,
         target_role TEXT,
-        remote_pref TEXT
+        location TEXT,
+        remote_pref TEXT,
+        completeness INTEGER NOT NULL DEFAULT 0,
+        cv_r2_key TEXT
+      );
+      CREATE TABLE experience_entries (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        company TEXT NOT NULL,
+        title TEXT NOT NULL
+      );
+      CREATE TABLE profile_skills (
+        user_id TEXT NOT NULL,
+        skill TEXT NOT NULL,
+        PRIMARY KEY (user_id, skill)
       );
       CREATE TABLE jobs (
         id TEXT PRIMARY KEY,
@@ -211,8 +225,37 @@ describe("POST /api/unlock quota", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();
-    expect(body).toEqual({ applyUrl });
+    expect(body).toEqual({ applyUrl, completeness: 20 });
     expect(body).not.toHaveProperty("apply_url");
+  });
+
+  it("includes live completeness on unlock JSON and still omits applyUrl from quota", async () => {
+    insertJob("job-1");
+    sqlite
+      .prepare("UPDATE profiles SET location = ? WHERE user_id = ?")
+      .run("Berlin", "user-1");
+    sqlite
+      .prepare(
+        "INSERT INTO experience_entries (id, user_id, company, title) VALUES (?, ?, ?, ?)",
+      )
+      .run("exp-1", "user-1", "Moonshot", "Gameplay Engineer");
+    sqlite
+      .prepare("INSERT INTO profile_skills (user_id, skill) VALUES (?, ?)")
+      .run("user-1", "unity");
+    sqlite
+      .prepare("INSERT INTO profile_skills (user_id, skill) VALUES (?, ?)")
+      .run("user-1", "unreal");
+    sqlite
+      .prepare("INSERT INTO profile_skills (user_id, skill) VALUES (?, ?)")
+      .run("user-1", "godot");
+
+    const { POST } = await import("./route");
+    const response = await POST(unlockRequest("job-1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ applyUrl, completeness: 80 });
+    expect(JSON.stringify(body)).not.toContain("apply_url");
   });
 
   it("returns 402 quota with no applyUrl on the 6th distinct job", async () => {

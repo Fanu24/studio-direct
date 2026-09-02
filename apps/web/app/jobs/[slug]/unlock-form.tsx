@@ -2,10 +2,14 @@
 
 import { useState, type FormEvent } from "react";
 
+import { shouldShowCompletenessNudge } from "../../../lib/profile/completeness";
 import { consumeUnlockResponse } from "../../../lib/unlocks/client";
 
 export const QUOTA_MESSAGE =
   "You've used your 5 free unlocks this week. Come back next Monday (UTC) for more.";
+
+export const COMPLETENESS_NUDGE_MESSAGE =
+  "Your profile is under 80% complete. Add experience and skills so studios can learn more about you.";
 
 export async function submitUnlockForm(
   formData: FormData,
@@ -19,6 +23,24 @@ export async function submitUnlockForm(
   return consumeUnlockResponse(response);
 }
 
+export function applyUnlockResult(result: {
+  kind: "apply";
+  applyUrl: string;
+  completeness: number;
+}):
+  | { action: "nudge"; applyUrl: string; completeness: number }
+  | { action: "redirect"; applyUrl: string } {
+  if (shouldShowCompletenessNudge(result.completeness)) {
+    return {
+      action: "nudge",
+      applyUrl: result.applyUrl,
+      completeness: result.completeness,
+    };
+  }
+
+  return { action: "redirect", applyUrl: result.applyUrl };
+}
+
 export function UnlockApplyForm({
   jobId,
   next,
@@ -28,6 +50,10 @@ export function UnlockApplyForm({
 }) {
   const [quota, setQuota] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nudge, setNudge] = useState<{
+    applyUrl: string;
+    completeness: number;
+  } | null>(null);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,7 +61,15 @@ export function UnlockApplyForm({
     const result = await submitUnlockForm(new FormData(event.currentTarget));
 
     if (result.kind === "apply") {
-      window.location.assign(result.applyUrl);
+      const nextView = applyUnlockResult(result);
+      if (nextView.action === "nudge") {
+        setNudge({
+          applyUrl: nextView.applyUrl,
+          completeness: nextView.completeness,
+        });
+        return;
+      }
+      window.location.assign(nextView.applyUrl);
       return;
     }
 
@@ -56,6 +90,17 @@ export function UnlockApplyForm({
     <>
       {quota ? <p role="alert">{QUOTA_MESSAGE}</p> : null}
       {error ? <p role="alert">{error}</p> : null}
+      {nudge ? (
+        <p role="status">
+          {COMPLETENESS_NUDGE_MESSAGE}
+          {" "}
+          Your profile is {nudge.completeness}% complete.
+          {" "}
+          <a href="/profile">Finish your profile</a>
+          {" · "}
+          <a href={nudge.applyUrl}>Continue to application</a>
+        </p>
+      ) : null}
       <form action="/api/unlock" method="post" onSubmit={onSubmit}>
         <input name="jobId" type="hidden" value={jobId} />
         <input name="next" type="hidden" value={next} />

@@ -1,5 +1,5 @@
 export type UnlockClientResult =
-  | { kind: "apply"; applyUrl: string }
+  | { kind: "apply"; applyUrl: string; completeness: number }
   | { kind: "quota" }
   | { kind: "redirect"; url: string }
   | { kind: "error" };
@@ -35,7 +35,11 @@ export async function consumeUnlockResponse(
       && typeof body.applyUrl === "string"
       && body.applyUrl.length > 0
     ) {
-      return { kind: "apply", applyUrl: body.applyUrl };
+      const completeness =
+        "completeness" in body && typeof body.completeness === "number"
+          ? body.completeness
+          : 0;
+      return { kind: "apply", applyUrl: body.applyUrl, completeness };
     }
   }
 

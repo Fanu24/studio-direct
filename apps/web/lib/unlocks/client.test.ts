@@ -7,10 +7,19 @@ const applyUrl = "https://studio.example/careers/secret-apply";
 describe("consumeUnlockResponse", () => {
   it("redirects the client to applyUrl on success JSON", async () => {
     const result = await consumeUnlockResponse(
-      Response.json({ applyUrl }, { status: 200 }),
+      Response.json({ applyUrl, completeness: 40 }, { status: 200 }),
     );
 
-    expect(result).toEqual({ kind: "apply", applyUrl });
+    expect(result).toEqual({ kind: "apply", applyUrl, completeness: 40 });
+  });
+
+  it("passes completeness through so the client can nudge below 80", async () => {
+    const result = await consumeUnlockResponse(
+      Response.json({ applyUrl, completeness: 20 }, { status: 200 }),
+    );
+
+    expect(result).toEqual({ kind: "apply", applyUrl, completeness: 20 });
+    expect(JSON.stringify(result)).not.toContain("apply_url");
   });
 
   it("shows quota on 402 without an applyUrl or studio redirect", async () => {
