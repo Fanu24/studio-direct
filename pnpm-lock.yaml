@@ -34,6 +34,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@gaming/shared':
+        specifier: workspace:*
+        version: link:../shared
       drizzle-orm:
         specifier: ^0.36.4
         version: 0.36.4

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { normalizeCompanyName } from "../../shared/src/index.ts";
+import { normalizeCompanyName } from "@gaming/shared";
 
 export const TENANT_SLUG = "gaming";
 export const TENANT_NAME = "Studio Direct";
