@@ -1,5 +1,7 @@
 /// <reference path="../worker-configuration.d.ts" />
 
+import { enqueueCronWork } from "./cron";
+
 export default {
   fetch(request) {
     const url = new URL(request.url);
@@ -17,6 +19,7 @@ export default {
 
   async scheduled(_controller, env) {
     const now = new Date().toISOString();
+    const stats = await enqueueCronWork(env);
 
     await env.DB.prepare(
       `INSERT INTO crawl_runs
@@ -29,7 +32,7 @@ export default {
         now,
         now,
         1,
-        '{"enqueued":0}',
+        JSON.stringify(stats),
       )
       .run();
   },
