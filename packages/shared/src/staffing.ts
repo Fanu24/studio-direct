@@ -11,6 +11,7 @@ const AGENCY_COMPANY_PATTERN =
 
 const AGENCY_DESCRIPTION_PATTERNS = [
   /\b(?:recruitment|staffing|employment)\s+agency\b/i,
+  /\b(?:recruitment|recruiting|staffing)\s+(?:consultanc(?:y|ies)|consulting|services?|solutions?)\b/i,
   /\b(?:recruiting|hiring)\s+(?:for|on behalf of)\s+(?:our|a|the)\s+client\b/i,
   /\bcontract\s+roles?\s+available\b/i,
   /\bRPO\s+(?:partner|provider|services?)\b/i,
