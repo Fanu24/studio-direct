@@ -12,6 +12,7 @@ import {
   type JobsDatabase,
 } from "../../../lib/jobs/queries";
 import { sanitizeJobDescriptionHtml } from "../../../lib/jobs/sanitize-description";
+import { UnlockApplyForm } from "./unlock-form";
 
 export const revalidate = 300;
 
@@ -102,11 +103,7 @@ export default async function JobPage({
         </nav>
       ) : null}
 
-      <form action="/api/unlock" method="post">
-        <input name="jobId" type="hidden" value={job.id} />
-        <input name="next" type="hidden" value={`/jobs/${job.slug}`} />
-        <button type="submit">Unlock application link</button>
-      </form>
+      <UnlockApplyForm jobId={job.id} next={`/jobs/${job.slug}`} />
     </main>
   );
 }

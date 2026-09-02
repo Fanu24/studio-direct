@@ -6,10 +6,16 @@ import {
   type ProfileQueryDatabase,
   unlockGateResponse,
 } from "../../../lib/profile/gate";
+import {
+  unlockJob,
+  type UnlockDatabase,
+} from "../../../lib/unlocks/quota";
 
-async function unlockEnv(): Promise<AuthEnv & { DB: ProfileQueryDatabase }> {
+type UnlockRouteDatabase = ProfileQueryDatabase & UnlockDatabase;
+
+async function unlockEnv(): Promise<AuthEnv & { DB: UnlockRouteDatabase }> {
   const { env } = await getCloudflareContext({ async: true });
-  return env as AuthEnv & { DB: ProfileQueryDatabase };
+  return env as AuthEnv & { DB: UnlockRouteDatabase };
 }
 
 export async function POST(request: Request) {
@@ -19,6 +25,7 @@ export async function POST(request: Request) {
   });
   const form = await request.formData();
   const next = String(form.get("next") ?? "");
+  const jobId = String(form.get("jobId") ?? "").trim();
   const userId = session?.user?.id ?? null;
   const profile = userId
     ? await loadOnboardingProfile(env.DB, userId)
@@ -32,7 +39,5 @@ export async function POST(request: Request) {
   });
   if (gated) return gated;
 
-  // Task 33 owns UTC ISO-week quota (5/week) and apply URL reveal.
-  // Continue to quota later. Do not invent Stripe. Do not return apply_url here.
-  return Response.json({ code: "quota_pending" }, { status: 501 });
+  return unlockJob(env.DB, { userId: userId!, jobId });
 }
