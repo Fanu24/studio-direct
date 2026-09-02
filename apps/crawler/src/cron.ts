@@ -1,6 +1,7 @@
-import type { QueueMessage } from "@gaming/shared";
-
-const ROLE_QUERIES = ["unity remote", "unreal remote"] as const;
+import {
+  REMOTE_GAMING_QUERIES,
+  type QueueMessage,
+} from "@gaming/shared";
 
 type CronEnv = Pick<
   Env,
@@ -28,7 +29,7 @@ export async function enqueueCronWork(
     });
   }
 
-  for (const query of ROLE_QUERIES) {
+  for (const query of REMOTE_GAMING_QUERIES) {
     await send(env.CRAWL_LINKEDIN, { kind: "linkedin", query });
     await send(env.CRAWL_INDEED, { kind: "indeed", query });
   }

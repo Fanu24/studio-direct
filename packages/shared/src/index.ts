@@ -1,5 +1,10 @@
 export const PACKAGE_NAME = "@gaming/shared";
 
+export {
+  GAMING_ROLES,
+  REMOTE_GAMING_QUERIES,
+  WORK_LOCATION_MODIFIERS,
+} from "./dictionary.ts";
 export type { JobDraft, JobSource, QueueMessage, Source } from "./jobs.ts";
 export { isQueueMessage } from "./jobs.ts";
 export {

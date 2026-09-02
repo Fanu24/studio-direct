@@ -1,4 +1,4 @@
-import type { QueueMessage } from "@gaming/shared";
+import { REMOTE_GAMING_QUERIES, type QueueMessage } from "@gaming/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { enqueueCronWork } from "./cron";
 
@@ -23,7 +23,7 @@ describe("enqueueCronWork", () => {
     vi.restoreAllMocks();
   });
 
-  it("enqueues five kind-based career messages and fixed board queries without HTTP", async () => {
+  it("fans out eligible companies and every dictionary query without HTTP", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const careerMessages: QueueMessage[] = [];
     const linkedinMessages: QueueMessage[] = [];
@@ -43,19 +43,36 @@ describe("enqueueCronWork", () => {
 
     const stats = await enqueueCronWork(env as unknown as Env);
 
+    expect(REMOTE_GAMING_QUERIES).toEqual([
+      "unity remote",
+      "unity hybrid",
+      "unreal remote",
+      "unreal hybrid",
+      "gameplay programmer remote",
+      "gameplay programmer hybrid",
+      "engine programmer remote",
+      "engine programmer hybrid",
+      "technical artist remote",
+      "technical artist hybrid",
+      "animator remote",
+      "animator hybrid",
+    ]);
     expect(careerMessages).toEqual(
       companyIds.map((companyId) => ({ kind: "career", companyId })),
     );
     expect(careerMessages).toHaveLength(5);
     expect(careerMessages.every((message) => !("type" in message))).toBe(true);
-    expect(linkedinMessages).toEqual([
-      { kind: "linkedin", query: "unity remote" },
-      { kind: "linkedin", query: "unreal remote" },
-    ]);
-    expect(indeedMessages).toEqual([
-      { kind: "indeed", query: "unity remote" },
-      { kind: "indeed", query: "unreal remote" },
-    ]);
+    expect(linkedinMessages).toEqual(
+      REMOTE_GAMING_QUERIES.map((query) => ({ kind: "linkedin", query })),
+    );
+    expect(indeedMessages).toEqual(
+      REMOTE_GAMING_QUERIES.map((query) => ({ kind: "indeed", query })),
+    );
+    expect(linkedinMessages).toHaveLength(REMOTE_GAMING_QUERIES.length);
+    expect(indeedMessages).toHaveLength(REMOTE_GAMING_QUERIES.length);
+    expect(env.DB.prepare).toHaveBeenCalledWith(
+      expect.stringContaining("WHERE career_url IS NOT NULL"),
+    );
     expect(stats).toEqual({ enqueuedCareer: 5 });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
