@@ -27,16 +27,26 @@ describe("web wrangler", () => {
     expect(existsSync(new URL("./wrangler.toml", import.meta.url))).toBe(false);
   });
 
-  it("names Better Auth, Google, and Turnstile secrets without values", () => {
+  it("names Better Auth, Google, Turnstile, and Stripe secrets without values", () => {
     expect(config.secrets.required).toEqual([
       "BETTER_AUTH_SECRET",
       "GOOGLE_CLIENT_ID",
       "GOOGLE_CLIENT_SECRET",
       "TURNSTILE_SECRET_KEY",
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET",
     ]);
     expect(raw).not.toMatch(/BETTER_AUTH_SECRET"\s*:/);
     expect(raw).not.toMatch(/GOOGLE_CLIENT_SECRET"\s*:/);
     expect(raw).not.toMatch(/TURNSTILE_SECRET_KEY"\s*:/);
+    expect(raw).not.toMatch(/STRIPE_SECRET_KEY"\s*:/);
+    expect(raw).not.toMatch(/STRIPE_WEBHOOK_SECRET"\s*:/);
+    expect(raw).not.toMatch(/sk_(live|test)_/);
+    expect(raw).not.toMatch(/whsec_/);
+  });
+
+  it("keeps Checkout behind STRIPE_ENABLED=false", () => {
+    expect(config.vars.STRIPE_ENABLED).toBe("false");
   });
 
   it("does not ship Cloudflare always-pass Turnstile site key", () => {

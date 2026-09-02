@@ -24,14 +24,17 @@
   ],
   "vars": {
     "TURNSTILE_SITE_KEY": "",
-    "EMAIL_FROM": "noreply@studio-direct.example"
+    "EMAIL_FROM": "noreply@studio-direct.example",
+    "STRIPE_ENABLED": "false"
   },
   "secrets": {
     "required": [
       "BETTER_AUTH_SECRET",
       "GOOGLE_CLIENT_ID",
       "GOOGLE_CLIENT_SECRET",
-      "TURNSTILE_SECRET_KEY"
+      "TURNSTILE_SECRET_KEY",
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET"
     ]
   }
 }
