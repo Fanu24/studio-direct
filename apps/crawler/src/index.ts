@@ -1,5 +1,36 @@
+/// <reference path="../worker-configuration.d.ts" />
+
 export default {
-  fetch() {
-    return new Response("Crawler worker");
+  fetch(request) {
+    const url = new URL(request.url);
+
+    if (request.method === "GET" && url.pathname === "/health") {
+      return Response.json({ ok: true, worker: "crawler" });
+    }
+
+    return new Response("Not Found", { status: 404 });
   },
-};
+
+  queue(batch) {
+    batch.ackAll();
+  },
+
+  async scheduled(_controller, env) {
+    const now = new Date().toISOString();
+
+    await env.DB.prepare(
+      `INSERT INTO crawl_runs
+        (id, source, started_at, finished_at, ok, stats_json)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        crypto.randomUUID(),
+        "career_page",
+        now,
+        now,
+        1,
+        '{"enqueued":0}',
+      )
+      .run();
+  },
+} satisfies ExportedHandler<Env>;
