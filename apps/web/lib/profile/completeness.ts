@@ -1,7 +1,7 @@
 import { isHubRoleSlug } from "@gaming/shared";
 
 export const COMPLETENESS_NUDGE_THRESHOLD = 80;
-export const CV_COMPLETENESS_POINTS = 0;
+export const CV_COMPLETENESS_POINTS = 20;
 
 export type CompletenessInput = {
   displayName?: string | null;
@@ -27,6 +27,7 @@ export type ProfileDetails = {
   target_role: string | null;
   location: string | null;
   remote_pref: string | null;
+  cv_r2_key: string | null;
 };
 
 export interface CompletenessDatabase {
@@ -113,7 +114,7 @@ export async function loadProfileDetails(
 ): Promise<ProfileDetails | null> {
   const row = await db
     .prepare(
-      `SELECT display_name, target_role, location, remote_pref
+      `SELECT display_name, target_role, location, remote_pref, cv_r2_key
        FROM profiles
        WHERE user_id = ?`,
     )
@@ -157,7 +158,7 @@ export async function listProfileSkills(
   return (result?.results ?? []).map((row) => row.skill);
 }
 
-async function persistCompleteness(
+export async function persistCompleteness(
   db: CompletenessDatabase,
   userId: string,
 ): Promise<number> {

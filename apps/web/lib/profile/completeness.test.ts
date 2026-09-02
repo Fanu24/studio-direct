@@ -182,18 +182,18 @@ describe("scoreCompleteness", () => {
     ).toBe(80);
   });
 
-  it("keeps the CV bucket at 0 until upload exists", () => {
-    expect(
-      scoreCompleteness({
-        displayName: "Ada",
-        targetRole: "Gameplay Programmer",
-        location: "Berlin",
-        remotePref: "remote",
-        experienceCount: 1,
-        skillCount: 3,
-        cvUploaded: true,
-      }),
-    ).toBe(80);
+  it("awards 20 when a CV is uploaded", () => {
+    const filled = {
+      displayName: "Ada",
+      targetRole: "Gameplay Programmer",
+      location: "Berlin",
+      remotePref: "remote",
+      experienceCount: 1,
+      skillCount: 3,
+    };
+
+    expect(scoreCompleteness({ ...filled, cvUploaded: false })).toBe(80);
+    expect(scoreCompleteness({ ...filled, cvUploaded: true })).toBe(100);
   });
 });
 
@@ -245,7 +245,7 @@ describe("loadProfileCompleteness", () => {
     await expect(loadProfileCompleteness(createD1(sqlite), "user-1")).resolves.toBe(0);
   });
 
-  it("scores live rows and ignores a stored CV key until upload exists", async () => {
+  it("scores live rows including a stored CV key as the fifth bucket", async () => {
     sqlite
       .prepare(
         "INSERT INTO profiles (user_id, display_name, target_role, location, remote_pref, cv_r2_key) VALUES (?, ?, ?, ?, ?, ?)",
@@ -273,7 +273,7 @@ describe("loadProfileCompleteness", () => {
       .prepare("INSERT INTO profile_skills (user_id, skill) VALUES (?, ?)")
       .run("user-1", "godot");
 
-    await expect(loadProfileCompleteness(createD1(sqlite), "user-1")).resolves.toBe(80);
+    await expect(loadProfileCompleteness(createD1(sqlite), "user-1")).resolves.toBe(100);
   });
 });
 

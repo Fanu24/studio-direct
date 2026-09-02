@@ -95,7 +95,7 @@ describe("ProfilePage", () => {
     await expect(ProfilePage()).rejects.toThrow("REDIRECT:/login");
   });
 
-  it("collects experience, hub skills, and location without talent-pool or CV upload", async () => {
+  it("collects experience, hub skills, location, and a PDF CV without talent-pool", async () => {
     const { default: ProfilePage } = await import("./page");
     const page = await ProfilePage();
     const copy = text(page);
@@ -129,7 +129,16 @@ describe("ProfilePage", () => {
     expect(copy.toLowerCase()).not.toContain("talent pool");
     expect(copy).not.toContain("Clerk");
     expect(copy).not.toContain("Resend");
-    expect(namedInputs.some((element) => element.props.type === "file")).toBe(false);
+    const fileInput = namedInputs.find((element) => element.props.type === "file");
+    expect(fileInput?.props.name).toBe("cv");
+    expect(fileInput?.props.accept).toBe("application/pdf");
+    const cvForm = elements(page).find(
+      (element) =>
+        element.type === "form"
+        && element.props.action === "/api/profile/cv",
+    );
+    expect(cvForm?.props.method).toMatch(/post/i);
+    expect(cvForm?.props.encType).toBe("multipart/form-data");
     expect(hrefs.some((href) => href === "/talent" || href.startsWith("/talent/"))).toBe(false);
   });
 });

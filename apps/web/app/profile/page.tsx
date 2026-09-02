@@ -97,8 +97,7 @@ export default async function ProfilePage() {
       <h1>Your profile</h1>
       <p>Profile completeness: {completeness}%</p>
       <p>
-        Add experience and at least three skills. A CV upload will be available
-        later.
+        Add experience, at least three skills, and a PDF CV (max 5 MB).
       </p>
 
       <section aria-labelledby="work-preferences">
@@ -186,6 +185,26 @@ export default async function ProfilePage() {
             </label>
           ))}
           <button type="submit">Save skills</button>
+        </form>
+      </section>
+
+      <section aria-labelledby="cv">
+        <h2 id="cv">CV</h2>
+        <p>
+          {profile?.cv_r2_key
+            ? "CV uploaded. You can replace it with a new PDF (max 5 MB)."
+            : "Upload a PDF CV (max 5 MB)."}
+        </p>
+        <form
+          action="/api/profile/cv"
+          encType="multipart/form-data"
+          method="post"
+        >
+          <label>
+            CV
+            <input accept="application/pdf" name="cv" required type="file" />
+          </label>
+          <button type="submit">Upload CV</button>
         </form>
       </section>
     </main>
