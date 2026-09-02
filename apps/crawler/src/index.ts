@@ -1,9 +1,101 @@
 /// <reference path="../worker-configuration.d.ts" />
 
-import { isQueueMessage } from "@gaming/shared";
+import { isQueueMessage, type QueueMessage } from "@gaming/shared";
 
 import { handleCareerMessage } from "./consumers/career";
+import { handleIndeedMessage } from "./consumers/indeed";
+import { handleLinkedinMessage } from "./consumers/linkedin";
 import { enqueueCronWork } from "./cron";
+
+type QueueHandlerResult =
+  | { action: "ack" }
+  | { action: "retry"; delaySeconds?: number };
+
+export type QueueHandlers = {
+  career: (
+    message: Extract<QueueMessage, { kind: "career" }>,
+    env: Env,
+  ) => Promise<QueueHandlerResult>;
+  linkedin: (
+    message: Extract<QueueMessage, { kind: "linkedin" }>,
+    env: Env,
+  ) => Promise<QueueHandlerResult>;
+  indeed: (
+    message: Extract<QueueMessage, { kind: "indeed" }>,
+    env: Env,
+  ) => Promise<QueueHandlerResult>;
+};
+
+const defaultQueueHandlers: QueueHandlers = {
+  career: handleCareerMessage,
+  linkedin: handleLinkedinMessage,
+  indeed: handleIndeedMessage,
+};
+
+export async function routeQueueBatch(
+  batch: MessageBatch<unknown>,
+  env: Env,
+  handlers: QueueHandlers = defaultQueueHandlers,
+): Promise<void> {
+  if (
+    batch.queue !== "crawl-career" &&
+    batch.queue !== "crawl-linkedin" &&
+    batch.queue !== "crawl-indeed"
+  ) {
+    batch.ackAll();
+    return;
+  }
+
+  const expectedKind =
+    batch.queue === "crawl-career"
+      ? "career"
+      : batch.queue === "crawl-linkedin"
+        ? "linkedin"
+        : "indeed";
+  const hasMatchingMessage = batch.messages.some(
+    (message) =>
+      isQueueMessage(message.body) && message.body.kind === expectedKind,
+  );
+  if (!hasMatchingMessage) {
+    batch.ackAll();
+    return;
+  }
+
+  for (const message of batch.messages) {
+    if (!isQueueMessage(message.body)) {
+      message.ack();
+      continue;
+    }
+
+    let result: QueueHandlerResult;
+    if (batch.queue === "crawl-career" && message.body.kind === "career") {
+      result = await handlers.career(message.body, env);
+    } else if (
+      batch.queue === "crawl-linkedin" &&
+      message.body.kind === "linkedin"
+    ) {
+      result = await handlers.linkedin(message.body, env);
+    } else if (
+      batch.queue === "crawl-indeed" &&
+      message.body.kind === "indeed"
+    ) {
+      result = await handlers.indeed(message.body, env);
+    } else {
+      message.ack();
+      continue;
+    }
+
+    if (result.action === "ack") {
+      message.ack();
+    } else {
+      message.retry(
+        result.delaySeconds === undefined
+          ? undefined
+          : { delaySeconds: result.delaySeconds },
+      );
+    }
+  }
+}
 
 export default {
   fetch(request) {
@@ -17,32 +109,7 @@ export default {
   },
 
   async queue(batch, env) {
-    const careerMessages = batch.messages.filter(
-      (message) =>
-        isQueueMessage(message.body) && message.body.kind === "career",
-    );
-    if (careerMessages.length === 0) {
-      batch.ackAll();
-      return;
-    }
-
-    for (const message of batch.messages) {
-      if (!isQueueMessage(message.body) || message.body.kind !== "career") {
-        message.ack();
-        continue;
-      }
-
-      const result = await handleCareerMessage(message.body, env);
-      if (result.action === "ack") {
-        message.ack();
-      } else {
-        message.retry(
-          result.delaySeconds === undefined
-            ? undefined
-            : { delaySeconds: result.delaySeconds },
-        );
-      }
-    }
+    await routeQueueBatch(batch, env);
   },
 
   async scheduled(_controller, env) {
