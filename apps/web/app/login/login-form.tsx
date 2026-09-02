@@ -5,6 +5,39 @@ import { useState, type FormEvent, type ReactNode } from "react";
 
 import { authClient } from "../../lib/auth/client";
 
+type TurnstileApi = { reset?: (widgetId?: string) => void };
+
+export function resetTurnstileWidget(
+  turnstile: TurnstileApi | undefined = (globalThis as typeof globalThis & {
+    turnstile?: TurnstileApi;
+  }).turnstile,
+): void {
+  turnstile?.reset?.();
+}
+
+export async function submitLoginMagicLink({
+  email,
+  token,
+}: {
+  email: string;
+  token: string;
+}) {
+  try {
+    return await authClient.signIn.magicLink({
+      email,
+      callbackURL: "/",
+      newUserCallbackURL: "/onboarding",
+      fetchOptions: {
+        headers: {
+          "x-captcha-response": token,
+        },
+      },
+    });
+  } finally {
+    resetTurnstileWidget();
+  }
+}
+
 export function LoginForm({
   children,
   siteKey,
@@ -24,16 +57,7 @@ export function LoginForm({
         ?.value ?? "";
 
     setError(null);
-    const { error: sendError } = await authClient.signIn.magicLink({
-      email,
-      callbackURL: "/",
-      newUserCallbackURL: "/onboarding",
-      fetchOptions: {
-        headers: {
-          "x-captcha-response": token,
-        },
-      },
-    });
+    const { error: sendError } = await submitLoginMagicLink({ email, token });
 
     if (sendError) {
       setError(

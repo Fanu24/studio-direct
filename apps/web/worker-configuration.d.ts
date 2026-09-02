@@ -5,7 +5,7 @@ interface __BaseEnv_Env {
 	FILES: R2Bucket;
 	DB: D1Database;
 	EMAIL: SendEmail;
-	TURNSTILE_SITE_KEY: "1x00000000000000000000AA";
+	TURNSTILE_SITE_KEY: "";
 	EMAIL_FROM: "noreply@studio-direct.example";
 	BETTER_AUTH_SECRET: string;
 	GOOGLE_CLIENT_ID: string;

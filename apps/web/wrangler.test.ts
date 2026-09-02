@@ -38,4 +38,9 @@ describe("web wrangler", () => {
     expect(raw).not.toMatch(/GOOGLE_CLIENT_SECRET"\s*:/);
     expect(raw).not.toMatch(/TURNSTILE_SECRET_KEY"\s*:/);
   });
+
+  it("does not ship Cloudflare always-pass Turnstile site key", () => {
+    expect(config.vars.TURNSTILE_SITE_KEY).toBe("");
+    expect(raw).not.toContain("1x00000000000000000000AA");
+  });
 });
