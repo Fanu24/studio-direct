@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { listJobs, type JobsDatabase } from "./queries";
+import { getJobBySlug, listJobs, type JobsDatabase } from "./queries";
 
 interface MemoryDatabase {
   exec(sql: string): void;
@@ -104,6 +104,8 @@ describe("listJobs", () => {
         slug TEXT NOT NULL,
         location TEXT,
         remote TEXT NOT NULL,
+        description_html TEXT NOT NULL DEFAULT '',
+        apply_url TEXT NOT NULL DEFAULT '',
         salary_text TEXT,
         exclusivity TEXT NOT NULL DEFAULT 'unknown',
         posted_at TEXT,
@@ -250,5 +252,61 @@ describe("listJobs", () => {
       total: 5,
       totalPages: 3,
     });
+  });
+
+  it("loads a listed job by tenant and slug with its full description", async () => {
+    insertJob(sqlite, {
+      id: "job-detail",
+      companyId: "studio-a",
+      title: "Lead Level Designer",
+      remote: "hybrid",
+      exclusivity: "hidden_from_linkedin",
+    });
+    sqlite
+      .prepare(
+        "UPDATE jobs SET slug = ?, description_html = ?, apply_url = ? WHERE id = ?",
+      )
+      .run(
+        "lead-level-designer",
+        "<p>Design every mission and encounter.</p>",
+        "https://alpha.example/jobs/lead-level-designer",
+        "job-detail",
+      );
+
+    const job = await getJobBySlug(db, "gaming", "lead-level-designer");
+
+    expect(job).toEqual({
+      id: "job-detail",
+      slug: "lead-level-designer",
+      title: "Lead Level Designer",
+      companyName: "Alpha Studio",
+      location: "London",
+      remote: "hybrid",
+      descriptionHtml: "<p>Design every mission and encounter.</p>",
+      applyUrl: "https://alpha.example/jobs/lead-level-designer",
+      salaryText: null,
+      exclusivity: "hidden_from_linkedin",
+      postedAt: "2026-09-01T00:00:00Z",
+    });
+  });
+
+  it("does not load unlisted jobs or jobs from another tenant", async () => {
+    insertJob(sqlite, {
+      id: "unlisted-detail",
+      companyId: "studio-a",
+      title: "Closed Role",
+      remote: "remote",
+      listed: 0,
+    });
+    insertJob(sqlite, {
+      id: "other-detail",
+      tenantId: "other",
+      companyId: "studio-other",
+      title: "Other Role",
+      remote: "remote",
+    });
+
+    await expect(getJobBySlug(db, "gaming", "unlisted-detail")).resolves.toBeNull();
+    await expect(getJobBySlug(db, "gaming", "other-detail")).resolves.toBeNull();
   });
 });

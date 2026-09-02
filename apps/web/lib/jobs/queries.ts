@@ -14,7 +14,7 @@ export interface JobsDatabase {
 
 export interface JobsStatement {
   bind(...values: unknown[]): JobsStatement;
-  first<T = unknown>(column: string): Promise<T | null>;
+  first<T = unknown>(column?: string): Promise<T | null>;
   all<T = Record<string, unknown>>(): Promise<{ results: T[] }>;
 }
 
@@ -39,6 +39,20 @@ export interface JobListResult {
   totalPages: number;
 }
 
+export interface JobDetail {
+  id: string;
+  slug: string;
+  title: string;
+  companyName: string;
+  location: string | null;
+  remote: string;
+  descriptionHtml: string;
+  applyUrl: string;
+  salaryText: string | null;
+  exclusivity: string;
+  postedAt: string | null;
+}
+
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
@@ -59,6 +73,37 @@ function ftsQuery(value: string) {
     .filter(Boolean)
     .map((term) => `"${term.replaceAll('"', '""')}"`)
     .join(" ");
+}
+
+export async function getJobBySlug(
+  db: JobsDatabase,
+  tenantId: string,
+  slug: string,
+): Promise<JobDetail | null> {
+  return db
+    .prepare(
+      `SELECT
+        j.id,
+        j.slug,
+        j.title,
+        c.name AS companyName,
+        j.location,
+        j.remote,
+        j.description_html AS descriptionHtml,
+        j.apply_url AS applyUrl,
+        j.salary_text AS salaryText,
+        j.exclusivity,
+        j.posted_at AS postedAt
+      FROM jobs j
+      JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
+      WHERE j.tenant_id = ?
+        AND j.slug = ?
+        AND j.listed = 1
+        AND c.listed = 1
+      LIMIT 1`,
+    )
+    .bind(tenantId, slug)
+    .first<JobDetail>();
 }
 
 export async function listJobs(
