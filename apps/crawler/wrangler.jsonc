@@ -1,0 +1,64 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gaming-crawler",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "triggers": {
+    "crons": ["0 */6 * * *"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gaming-jobs",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "LOCKS",
+      "id": "00000000000000000000000000000000"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "gaming-jobs-files"
+    }
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "CRAWL_CAREER",
+        "queue": "crawl-career"
+      },
+      {
+        "binding": "CRAWL_LINKEDIN",
+        "queue": "crawl-linkedin"
+      },
+      {
+        "binding": "CRAWL_INDEED",
+        "queue": "crawl-indeed"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "crawl-career",
+        "max_batch_size": 1
+      },
+      {
+        "queue": "crawl-linkedin",
+        "max_batch_size": 1
+      },
+      {
+        "queue": "crawl-indeed",
+        "max_batch_size": 1
+      }
+    ]
+  }
+}

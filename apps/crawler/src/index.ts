@@ -1,1 +1,5 @@
-export const CRAWLER_PACKAGE = "@gaming/crawler";
+export default {
+  fetch() {
+    return new Response("Crawler worker");
+  },
+};
