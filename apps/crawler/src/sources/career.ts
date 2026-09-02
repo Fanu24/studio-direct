@@ -1,13 +1,19 @@
 import type { JobDraft, JobSource, QueueMessage } from "@gaming/shared";
 
+import { fetchPublicText } from "../http/public-fetch";
 import { fetchGreenhouseBoard } from "./greenhouse";
+import { parseJobPostingJsonLd } from "./jsonld";
 import { fetchLeverPostings } from "./lever";
+
+const PRODUCT_USER_AGENT =
+  "StudioDirectBot/1.0 (+https://studio-direct.example/bot; jobs@studio-direct.example)";
 
 export interface CareerCompany {
   id: string;
   name: string;
   ats_type: string | null;
   ats_slug: string | null;
+  career_url?: string | null;
 }
 
 export interface CareerCompanyRepo {
@@ -54,6 +60,30 @@ export class CareerJobSource implements JobSource {
       );
     }
 
-    throw new Error(`Unsupported career ATS type: ${company.ats_type ?? "none"}`);
+    if (company.ats_type !== null) {
+      throw new Error(`Unsupported career ATS type: ${company.ats_type}`);
+    }
+
+    if (!company.career_url) {
+      throw new Error(`Company has no career URL: ${company.id}`);
+    }
+
+    const response = await fetchPublicText(
+      company.career_url,
+      this.fetchImpl,
+      PRODUCT_USER_AGENT,
+    );
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(
+        `Career page request failed with status ${response.status}`,
+      );
+    }
+
+    return parseJobPostingJsonLd(
+      response.body,
+      company.name,
+      company.career_url,
+    );
   }
 }
