@@ -50,6 +50,25 @@ describe("buildJobPostingJsonLd", () => {
 
     expect(result.description).toBe(descriptionHtml);
   });
+
+  it("strips executable markup from the job description", () => {
+    const result = buildJobPostingJsonLd(
+      {
+        slug: "security-engineer",
+        title: "Security Engineer",
+        descriptionHtml:
+          '<h2>The role</h2><script>alert("xss")</script><p><img src="x" onerror="alert(1)">Keep this text.</p>',
+        applyUrl: "https://studio.example/jobs/security",
+        companyName: "Example Studio",
+      },
+      "https://jobs.example.com",
+    );
+
+    expect(result.description).toContain("<h2>The role</h2>");
+    expect(result.description).toContain("Keep this text.");
+    expect(result.description).not.toContain("<script");
+    expect(result.description).not.toContain("onerror");
+  });
 });
 
 describe("showBadge", () => {

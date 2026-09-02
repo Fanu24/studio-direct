@@ -10,6 +10,7 @@ import {
   getJobBySlug,
   type JobsDatabase,
 } from "../../../lib/jobs/queries";
+import { sanitizeJobDescriptionHtml } from "../../../lib/jobs/sanitize-description";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,7 @@ export default async function JobPage({
     notFound();
   }
 
+  const descriptionHtml = sanitizeJobDescriptionHtml(job.descriptionHtml);
   const jsonLd = buildJobPostingJsonLd(job, requestOrigin(await headers()));
 
   return (
@@ -79,7 +81,7 @@ export default async function JobPage({
 
       <section aria-labelledby="job-description">
         <h2 id="job-description">Job description</h2>
-        <div dangerouslySetInnerHTML={{ __html: job.descriptionHtml }} />
+        <div dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
       </section>
 
       <form action="/api/unlock" method="post">
