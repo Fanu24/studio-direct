@@ -1,3 +1,4 @@
+import { HUB_ROLE_SLUGS, hubSlugLabel } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -56,6 +57,10 @@ export default async function JobPage({
 
   const descriptionHtml = sanitizeJobDescriptionHtml(job.descriptionHtml);
   const jsonLd = buildJobPostingJsonLd(job, requestOrigin(await headers()));
+  const normalizedTitle = job.title.toLowerCase().replace(/[^a-z0-9]+/g, " ");
+  const matchingHubs = HUB_ROLE_SLUGS.filter((role) =>
+    role.split("-").every((term) => normalizedTitle.includes(term)),
+  );
 
   return (
     <main>
@@ -70,7 +75,9 @@ export default async function JobPage({
         <Link href="/jobs">All jobs</Link>
         <h1>{job.title}</h1>
         <p>
-          {job.companyName} · {job.remote}
+          <Link href={`/companies/${job.companySlug}`}>{job.companyName}</Link>
+          {" · "}
+          {job.remote}
           {job.location ? ` · ${job.location}` : ""}
         </p>
         {job.salaryText ? <p>{job.salaryText}</p> : null}
@@ -83,6 +90,20 @@ export default async function JobPage({
         <h2 id="job-description">Job description</h2>
         <div dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
       </section>
+
+      {matchingHubs.length > 0 ? (
+        <nav aria-label="Related job hubs">
+          {matchingHubs.map((role) => (
+            <span key={role}>
+              <Link href={`/remote-${role}-jobs`}>
+                Remote {hubSlugLabel(role)} jobs
+              </Link>
+              {" · "}
+              <Link href={`/skills/${role}`}>{hubSlugLabel(role)} skill jobs</Link>
+            </span>
+          ))}
+        </nav>
+      ) : null}
 
       <form action="/api/unlock" method="post">
         <input name="jobId" type="hidden" value={job.id} />

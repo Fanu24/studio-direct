@@ -1,7 +1,12 @@
 import { createRequire } from "node:module";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { getJobBySlug, listJobs, type JobsDatabase } from "./queries";
+import {
+  getCompanyBySlug,
+  getJobBySlug,
+  listJobs,
+  type JobsDatabase,
+} from "./queries";
 
 interface MemoryDatabase {
   exec(sql: string): void;
@@ -94,6 +99,7 @@ describe("listJobs", () => {
         id TEXT PRIMARY KEY,
         tenant_id TEXT NOT NULL,
         name TEXT NOT NULL,
+        name_norm TEXT NOT NULL,
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (
@@ -120,9 +126,9 @@ describe("listJobs", () => {
         title, description, company_name
       );
       INSERT INTO companies VALUES
-        ('studio-a', 'gaming', 'Alpha Studio', 1),
-        ('studio-b', 'gaming', 'Beta Forge', 1),
-        ('studio-other', 'other', 'Other Studio', 1);
+        ('studio-a', 'gaming', 'Alpha Studio', 'alpha', 1),
+        ('studio-b', 'gaming', 'Beta Forge', 'betaforge', 1),
+        ('studio-other', 'other', 'Other Studio', 'other', 1);
     `);
     db = createD1(sqlite);
   });
@@ -164,6 +170,7 @@ describe("listJobs", () => {
     const result = await listJobs(db, "gaming", {});
 
     expect(result.jobs.map((job) => job.id)).toEqual(["hybrid", "remote"]);
+    expect(result.jobs.map((job) => job.companySlug)).toEqual(["betaforge", "alpha"]);
     expect(result.total).toBe(2);
   });
 
@@ -232,6 +239,25 @@ describe("listJobs", () => {
     expect(result.total).toBe(1);
   });
 
+  it("filters company hub jobs by exact company id", async () => {
+    insertJob(sqlite, {
+      id: "alpha",
+      companyId: "studio-a",
+      title: "Gameplay Programmer",
+      remote: "remote",
+    });
+    insertJob(sqlite, {
+      id: "beta",
+      companyId: "studio-b",
+      title: "Tools Programmer",
+      remote: "remote",
+    });
+
+    const result = await listJobs(db, "gaming", { companyId: "studio-a" });
+
+    expect(result.jobs.map((job) => job.id)).toEqual(["alpha"]);
+  });
+
   it("paginates results and reports page metadata", async () => {
     for (let index = 1; index <= 5; index += 1) {
       insertJob(sqlite, {
@@ -280,6 +306,7 @@ describe("listJobs", () => {
       slug: "lead-level-designer",
       title: "Lead Level Designer",
       companyName: "Alpha Studio",
+      companySlug: "alpha",
       location: "London",
       remote: "hybrid",
       descriptionHtml: "<p>Design every mission and encounter.</p>",
@@ -308,5 +335,20 @@ describe("listJobs", () => {
 
     await expect(getJobBySlug(db, "gaming", "unlisted-detail")).resolves.toBeNull();
     await expect(getJobBySlug(db, "gaming", "other-detail")).resolves.toBeNull();
+  });
+
+  it("loads only listed companies by a slug derived from name_norm", async () => {
+    sqlite.exec(
+      "INSERT INTO companies VALUES ('hidden', 'gaming', 'Hidden Studio', 'hidden', 0)",
+    );
+
+    await expect(getCompanyBySlug(db, "gaming", "beta-forge")).resolves.toBeNull();
+    await expect(getCompanyBySlug(db, "gaming", "betaforge")).resolves.toEqual({
+      id: "studio-b",
+      name: "Beta Forge",
+      slug: "betaforge",
+    });
+    await expect(getCompanyBySlug(db, "gaming", "hidden")).resolves.toBeNull();
+    await expect(getCompanyBySlug(db, "gaming", "other")).resolves.toBeNull();
   });
 });

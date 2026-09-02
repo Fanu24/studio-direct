@@ -1,7 +1,10 @@
+import { slugTitle } from "@gaming/shared";
+
 export interface JobListFilters {
   hidden?: boolean;
   q?: string;
   company?: string;
+  companyId?: string;
   seniority?: string;
   source?: string;
   page?: number;
@@ -24,6 +27,7 @@ export interface JobListItem {
   title: string;
   companyId: string;
   companyName: string;
+  companySlug: string;
   location: string | null;
   remote: string;
   salaryText: string | null;
@@ -44,6 +48,7 @@ export interface JobDetail {
   slug: string;
   title: string;
   companyName: string;
+  companySlug: string;
   location: string | null;
   remote: string;
   descriptionHtml: string;
@@ -51,6 +56,12 @@ export interface JobDetail {
   salaryText: string | null;
   exclusivity: string;
   postedAt: string | null;
+}
+
+export interface CompanyHub {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -80,13 +91,14 @@ export async function getJobBySlug(
   tenantId: string,
   slug: string,
 ): Promise<JobDetail | null> {
-  return db
+  const row = await db
     .prepare(
       `SELECT
         j.id,
         j.slug,
         j.title,
         c.name AS companyName,
+        c.name_norm AS companyNameNorm,
         j.location,
         j.remote,
         j.description_html AS descriptionHtml,
@@ -103,7 +115,32 @@ export async function getJobBySlug(
       LIMIT 1`,
     )
     .bind(tenantId, slug)
-    .first<JobDetail>();
+    .first<JobDetail & { companyNameNorm: string }>();
+
+  if (!row) return null;
+  const { companyNameNorm, ...job } = row;
+  return { ...job, companySlug: slugTitle(companyNameNorm) };
+}
+
+export async function getCompanyBySlug(
+  db: JobsDatabase,
+  tenantId: string,
+  slug: string,
+): Promise<CompanyHub | null> {
+  if (slugTitle(slug) !== slug) return null;
+
+  const company = await db
+    .prepare(
+      `SELECT id, name, name_norm AS nameNorm
+      FROM companies
+      WHERE tenant_id = ? AND name_norm = ? AND listed = 1
+      LIMIT 1`,
+    )
+    .bind(tenantId, slug)
+    .first<{ id: string; name: string; nameNorm: string }>();
+  return company
+    ? { id: company.id, name: company.name, slug: slugTitle(company.nameNorm) }
+    : null;
 }
 
 export async function listJobs(
@@ -144,6 +181,11 @@ export async function listJobs(
     whereBindings.push(containsPattern(filters.company.trim()));
   }
 
+  if (filters.companyId?.trim()) {
+    conditions.push("j.company_id = ?");
+    whereBindings.push(filters.companyId.trim());
+  }
+
   if (filters.seniority?.trim()) {
     conditions.push("LOWER(j.title) LIKE LOWER(?) ESCAPE '\\'");
     whereBindings.push(containsPattern(filters.seniority.trim()));
@@ -171,6 +213,7 @@ export async function listJobs(
         j.title,
         j.company_id AS companyId,
         c.name AS companyName,
+        c.name_norm AS companyNameNorm,
         j.location,
         j.remote,
         j.salary_text AS salaryText,
@@ -181,10 +224,13 @@ export async function listJobs(
       LIMIT ? OFFSET ?`,
     )
     .bind(...bindings, pageSize, (page - 1) * pageSize)
-    .all<JobListItem>();
+    .all<JobListItem & { companyNameNorm: string }>();
 
   return {
-    jobs: rows.results,
+    jobs: rows.results.map(({ companyNameNorm, ...job }) => ({
+      ...job,
+      companySlug: slugTitle(companyNameNorm),
+    })),
     page,
     pageSize,
     total,

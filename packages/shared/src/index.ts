@@ -1,6 +1,13 @@
 export const PACKAGE_NAME = "@gaming/shared";
 
 export {
+  HUB_ROLE_SLUGS,
+  hubSlugLabel,
+  isHubRoleSlug,
+  parseRoleHubSegment,
+} from "./hubs.ts";
+export type { HubRoleSlug } from "./hubs.ts";
+export {
   GAMING_ROLES,
   REMOTE_GAMING_QUERIES,
   WORK_LOCATION_MODIFIERS,
