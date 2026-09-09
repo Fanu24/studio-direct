@@ -47,6 +47,7 @@ export default async function HighestPaidDesignersJobsPage({
     filters: FILTERS,
     lead: "Design listings that published a salary minimum and maximum, ordered by that band.",
     path: PATH,
+    ranked: true,
     searchParams,
     title: TITLE,
   });

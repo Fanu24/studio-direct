@@ -23,6 +23,7 @@ export async function RankingJobsPage({
   countLabel,
   extraChips,
   searchParams,
+  ranked = false,
 }: {
   title: string;
   path: string;
@@ -34,9 +35,20 @@ export async function RankingJobsPage({
   countLabel?: string;
   extraChips?: ReactNode;
   searchParams: Promise<{ page?: string }>;
+  /**
+   * True only when `filters` actually orders the slice by a ranked metric
+   * (currently `orderBy: "salary"`). Every caller of this component shares
+   * the same JobBoard, but not every one of them is a ranking: the
+   * "most popular" and "top web3 jobs" pages fall back to the catalog's
+   * default order (featured, then most recently posted), which is a
+   * recency feed, not a ranking - a rank number there would be a false
+   * claim about the data. Leave this false for those callers.
+   */
+  ranked?: boolean;
 }) {
   const page = catalogPageNumber((await searchParams).page);
   const { result, selected } = await loadCatalogJobs({ ...filters, page });
+  const rankOffset = ranked ? (result.page - 1) * result.pageSize : undefined;
 
   return (
     <main className="surface surface--data board-main">
@@ -62,6 +74,7 @@ export async function RankingJobsPage({
         emptyMessage={emptyMessage}
         jobs={result.jobs}
         pager={<CatalogPager path={path} result={result} />}
+        rankOffset={rankOffset}
         selected={selected}
       />
       <RelatedBrowseLinks tag={filters.tag} />

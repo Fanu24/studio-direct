@@ -322,6 +322,66 @@ main.board-main {
   max-width: 100%;
 }
 
+/* ---------------------------------------------------------------------------
+   Ranked board: JobBoard's optional `rankOffset` prop (lane 2) overlays a
+   rank number inside the job column instead of adding a real table column,
+   so the five nth-child width rules above never have to shift for a sixth.
+   The overlay and its reserved space are styled here, on this side, since
+   board.css owns every board-* class regardless of who renders the markup.
+
+   .board-col-job gets a scoped `position: relative` plus reserved left
+   padding only when the table carries `.board-table--ranked`, so an
+   unranked board (every other page that embeds JobBoard) is unaffected and
+   a long title never runs underneath the number - it wraps inside the
+   padded content box instead. 36px covers up to three digits at this font
+   size with room to spare; the largest ranked page here tops out at a few
+   hundred jobs.
+   --------------------------------------------------------------------------- */
+
+.board-table--ranked .board-col-job {
+  position: relative;
+  padding-left: 32px;
+}
+
+.board-row__rank {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Top three: a quiet accent wash and a stronger rank figure - no medals,
+   same treatment as .salary-table--ranked in nodework.css. Keyed off row
+   position within the rendered page (row 1-3 of whatever page is on
+   screen), so it reads correctly on an unpaginated top-N page and on page 1
+   of a paginated one; a later page's first three rows get the same quiet
+   emphasis even though their rank numbers are no longer 1-3 - a cosmetic
+   simplification, not a data error, since the rank figure itself always
+   comes from rankOffset and is never wrong. */
+.board-table--ranked .board-tr:nth-child(-n + 3) {
+  background: var(--accent-soft);
+}
+
+.board-table--ranked .board-tr:nth-child(-n + 3):hover {
+  background: var(--accent-soft);
+}
+
+.board-table--ranked .board-tr:nth-child(-n + 3) .board-row__rank {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.board-table--ranked .board-tr:nth-child(1) .board-row__rank {
+  color: var(--accent);
+}
+
 .board__pane {
   padding: 0;
   background: var(--bg);
@@ -552,6 +612,22 @@ main.board-main {
 
   .board-col-job {
     grid-area: job;
+  }
+
+  /* .board-tr td padding is reset to 0 just above; re-assert the reserved
+     rank gutter explicitly here too (belt-and-suspenders alongside the
+     higher-specificity base rule) since this is the layout that matters
+     most at 360-390px. The job area now spans three grid rows (it sits
+     beside posted/location/pay stacked in the second column), so the
+     number is pinned near the top instead of vertically centred - that is
+     where the mark and title actually start. */
+  .board-table--ranked .board-col-job {
+    padding-left: 32px;
+  }
+
+  .board-table--ranked .board-row__rank {
+    top: 2px;
+    transform: none;
   }
 
   .board-col-posted {

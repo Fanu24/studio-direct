@@ -119,6 +119,7 @@ export default async function HighestPayingWeb3JobsPage() {
       <JobBoard
         emptyMessage="No jobs with a published salary band yet."
         jobs={listed.jobs}
+        rankOffset={0}
         selected={selected}
       />
       <section className="container">

@@ -47,6 +47,7 @@ export default async function HighestPaidNonTechJobsPage({
       filters: FILTERS,
       lead: "Non-tech listings that published a salary minimum and maximum, ordered by that band.",
       path: PATH,
+      ranked: true,
       searchParams,
       title: TITLE,
     });

@@ -80,6 +80,7 @@ export default async function HighestPaidDeveloperJobsPage({
         emptyMessage="No jobs with a published salary band right now."
         jobs={result.jobs}
         pager={<CatalogPager path={PATH} result={result} />}
+        rankOffset={(result.page - 1) * result.pageSize}
         selected={selected}
       />
       <RelatedBrowseLinks />
