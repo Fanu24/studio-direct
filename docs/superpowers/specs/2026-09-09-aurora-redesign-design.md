@@ -11,9 +11,15 @@ that is genuinely fluid, and a UI that stays legible on every device. Structural
 parity with web3.career is **no longer** the acceptance bar: pages may be
 restructured freely.
 
-The acceptance bar is now: every one of the 17 distinct templates renders
-correctly and beautifully across 3 browser engines and 6 viewports, with zero
-Critical and zero High defects, and the existing test suite green.
+The acceptance bar is now: every distinct template renders correctly and
+beautifully across 3 browser engines and 6 viewports, with zero Critical and
+zero High defects, and the existing test suite green.
+
+Corrected 2026-09-10: this document said 17 templates. The QA harness counted
+**21**, derived from the distinct root wrappers in the component tree rather
+than from route names, and found that several routes which look like separate
+templates are redirect shims. The inventory that binds is
+`apps/web/qa/templates.mjs`, not this sentence.
 
 ## What this is not
 
@@ -63,7 +69,8 @@ read as light, and light needs something to sit on.
 
 --accent:        #FF2D87   /* primary, retained brand */
 --accent-strong: #FF5AA3
---accent-ink:    #FFFFFF
+--accent-ink:    #06070C   /* corrected: #FFFFFF on --accent is 3.51:1 and fails
+                              AA for normal text; this near-black is 5.73:1 */
 --accent-soft:   rgb(255 45 135 / 0.14)
 --accent-line:   rgb(255 45 135 / 0.42)
 
@@ -239,7 +246,13 @@ Primitives, each a class:
 
 **Scroll-driven, with a real fallback.** `.m-reveal` and `.m-parallax` are
 implemented with `animation-timeline: view()`, which needs no JavaScript at all.
-Chromium supports it; WebKit and Firefox do not, at time of writing.
+
+Corrected 2026-09-10, after QA measured it with `CSS.supports` rather than
+trusting this document: **Chromium and WebKit 26.6 both support it. Only Firefox
+does not.** The original text here claimed WebKit lacked it, which sent the
+motion work looking for two engines' worth of fallback behaviour that only one
+engine needs. Firefox is the sole consumer of the IntersectionObserver path, and
+therefore the only engine where a bug in that path can strand content.
 
 ```css
 @supports (animation-timeline: view()) {
