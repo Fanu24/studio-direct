@@ -59,7 +59,7 @@ export default async function LegacyApplyPage({
   const next = jobApplyHref(job);
 
   return (
-    <main className="board-main apply-main">
+    <main className="surface surface--data board-main apply-main">
       <p>
         <Link className="text-link" href={jobPublicHref(job)}>
           Back to the listing

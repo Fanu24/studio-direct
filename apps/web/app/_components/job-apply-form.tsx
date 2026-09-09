@@ -26,32 +26,54 @@ export function JobApplyForm({ jobId, next, sent, error }: ApplyFormProps) {
         </label>
       </p>
       {error ? (
-        <p className="apply-form__err" role="alert">
+        <p className="notice notice--danger apply-form__err" role="alert">
           Check your name and email, then submit again.
         </p>
       ) : null}
-      <label htmlFor="apply-name">
-        <span>Full name</span>
-        <input autoComplete="name" id="apply-name" name="name" required />
-      </label>
-      <label htmlFor="apply-email">
-        <span>Email</span>
-        <input autoComplete="email" id="apply-email" name="email" required type="email" />
-      </label>
-      <label htmlFor="apply-url">
-        <span>Portfolio or LinkedIn</span>
+      <div className="field">
+        <label className="field__label" htmlFor="apply-name">
+          Full name
+        </label>
+        <input
+          autoComplete="name"
+          className="field__input"
+          id="apply-name"
+          name="name"
+          required
+        />
+      </div>
+      <div className="field">
+        <label className="field__label" htmlFor="apply-email">
+          Email
+        </label>
+        <input
+          autoComplete="email"
+          className="field__input"
+          id="apply-email"
+          name="email"
+          required
+          type="email"
+        />
+      </div>
+      <div className="field">
+        <label className="field__label" htmlFor="apply-url">
+          Portfolio or LinkedIn <span className="field__optional">(optional)</span>
+        </label>
         <input
           autoComplete="url"
+          className="field__input"
           id="apply-url"
           name="profileUrl"
           placeholder="https://"
           type="url"
         />
-      </label>
-      <label htmlFor="apply-note">
-        <span>Note</span>
-        <textarea id="apply-note" name="note" rows={5} />
-      </label>
+      </div>
+      <div className="field">
+        <label className="field__label" htmlFor="apply-note">
+          Note <span className="field__optional">(optional)</span>
+        </label>
+        <textarea className="field__input" id="apply-note" name="note" rows={5} />
+      </div>
       <button className="button button--primary button--block" type="submit">
         Submit application
       </button>

@@ -203,7 +203,7 @@ export default async function HomePage({
         <section className="home-section m-reveal" data-reveal data-reveal-delay="3">
           <div className="container">
             <JobBoard
-              emptyMessage="No jobs imported yet. Connect WEB3_CAREER_API_TOKEN and run the crawler."
+              emptyMessage="No roles are listed right now. New ones appear here as soon as we index them."
               details={jobDetails}
               jobs={listed.jobs}
               pickedId={query.job ?? null}

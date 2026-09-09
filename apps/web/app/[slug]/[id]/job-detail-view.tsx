@@ -15,7 +15,9 @@ import {
   type JobListItem,
 } from "../../../lib/jobs/queries";
 import { sanitizeJobDescriptionHtml } from "../../../lib/jobs/sanitize-description";
+import { LockIcon } from "../../_components/icons";
 import { remoteLabel } from "../../_components/job-card";
+import { UnlockApplyForm } from "../../jobs/[slug]/unlock-form";
 
 /**
  * Everything on a job page below the breadcrumbs, shared by the canonical
@@ -148,6 +150,11 @@ export function JobDetailBody({
   const salary = jobSalaryLabel(job);
   const posted = formatPostedLong(job.postedAt);
   const age = postedAge(job.postedAt);
+  // Exclusive listings (not sighted on LinkedIn) route through the unlock quota instead of
+  // the plain on-site form: the studio's own apply link is only ever revealed by /api/unlock,
+  // server-side, after login + onboarding + the weekly quota check - it never reaches this
+  // markup. Every other listing keeps the always-available on-site apply form unchanged.
+  const gated = showBadge(job.exclusivity);
 
   const tag = sections.primaryTag;
   const label = tag ? tagLabel(tag) : null;
@@ -159,7 +166,7 @@ export function JobDetailBody({
 
   return (
     <>
-      <header className="jd-hero">
+      <header className="jd-hero m-reveal" data-reveal>
         <h1 className="jd-hero__title">
           <span className="jd-hero__hiring">{job.companyName} is hiring</span>
           {job.title}
@@ -170,9 +177,12 @@ export function JobDetailBody({
             {job.companyName}
           </Link>
         </p>
-        {showBadge(job.exclusivity) ? (
+        {gated ? (
           <p className="jd-hero__badge">
-            <span className="badge badge--lg" title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>
+            <span
+              className="badge badge--honest badge--lg"
+              title={LINKEDIN_EXCLUSIVITY_TOOLTIP}
+            >
               Not on LinkedIn
             </span>
           </p>
@@ -193,7 +203,7 @@ export function JobDetailBody({
       </header>
 
       <div className="jd-layout">
-        <article className="jd-main">
+        <article className="jd-main m-reveal" data-reveal data-reveal-delay="1">
           <section aria-labelledby="job-description" className="jd-description">
             <h2 className="jd-section-title" id="job-description">
               Job description
@@ -205,15 +215,28 @@ export function JobDetailBody({
           </section>
 
           <div className="jd-apply-inline">
-            <p className="jd-apply-inline__label">Apply for this role:</p>
-            <Link className="button button--primary" href={applyHref}>
-              Apply now
-            </Link>
+            {gated ? (
+              <>
+                <p className="jd-apply-inline__label">
+                  <LockIcon size={14} /> This role is not on LinkedIn
+                </p>
+                <a className="button button--primary" href="#jd-apply-title">
+                  Unlock the apply link
+                </a>
+              </>
+            ) : (
+              <>
+                <p className="jd-apply-inline__label">Apply for this role:</p>
+                <Link className="button button--primary" href={applyHref}>
+                  Apply now
+                </Link>
+              </>
+            )}
           </div>
         </article>
 
-        <aside aria-labelledby="jd-apply-title" className="jd-aside">
-          <div className="jd-apply apply-public">
+        <aside aria-labelledby="jd-apply-title" className="jd-aside m-reveal" data-reveal data-reveal-delay="2">
+          <div className={`jd-apply apply-public${gated ? " jd-apply--gated" : ""}`}>
             <p className="jd-apply__studio">
               <span aria-hidden="true" className="board-row__mark">
                 {companyMark(job.companyName)}
@@ -223,7 +246,7 @@ export function JobDetailBody({
               </Link>
             </p>
             <h2 className="jd-apply__title" id="jd-apply-title">
-              Apply
+              {gated ? "Unlock to apply" : "Apply"}
             </h2>
             <dl className="jd-apply__facts">
               <div>
@@ -243,13 +266,30 @@ export function JobDetailBody({
                 </div>
               ) : null}
             </dl>
-            <Link className="button button--primary button--block" href={applyHref}>
-              Apply now
-            </Link>
-            <p className="small muted">
-              Your application stays on Nodework. We never hand a profile to a studio, and
-              the recruiter talent pool is a separate opt-in that is off by default.
-            </p>
+            {gated ? (
+              <div className="jd-unlock-gate">
+                <p className="jd-unlock-gate__lead">
+                  This studio does not post to LinkedIn - the apply link only exists here.
+                  Unlocking reveals it and sends you straight to the studio&apos;s own page.
+                </p>
+                <ul className="jd-unlock-gate__list">
+                  <li>The real apply link, not a redirect through a public board</li>
+                  <li>Up to 5 free unlocks every UTC week, unlimited on a paid plan</li>
+                  <li>One unlock per job - reopen it any time, it stays unlocked</li>
+                </ul>
+                <UnlockApplyForm jobId={job.id} next={jobPublicHref(job)} />
+              </div>
+            ) : (
+              <>
+                <Link className="button button--primary button--block" href={applyHref}>
+                  Apply now
+                </Link>
+                <p className="small muted">
+                  Your application stays on Nodework. We never hand a profile to a studio, and
+                  the recruiter talent pool is a separate opt-in that is off by default.
+                </p>
+              </>
+            )}
             <hr className="jd-apply__rule" />
             <p className="jd-apply__more-label">More roles like this</p>
             <ul className="jd-apply__more">
@@ -280,6 +320,19 @@ export function JobDetailBody({
         </aside>
       </div>
 
+      <div className="jd-apply-fixed">
+        <span className="jd-apply-fixed__title">{job.title}</span>
+        {gated ? (
+          <a className="button button--primary jd-apply-fixed__btn" href="#jd-apply-title">
+            <LockIcon size={16} /> Unlock link
+          </a>
+        ) : (
+          <Link className="button button--primary jd-apply-fixed__btn" href={applyHref}>
+            Apply now
+          </Link>
+        )}
+      </div>
+
       <footer className="jd-foot">
         {job.tags.length > 0 ? (
           <nav aria-labelledby="related-hubs" className="jd-related">
@@ -305,7 +358,7 @@ export function JobDetailBody({
       </footer>
 
       {tag && label && roleRange && sections.salary ? (
-        <section aria-labelledby="jd-salary" className="jd-panel">
+        <section aria-labelledby="jd-salary" className="jd-panel m-reveal" data-reveal>
           <h2 className="jd-panel__title" id="jd-salary">
             {label} salary
           </h2>
@@ -325,7 +378,7 @@ export function JobDetailBody({
       ) : null}
 
       {sections.relatedJobs.length > 0 && label && tag ? (
-        <section aria-labelledby="jd-related-jobs" className="jd-panel">
+        <section aria-labelledby="jd-related-jobs" className="jd-panel m-reveal" data-reveal>
           <h2 className="jd-panel__title" id="jd-related-jobs">
             More {label} jobs
           </h2>
@@ -339,7 +392,7 @@ export function JobDetailBody({
       ) : null}
 
       {sections.companyJobs.length > 0 ? (
-        <section aria-labelledby="jd-company-jobs" className="jd-panel">
+        <section aria-labelledby="jd-company-jobs" className="jd-panel m-reveal" data-reveal>
           <h2 className="jd-panel__title" id="jd-company-jobs">
             Other roles at {job.companyName}
           </h2>
@@ -353,7 +406,11 @@ export function JobDetailBody({
       ) : null}
 
       {hireHref && label ? (
-        <section aria-labelledby="jd-hire" className="jd-panel jd-panel--hire">
+        <section
+          aria-labelledby="jd-hire"
+          className="jd-panel jd-panel--hire m-reveal"
+          data-reveal
+        >
           <h2 className="jd-panel__title" id="jd-hire">
             Hiring {label}?
           </h2>

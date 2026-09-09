@@ -1,3 +1,4 @@
+import { SENIORITY_SLUGS, tagLabel } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -14,6 +15,7 @@ import {
 import { JobBoard } from "../_components/job-board";
 import { TagChips } from "../_components/job-row";
 import { JsonLd } from "../_components/json-ld";
+import { LINKEDIN_EXCLUSIVITY_TOOLTIP } from "../../lib/copy";
 import { buildLandingDescription, buildLandingTitle } from "../../lib/jobs/landing-meta";
 import {
   countNewJobs,
@@ -50,13 +52,25 @@ const loadJobsData = cache(
     seniority: string | undefined,
     tag: string | undefined,
     remoteOnly: boolean,
+    source: string | undefined,
+    hidden: boolean,
     page: number | undefined,
     pageSize: number | undefined,
   ) => {
     const { env } = await getCloudflareContext({ async: true });
     const db = (env as CloudflareEnv & { DB: JobsDatabase }).DB;
     const tenantId = await requireTenantId(db);
-    const filters: JobListFilters = { q, company, seniority, tag, remoteOnly, page, pageSize };
+    const filters: JobListFilters = {
+      q,
+      company,
+      seniority,
+      tag,
+      remoteOnly,
+      source,
+      hidden,
+      page,
+      pageSize,
+    };
     const result = await listJobs(db, tenantId, filters);
     // One query for every row's detail, not one per row: the board needs them all to
     // switch panes without navigating, and `selected` is just the first of them.
@@ -74,9 +88,34 @@ function loadJobs(params: JobsSearchParams) {
     first(params.seniority),
     first(params.tag),
     first(params.remote) === "1",
+    first(params.source),
+    first(params.hidden) === "1",
     positiveNumber(params.page),
     positiveNumber(params.pageSize),
   );
+}
+
+/** Seniority chips: the fixed, enumerable facet - unlike company, which is open-ended and
+ * only ever shown as an already-active, removable chip in the filter ribbon below. */
+const SENIORITY_OPTIONS = SENIORITY_SLUGS.map((slug) => ({ slug, label: tagLabel(slug) }));
+
+/**
+ * Toggle one query param on `/jobs`, preserving every other filter and dropping `page`
+ * (a changed filter invalidates whatever page you were on). Selecting the same value
+ * again clears it, so every filter chip in the bar also acts as its own "off" switch.
+ */
+function toggleFilterHref(searchParams: JobsSearchParams, key: string, value: string): string {
+  const params = new URLSearchParams();
+  const isActive = first(searchParams[key]) === value;
+
+  for (const [k, v] of Object.entries(searchParams)) {
+    if (k === "page" || k === key || v === undefined) continue;
+    for (const item of Array.isArray(v) ? v : [v]) params.append(k, item);
+  }
+  if (!isActive) params.set(key, value);
+
+  const query = params.toString();
+  return query ? `/jobs?${query}` : "/jobs";
 }
 
 export async function generateMetadata({
@@ -164,13 +203,15 @@ export default async function JobsPage({
   const activeChips = [
     filters.q ? { key: "q", label: `Search: ${filters.q}` } : null,
     filters.company ? { key: "company", label: `Company: ${filters.company}` } : null,
-    filters.seniority ? { key: "seniority", label: `Title: ${filters.seniority}` } : null,
+    filters.seniority ? { key: "seniority", label: `Title: ${tagLabel(filters.seniority)}` } : null,
     filters.tag ? { key: "tag", label: `Tag: ${filters.tag}` } : null,
     filters.remoteOnly ? { key: "remote", label: "Remote" } : null,
+    filters.source ? { key: "source", label: "Direct from career pages" } : null,
+    filters.hidden ? { key: "hidden", label: "Not on LinkedIn" } : null,
   ].filter((chip): chip is { key: string; label: string } => chip !== null);
 
   return (
-    <main className="board-main">
+    <main className="surface surface--data board-main">
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -192,14 +233,48 @@ export default async function JobsPage({
           {result.total === 1 ? "job found" : "jobs found"}
         </p>
         <BoardSearch defaultQuery={filters.q} remoteHref={remoteFilterHref()} />
+        <div
+          aria-label="Filter by seniority, source or LinkedIn visibility"
+          className="jobs-chip-track"
+          role="group"
+        >
+          {SENIORITY_OPTIONS.map((option) => (
+            <Link
+              className={`chip${filters.seniority === option.slug ? " chip--active" : ""}`}
+              href={toggleFilterHref(params, "seniority", option.slug)}
+              key={option.slug}
+            >
+              {option.label}
+            </Link>
+          ))}
+          <span aria-hidden="true" className="jobs-chip-track__sep" />
+          <Link
+            className={`chip${filters.source === "career_page" ? " chip--active" : ""}`}
+            href={toggleFilterHref(params, "source", "career_page")}
+          >
+            Direct from career pages
+          </Link>
+          <Link
+            className={`chip${filters.hidden ? " chip--active" : ""}`}
+            href={toggleFilterHref(params, "hidden", "1")}
+            title={LINKEDIN_EXCLUSIVITY_TOOLTIP}
+          >
+            Not on LinkedIn
+          </Link>
+        </div>
         <TagChips active={filters.tag} />
       </header>
 
       {activeChips.length > 0 ? (
         <div className="jobs-active">
-          <span className="tag">Filters</span>
+          <span className="tag">
+            Filters
+            <span className="count jobs-active__count">
+              {result.total.toLocaleString("en-US")} match
+            </span>
+          </span>
           {activeChips.map((chip) => (
-            <Link className="chip chip--on" href={withoutFilter(params, chip.key)} key={chip.key}>
+            <Link className="chip chip--active" href={withoutFilter(params, chip.key)} key={chip.key}>
               {chip.label}
               <span aria-hidden="true">×</span>
               <span className="visually-hidden">Remove this filter</span>
@@ -213,11 +288,11 @@ export default async function JobsPage({
 
       <JobBoard
         emptyActions={
-          <Link className="button button--secondary" href="/jobs">
-            Clear filters
+          <Link className="button button--ghost" href="/jobs">
+            Clear all filters
           </Link>
         }
-        emptyMessage="No jobs match these filters. Try a broader search, or drop one filter."
+        emptyMessage="Nothing matches this search yet. Try a broader keyword, drop a filter above, or clear them all to see the full board."
         jobs={result.jobs}
         pager={
           result.totalPages > 1 ? (
@@ -225,11 +300,13 @@ export default async function JobsPage({
               {result.page > 1 ? (
                 <Link href={pageHref(params, result.page - 1)}>Previous</Link>
               ) : null}
-              <span>
+              <span aria-current="page">
                 Page {result.page} of {result.totalPages}
               </span>
               {result.page < result.totalPages ? (
-                <Link href={pageHref(params, result.page + 1)}>Next</Link>
+                <Link href={pageHref(params, result.page + 1)} rel="next">
+                  Next
+                </Link>
               ) : null}
             </nav>
           ) : null

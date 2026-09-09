@@ -245,6 +245,43 @@ describe("JobBoard", () => {
     );
   });
 
+  it("leaves the row unranked when rankOffset is omitted", () => {
+    const nodes = elements(JobBoard({ jobs: [job], selected, emptyMessage: "None" }));
+    expect(nodes.some((element) => String(element.props.className ?? "").includes("board-row__rank"))).toBe(
+      false,
+    );
+  });
+
+  it("renders each row's position in the full result set, not the page, when rankOffset is set", () => {
+    const second: JobListItem = { ...job, id: "job-2", slug: "rust-engineer-beta" };
+    const nodes = elements(
+      JobBoard({ jobs: [job, second], selected, emptyMessage: "None", rankOffset: 20 }),
+    );
+    const ranks = nodes
+      .filter((element) => String(element.props.className ?? "").includes("board-row__rank"))
+      .map((element) => text(element).replace(/\D/g, ""));
+
+    expect(ranks).toEqual(["21", "22"]);
+  });
+
+  it("only marks the table as containing the podium when rankOffset is exactly 0", () => {
+    const table = (tree: ReactNode) =>
+      elements(tree).find((element) => element.type === "table");
+
+    const page1 = table(JobBoard({ jobs: [job], selected, emptyMessage: "None", rankOffset: 0 }));
+    expect(String(page1?.props.className)).toContain("board-table--ranked");
+    expect(String(page1?.props.className)).toContain("board-table--ranked-top");
+
+    const page2 = table(
+      JobBoard({ jobs: [job], selected, emptyMessage: "None", rankOffset: 20 }),
+    );
+    expect(String(page2?.props.className)).toContain("board-table--ranked");
+    expect(String(page2?.props.className)).not.toContain("board-table--ranked-top");
+
+    const unranked = table(JobBoard({ jobs: [job], selected, emptyMessage: "None" }));
+    expect(String(unranked?.props.className)).not.toContain("board-table--ranked");
+  });
+
   it("links tag chips to Nodework tag landings", () => {
     const tree = JobBoard({
       jobs: [job],

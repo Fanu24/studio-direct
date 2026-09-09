@@ -88,6 +88,36 @@
   cursor: help;
 }
 
+/* Seniority / source / "not on LinkedIn" filter chips, under the search bar. Its own
+   horizontally-scrolling track at narrow widths, so a long chip row never widens the
+   page itself - only this track scrolls. */
+
+.jobs-chip-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  /* A little breathing room so the last chip doesn't sit flush with the viewport edge
+     when the track scrolls on a touch device. */
+  padding-bottom: 2px;
+}
+
+.jobs-chip-track .chip {
+  flex-shrink: 0;
+}
+
+.jobs-chip-track__sep {
+  flex-shrink: 0;
+  width: 1px;
+  height: 20px;
+  background: var(--line-strong);
+  margin: 0 2px;
+}
+
 /* Active filter chips */
 
 .jobs-active {
@@ -96,6 +126,16 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 24px;
+}
+
+.jobs-active .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jobs-active__count {
+  color: var(--dim);
 }
 
 .jobs-active .chip span[aria-hidden="true"] {
@@ -161,6 +201,7 @@
 .jobs-num {
   color: var(--accent);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Badge explainer on /hidden-jobs */
@@ -500,6 +541,105 @@
   }
 }
 
+/* Tabular figures for numeric columns in the job board */
+
+.board-row__pay,
+.board-col-posted,
+.board-col-pay time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Optional rank column (top-N landing pages). Overlaid on the job cell rather than
+   inserted as a real <table> column, so it never touches board.css's nth-child column
+   widths - absent the prop, .board-table--ranked is never applied and nothing here
+   matches. `.board-tr` is already `position: relative` in board.css, which is what
+   `.board-row__rank` positions against, in both the desktop table and the mobile
+   grid-stacked row. */
+
+.board-table--ranked .board-col-job {
+  padding-left: 34px;
+}
+
+.board-row__rank {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 18px;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--muted);
+}
+
+@media (max-width: 959px) {
+  .board-table--ranked .board-col-job {
+    padding-left: 30px;
+  }
+
+  .board-row__rank {
+    left: 14px;
+    top: 14px;
+    transform: none;
+  }
+}
+
+/* At the stacked mobile row, a long company name must wrap rather than clip - "nothing
+   truncates into ellipsis soup" - so it overrides board.css's single-line ellipsis
+   there. The doubled class is a specificity bump, not a typo: board.css loads after
+   this file, so an equal-specificity rule here would lose the cascade tie; repeating
+   the class is the standard way to out-rank it without `!important` or touching a
+   file this lane doesn't own. */
+@media (max-width: 959px) {
+  .board-row__company.board-row__company {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: unset;
+  }
+}
+
+/* Pagination: bump every target to the 44px floor and make the current page
+   unmistakable - a plain text "Page 3 of 12" or number chip is easy to misread
+   as just another link. Applies to both the /jobs Prev/Current/Next nav and
+   CatalogPager's numbered list, since both use the shared .pager primitive. */
+
+.pager a,
+.pager span[aria-current="page"] {
+  min-height: 44px;
+}
+
+.pager span[aria-current="page"] {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Empty state: say what's missing, and give the escape hatch real weight. */
+
+.board-empty {
+  padding: clamp(40px, 6vw, 64px) 24px;
+}
+
+.board-empty__title {
+  margin: 0 0 8px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text);
+}
+
+.board-empty__actions {
+  margin-top: 20px;
+}
+
 /* Job list row heading
    ------------------------------------------------------------------
    JobRow wraps its title link in a real heading so each listing shows up in
@@ -515,4 +655,8 @@
   line-height: inherit;
   text-wrap: normal;
   color: inherit;
+}
+
+.job-row__badge {
+  margin: 2px 0 8px;
 }

@@ -12,6 +12,8 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { LINKEDIN_EXCLUSIVITY_TOOLTIP } from "../../lib/copy";
+import { showBadge } from "../../lib/jobs/exclusivity";
 import { jobPublicHref, type JobListItem } from "../../lib/jobs/queries";
 import { formatPosted, remoteLabel } from "./job-card";
 
@@ -90,7 +92,7 @@ export function JobRow({
   const remote = remoteLabel(job.remote);
 
   return (
-    <article className={`job-row${sticky ? " job-row--hl" : ""}`}>
+    <article className={`job-row m-lift${sticky ? " job-row--hl" : ""}`}>
       <div className="job-row__main">
         <Heading className="job-row__heading">
           <Link className="job-row__title" href={href}>
@@ -100,6 +102,11 @@ export function JobRow({
         <p className="job-row__company">
           <Link href={`/web3-companies/${job.companySlug}`}>{job.companyName}</Link>
         </p>
+        {showBadge(job.exclusivity) ? (
+          <span className="badge badge--honest job-row__badge" title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>
+            Not on LinkedIn
+          </span>
+        ) : null}
         <div className="job-row__chips">
           {job.tags.slice(0, 4).map((tag) => (
             <Link className="chip" href={`/${tag}-jobs`} key={tag}>

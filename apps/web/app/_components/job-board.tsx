@@ -56,6 +56,7 @@ export function JobBoard({
   pager,
   titleAs = "h2",
   rowTitleAs = "h2",
+  rankOffset,
 }: {
   jobs: JobListItem[];
   selected: JobDetail | null;
@@ -84,12 +85,29 @@ export function JobBoard({
    * introduced by its own section h2, so the outline stays well-formed.
    */
   rowTitleAs?: "h2" | "h3";
+  /**
+   * 1-based rank of the *first* row in `jobs` within the full, unpaginated result set - e.g.
+   * 20 on page 2 at pageSize 20, so that page's first row renders as rank 21. When set, every
+   * row gets a leading rank number (mono, tabular, right-aligned) overlaid on the job column
+   * rather than inserted as a real `<table>` column, so it never disturbs the nth-child
+   * column widths a caller's own stylesheet may already rely on. Omit it and the board
+   * renders exactly as before: no column, no layout shift.
+   *
+   * The table also gets a `board-table--ranked` class whenever this is set, and
+   * `board-table--ranked-top` *in addition* when it is exactly 0 - i.e. only on the page
+   * that actually contains ranks 1-3. CSS can't see `rankOffset` on its own (only which
+   * child a row is), so a page-2+ accent wash keyed off `:nth-child(-n+3)` would tint
+   * rows 21-23 as if they were the podium; this second class is the hook a caller's own
+   * stylesheet needs to scope that wash to the page it's actually true for.
+   */
+  rankOffset?: number;
 }) {
   if (jobs.length === 0) {
     return (
-      <div className="empty">
+      <div className="empty board-empty">
+        <p className="board-empty__title">No jobs match yet</p>
         <p>{emptyMessage}</p>
-        {emptyActions}
+        {emptyActions ? <div className="cluster board-empty__actions">{emptyActions}</div> : null}
       </div>
     );
   }
@@ -116,9 +134,17 @@ export function JobBoard({
   const RowCompanyTag = rowTitleAs === "h2" ? "h3" : "h4";
 
   return (
-    <div className="board">
+    <div className="board m-reveal" data-reveal>
       <section aria-label="Job listings" className="board__list">
-        <table className="board-table">
+        <table
+          className={`board-table${
+            rankOffset !== undefined
+              ? rankOffset === 0
+                ? " board-table--ranked board-table--ranked-top"
+                : " board-table--ranked"
+              : ""
+          }`}
+        >
           <thead>
             <tr>
               <th scope="col">Job Position and Company</th>
@@ -129,7 +155,8 @@ export function JobBoard({
             </tr>
           </thead>
           <tbody>
-            {jobs.map((job) => {
+            {jobs.map((job, index) => {
+              const rank = rankOffset !== undefined ? rankOffset + index + 1 : null;
               const canSelect = details?.some((d) => d && d.id === job.id) ?? false;
               // With details loaded the row selects in place; without them it behaves as
               // it always did and links straight to the job page.
@@ -142,10 +169,16 @@ export function JobBoard({
               const place = placeLabel(job);
               return (
                 <tr
-                  className={`board-tr${isActive ? " is-active" : ""}`}
+                  className={`board-tr m-lift${isActive ? " is-active" : ""}`}
                   key={job.id}
                 >
                   <td className="board-col-job">
+                    {rank !== null ? (
+                      <span className="board-row__rank">
+                        <span className="visually-hidden">Rank </span>
+                        {rank}
+                      </span>
+                    ) : null}
                     <Link
                       aria-current={isActive ? "true" : undefined}
                       className={`board-row${isActive ? " is-active" : ""}`}
@@ -167,6 +200,14 @@ export function JobBoard({
                         <RowCompanyTag className="board-row__company">
                           {job.companyName}
                         </RowCompanyTag>
+                        {showBadge(job.exclusivity) ? (
+                          <span
+                            className="badge badge--honest board-row__badge"
+                            title={LINKEDIN_EXCLUSIVITY_TOOLTIP}
+                          >
+                            Not on LinkedIn
+                          </span>
+                        ) : null}
                       </div>
                     </Link>
                   </td>
@@ -231,7 +272,7 @@ export function JobBoard({
                     {selectedSalary ? ` / ${selectedSalary}` : ""}
                   </p>
                   {showBadge(active.exclusivity) ? (
-                    <span className="badge" title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>
+                    <span className="badge badge--honest" title={LINKEDIN_EXCLUSIVITY_TOOLTIP}>
                       Not on LinkedIn
                     </span>
                   ) : null}

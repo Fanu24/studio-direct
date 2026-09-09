@@ -137,7 +137,7 @@ export function RelatedBrowseLinks({
       : "Web3 salaries";
 
   return (
-    <section className="container jobs-more">
+    <section className="container jobs-more m-reveal" data-reveal>
       <h2>Related pages</h2>
       <div className="chips">
         <Link className="chip" href={landingPath({ kind: "remote" })}>
@@ -173,7 +173,7 @@ export function BoardFaq({
   items: { question: string; answer: string }[];
 }) {
   return (
-    <section className="container jobs-more faq-accordion">
+    <section className="container jobs-more faq-accordion m-reveal" data-reveal>
       <details className="faq-item" open>
         <summary>{featured.question}</summary>
         <p>{featured.answer}</p>

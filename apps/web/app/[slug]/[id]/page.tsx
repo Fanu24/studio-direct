@@ -102,7 +102,7 @@ export default async function PublicJobPage({ params }: { params: JobParams }) {
   );
 
   return (
-    <main className="jd">
+    <main className="surface surface--data jd">
       <JsonLd data={buildJobPostingJsonLd(job, requestOrigin(await headers()))} />
       <Breadcrumbs
         items={[
