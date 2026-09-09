@@ -48,7 +48,14 @@
   overflow-wrap: anywhere;
 }
 
+/* These row labels are the primary way into a role's own salary page, and they
+   rendered as 16px inline text: a tap target well under the 24px floor, on the
+   page with the most of them. The chart's own three tap-target rules were fixed
+   elsewhere; this component was never in their scope. */
 .salary-chart__label a {
+  display: inline-block;
+  min-height: 24px;
+  padding-block: 4px;
   color: inherit;
   text-decoration: none;
 }

@@ -748,9 +748,17 @@ main.board-main {
   color: var(--muted);
 }
 
+/* min-width: 0 is load-bearing, not tidiness. A flex item inside a grid track
+   defaults to an automatic minimum of its content width and pushes the track
+   open instead of scrolling. The homepage stat band had the identical bug and
+   was fixed first; this carousel reproduced the same 25px of page overflow at
+   360px on all three engines, so verification of that fix failed on its
+   neighbour. Any horizontally scrolling child of a grid track needs this. */
 .home-reviews__carousel {
   position: relative;
   overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
   margin-top: 16px;
 }
 
