@@ -146,8 +146,30 @@ Rules:
 
 ### 1.5 The two registers
 
-One system, two registers, switched by an attribute on `<body>` set from the
-layout. Not two design systems.
+One system, two registers, switched by a class on each page's outermost element.
+Not two design systems.
+
+The root layout is a server component and never learns the pathname, so the
+register is **declared by the page**, not derived from the URL. Every page's
+outermost element carries `surface surface--stage` or `surface surface--data`.
+No middleware, no `usePathname`, no client component, no hydration flash.
+
+The aurora is painted by a fixed pseudo-element on that container, so it covers
+the viewport even though the class does not sit on `<body>`:
+
+```css
+.surface--stage::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--aurora);
+}
+```
+
+Token overrides declared on `.surface--stage` / `.surface--data` cascade to all
+page content, which is inside the container by construction.
 
 `data-surface="stage"` — home, pricing, hire, post-a-job, learn, about, faq,
 what-is-web3, login, onboarding, legal.
@@ -159,7 +181,7 @@ What the attribute switches:
 
 | | stage | data |
 |---|---|---|
-| body background | `--aurora` over `--bg` | flat `--bg`, no aurora |
+| page background | `--aurora` fixed layer over `--bg` | flat `--bg`, no aurora |
 | heading font | `--font-display` | `--font-sans`, 600 |
 | section rhythm | `--section: clamp(88px, 10vw, 152px)` | `--section: clamp(48px, 5vw, 72px)` |
 | card surface | `--bg-elev` + accent-tinted glow on hover | `--bg-elev` + hairline, no glow |
