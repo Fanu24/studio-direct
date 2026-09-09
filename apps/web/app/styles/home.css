@@ -56,12 +56,20 @@
   padding: var(--section) 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
+  /* A grid item's default min-width is auto, so a 200px column minimum below
+     propagates up and pushes this band wider than its track instead of
+     wrapping. That produced 25px of real horizontal page scroll on the
+     homepage at 360px, identically on all three engines. */
+  min-width: 0;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  /* min() keeps the track from demanding 200px on a 360px screen, where the
+     container is narrower than the minimum once gutters are taken out. */
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   gap: var(--gutter);
+  min-width: 0;
 }
 
 .stat {

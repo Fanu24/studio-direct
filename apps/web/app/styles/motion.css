@@ -133,7 +133,45 @@
   .m-reveal[data-reveal-delay="3"] {
     animation-range: entry 18% cover 50%;
   }
+
+  /* Levels beyond 6 all resolve here: a stagger deep enough to notice is a
+     stagger long enough to annoy, and pages were using up to 12. */
+  .m-reveal[data-reveal-delay="4"] {
+    animation-range: entry 24% cover 56%;
+  }
+
+  .m-reveal[data-reveal-delay="5"] {
+    animation-range: entry 30% cover 62%;
+  }
+
+  .m-reveal[data-reveal-delay="6"],
+  .m-reveal[data-reveal-delay="7"],
+  .m-reveal[data-reveal-delay="8"],
+  .m-reveal[data-reveal-delay="9"],
+  .m-reveal[data-reveal-delay="10"],
+  .m-reveal[data-reveal-delay="11"],
+  .m-reveal[data-reveal-delay="12"] {
+    animation-range: entry 36% cover 68%;
+  }
 }
+
+/* --- .m-reveal--now: reveal on load, never on scroll. ---------------------
+   An element sitting in the first viewport has no scroll distance to be
+   revealed over, and a view() timeline leaves it parked at whatever partial
+   progress its range resolves to - measured at opacity 0.91 and 0.55 on two
+   home hero elements, on every load, on Chromium and WebKit, never updating.
+   Above-the-fold content uses this instead. */
+.m-reveal--now,
+.m-reveal--now[data-reveal]:not(.is-in) {
+  animation: reveal var(--dur-long) var(--ease-out) both !important;
+  animation-timeline: auto !important;
+  opacity: 1;
+  transform: none;
+}
+
+.m-reveal--now[data-reveal-delay="1"] { animation-delay: 80ms !important; }
+.m-reveal--now[data-reveal-delay="2"] { animation-delay: 160ms !important; }
+.m-reveal--now[data-reveal-delay="3"] { animation-delay: 240ms !important; }
 
 @supports not (animation-timeline: view()) {
   /* Default is the finished state: no JS, no support, still readable. */
@@ -156,6 +194,16 @@
   .m-reveal[data-reveal-delay="3"] {
     transition-delay: 270ms;
   }
+
+  .m-reveal[data-reveal-delay="4"] { transition-delay: 360ms; }
+  .m-reveal[data-reveal-delay="5"] { transition-delay: 450ms; }
+  .m-reveal[data-reveal-delay="6"],
+  .m-reveal[data-reveal-delay="7"],
+  .m-reveal[data-reveal-delay="8"],
+  .m-reveal[data-reveal-delay="9"],
+  .m-reveal[data-reveal-delay="10"],
+  .m-reveal[data-reveal-delay="11"],
+  .m-reveal[data-reveal-delay="12"] { transition-delay: 540ms; }
 
   /* Only a browser that will actually run the observer gets the start state. */
   @media (scripting: enabled) {
@@ -366,11 +414,16 @@
     animation: none;
   }
 
+  /* !important is required, not decorative. The no-support branch starts
+     hidden elements with `.m-reveal[data-reveal]:not(.is-in)`, specificity
+     (0,3,0); a bare `.m-reveal` here is (0,1,0) and loses. Without this a
+     reduced-motion reader on Firefox gets a page whose below-the-fold
+     sections never become visible. */
   .m-reveal,
   .m-count > * {
-    animation: none;
-    opacity: 1;
-    transform: none;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 
   .m-parallax,

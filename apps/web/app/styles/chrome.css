@@ -47,6 +47,10 @@
 .wordmark {
   display: inline-flex;
   align-items: center;
+  /* The mark is 22px and line-height is 1, so without a floor the whole link
+     was a 22px tap target - in the header and, via footer.css which overrides
+     only font-size, in the footer too. Every page, both places. */
+  min-height: 44px;
   gap: 10px;
   font-family: var(--display);
   font-size: 1.22rem;

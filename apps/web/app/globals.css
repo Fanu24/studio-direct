@@ -1208,7 +1208,15 @@ select {
   background: var(--bg-hover);
 }
 
+/* The cell already carries 12px of vertical padding, but an inline link's hit
+   area is only its glyph line box, so none of that padding was clickable -
+   170 such links on /web3-salaries alone. inline-block reclaims it without
+   touching the heading reset in table-heading.tsx, which deliberately keeps
+   these from looking like headings. */
 .table td a {
+  display: inline-block;
+  min-height: 24px;
+  padding-block: 6px;
   color: var(--text);
   text-decoration: none;
 }

@@ -41,16 +41,15 @@ const nextConfig: NextConfig = {
      * static generation - worth it for a build that finishes.
      */
     cpus: 1,
-    /**
-     * `@view-transition { navigation: auto }` in CSS only fires on full-document
-     * loads. Next `<Link>` navigation is same-document, so without this flag the
-     * page transitions in `motion.css` never run at all.
+    /*
+     * `experimental.viewTransition` was enabled here so that same-document
+     * <Link> navigation could run the CSS page transitions, and then removed:
+     * QA measured it inert in all three engines. The flag turns on React's
+     * ViewTransition component, which needs React's experimental channel, and
+     * this project pins stable React 19. Navigation itself is unaffected.
      *
-     * This is an experimental flag. It degrades safely - a browser without the
-     * View Transitions API just navigates - but if it ever destabilises the build
-     * or the Workers bundle, deleting this line is the whole fix.
+     * Re-enabling it means moving React to the experimental channel first.
      */
-    viewTransition: true,
   },
 };
 

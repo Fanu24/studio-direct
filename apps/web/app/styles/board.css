@@ -95,8 +95,10 @@ main.board-main {
   border-bottom: 1px solid var(--line);
 }
 
+/* table-layout is fixed, so THESE widths are the ones that bind - the tbody
+   cell rules below only document intent. Job 42% -> 37%, location 12% -> 17%. */
 .board-table thead th:nth-child(1) {
-  width: 42%;
+  width: 37%;
 }
 
 .board-table thead th:nth-child(2) {
@@ -104,7 +106,7 @@ main.board-main {
 }
 
 .board-table thead th:nth-child(3) {
-  width: 12%;
+  width: 17%;
 }
 
 .board-table thead th:nth-child(4) {
@@ -136,7 +138,9 @@ main.board-main {
 }
 
 .board-col-job {
-  width: 42%;
+  /* 42% -> 37%: the five points went to .board-col-loc, which had 12% of a
+     half-width pane and could not fit a real location string. */
+  width: 37%;
   overflow: hidden;
 }
 
@@ -147,7 +151,11 @@ main.board-main {
 }
 
 .board-col-loc {
-  width: 12%;
+  /* 12% of a half-width list pane left the text span 20-30px, which is not a
+     location. Real data here is "City, Region, Country", not "Remote". The
+     extra 5 points come from .board-col-job, which has the most to spare. */
+  width: 17%;
+  min-width: 96px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -591,7 +599,13 @@ main.board-main {
 
   .board-tr {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    /* The second track was `auto`, so a long location string claimed its full
+       max-content width and the job title - which minmax(0, 1fr) allows to
+       shrink to nothing - absorbed the whole squeeze and disappeared. Real
+       data does this: "New York City Metropolitan Area US" erased the title
+       at 360px and 390px on all three engines. Capping the second track means
+       no metadata value can ever take the title's space again. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 42%);
     grid-template-areas:
       "job posted"
       "job loc"

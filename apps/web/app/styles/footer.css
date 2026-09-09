@@ -82,7 +82,12 @@
   gap: 8px;
 }
 
+/* 27 of these render on every page and each was ~22.5px tall: text line box,
+   no padding, no floor. This is the normal way a visitor leaves the site. */
 .footer-column__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   width: fit-content;
   color: var(--muted);
   font-size: 0.88rem;

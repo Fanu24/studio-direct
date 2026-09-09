@@ -134,16 +134,16 @@ export default async function HomePage({
         .map((job) => (
           <JsonLd data={buildJobPostingJsonLd(job, origin)} key={job.id} />
         ))}
-      <section className="home-hero m-reveal m-sheen" data-reveal>
+      <section className="home-hero m-reveal m-reveal--now m-sheen" data-reveal>
         <div className="container">
           <h1 className="display display--sm">Web3 Jobs</h1>
-          <p className="lead m-reveal" data-reveal data-reveal-delay="1">
+          <p className="lead m-reveal m-reveal--now" data-reveal data-reveal-delay="1">
             {homepageSummary(listed.total, companyCount)}
           </p>
-          <div className="home-hero__search m-reveal" data-reveal data-reveal-delay="2">
+          <div className="home-hero__search m-reveal m-reveal--now" data-reveal data-reveal-delay="2">
             <BoardSearch remoteHref={remoteFilterHref()} />
           </div>
-          <div className="m-reveal" data-reveal data-reveal-delay="3">
+          <div className="m-reveal m-reveal--now" data-reveal data-reveal-delay="3">
             <TagChips />
           </div>
         </div>
