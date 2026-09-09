@@ -308,27 +308,29 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
   };
 
   return (
-    <main className="board-main">
+    <main className="surface surface--data">
       <JsonLd data={blogPostingJsonLd} />
       {details.map((job) => (
         <JsonLd data={buildJobPostingJsonLd(job, origin)} key={job.id} />
       ))}
-      <header className="board-hero">
-        <Breadcrumbs
-          items={[
-            { href: "/jobs", label: "Jobs" },
-            { href: "/web3-salaries", label: "Web3 salaries" },
-            { label },
-          ]}
-        />
-        <h1>{title}</h1>
-        <p className="lead">{averageNarrative(parsed, label, subject, rollup)}</p>
+      <div className="container">
+        <header className="page-header">
+          <Breadcrumbs
+            items={[
+              { href: "/jobs", label: "Jobs" },
+              { href: "/web3-salaries", label: "Web3 salaries" },
+              { label },
+            ]}
+          />
+          <h1>{title}</h1>
+          <p className="lead">{averageNarrative(parsed, label, subject, rollup)}</p>
+        </header>
         <BoardSearch remoteHref="/remote-jobs" />
         <TagChips />
         <p className="count">
           <span className="jobs-num">{jobs.total}</span> jobs found
         </p>
-      </header>
+      </div>
 
       <article className="container container--content">
         <h2>{howMuchQuestion(parsed, label, subject)}</h2>
@@ -342,7 +344,14 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
         <h2>Average yearly salary</h2>
         {rollup ? (
           <>
-            <p className="salary-stat-figure">{formatSalaryRange(rollup.avg, rollup.avg)}</p>
+            <div className="stat">
+              <span className="stat__value">
+                <span className="m-count" data-reveal>
+                  <span>{formatSalaryRange(rollup.avg, rollup.avg)}</span>
+                </span>
+              </span>
+              <span className="stat__label">Average yearly salary</span>
+            </div>
             <p>
               The midpoint of every published band behind this page. It moves when the
               listings move, so it is a read on what is being advertised now, not a
@@ -434,21 +443,23 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
         selected={selected}
       />
 
-      <section className="container salary-cta">
-        <h2>{hireHeading(parsed, label)}</h2>
-        <p>
-          Nodework is a public job catalog, not a recruiting product. Post the role and it
-          joins this page automatically once it is live.
-        </p>
-        <div className="salary-cta__actions">
-          <Link className="button button--primary" href="/post-web3-job">
-            Post a job
-          </Link>
-          {hireHref ? (
-            <Link className="button button--secondary" href={hireHref}>
-              See who is hiring {label}
+      <section className="container">
+        <div className="panel panel--accent salary-cta">
+          <h2>{hireHeading(parsed, label)}</h2>
+          <p>
+            Nodework is a public job catalog, not a recruiting product. Post the role and it
+            joins this page automatically once it is live.
+          </p>
+          <div className="cluster salary-cta__actions">
+            <Link className="button button--primary" href="/post-web3-job">
+              Post a job
             </Link>
-          ) : null}
+            {hireHref ? (
+              <Link className="button button--secondary" href={hireHref}>
+                See who is hiring {label}
+              </Link>
+            ) : null}
+          </div>
         </div>
       </section>
 

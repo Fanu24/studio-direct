@@ -117,7 +117,11 @@ export default function LearnWeb3HubPage() {
         {LEARN_HUB_PARAGRAPHS.map((paragraph) => (
           <p key={paragraph.slice(0, 32)}>{paragraph}</p>
         ))}
-        <section aria-label="Browse Learn Web3 by facet" className="learn-facets" id="browse">
+        <section
+          aria-label="Browse Learn Web3 by facet"
+          className="learn-facets m-sheen"
+          id="browse"
+        >
           {LEARN_FACETS.map((facet) => (
             <div className="learn-facet-group" key={facet.key}>
               <h2>{facet.label}</h2>
@@ -144,7 +148,7 @@ export default function LearnWeb3HubPage() {
             the gap between you and the role is a sentence you could write down.
           </p>
           {LEARN_CAREER_LANES.map((lane) => (
-            <div className="learn-facet-group" key={lane.key}>
+            <div className="learn-facet-group m-reveal" data-reveal key={lane.key}>
               <h3>{lane.heading}</h3>
               <p>{lane.blurb}</p>
               <div className="chips">
@@ -173,7 +177,7 @@ export default function LearnWeb3HubPage() {
           */}
           <div className="about-faq__list">
             {LEARN_HUB_FAQ.map((item) => (
-              <div className="about-faq__item" key={item.question}>
+              <div className="about-faq__item m-reveal" data-reveal key={item.question}>
                 <h2 style={FAQ_QUESTION_STYLE}>{item.question}</h2>
                 <p style={FAQ_ANSWER_STYLE}>{item.answer}</p>
               </div>

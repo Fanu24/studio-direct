@@ -67,8 +67,8 @@ export function SalaryStatsTable({
   return (
     <>
       {heading ? <Heading>{heading}</Heading> : null}
-      <div className="salary-table-wrap">
-        <table className="salary-table">
+      <div className="table-wrap">
+        <table className="table">
           <thead>
             <tr>
               <th>{labelHeader}</th>
@@ -90,13 +90,13 @@ export function SalaryStatsTable({
                       <Link href={hrefFor(slug)}>{tagLabel(slug)}</Link>
                     </h2>
                   </td>
-                  <td className="mono">
+                  <td className="table__num">
                     {hasData ? formatSalaryRange(row!.avg, row!.avg) : <Dash />}
                   </td>
-                  <td className="mono">
+                  <td className="table__num table__num--muted">
                     {hasData ? formatSalaryRange(row!.min, row!.min) : <Dash />}
                   </td>
-                  <td className="mono">
+                  <td className="table__num table__num--muted">
                     {hasData ? formatSalaryRange(row!.max, row!.max) : <Dash />}
                   </td>
                 </tr>
@@ -138,8 +138,8 @@ export function SalaryBreakdownTable({
       {rows.length === 0 ? (
         <p className="muted">{emptyMessage}</p>
       ) : (
-        <div className="salary-table-wrap">
-          <table className="salary-table">
+        <div className="table-wrap">
+          <table className="table">
             <thead>
               <tr>
                 <th>{labelHeader}</th>
@@ -160,9 +160,13 @@ export function SalaryBreakdownTable({
                       )}
                     </h2>
                   </td>
-                  <td className="mono">{formatSalaryRange(row.avg, row.avg)}</td>
-                  <td className="mono">{formatSalaryRange(row.min, row.min)}</td>
-                  <td className="mono">{formatSalaryRange(row.max, row.max)}</td>
+                  <td className="table__num">{formatSalaryRange(row.avg, row.avg)}</td>
+                  <td className="table__num table__num--muted">
+                    {formatSalaryRange(row.min, row.min)}
+                  </td>
+                  <td className="table__num table__num--muted">
+                    {formatSalaryRange(row.max, row.max)}
+                  </td>
                 </tr>
               ))}
             </tbody>

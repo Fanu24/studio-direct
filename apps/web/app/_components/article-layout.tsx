@@ -8,6 +8,7 @@ export function ArticleLayout({
   children,
   breadcrumbs,
   related,
+  surface = "stage",
 }: {
   title: string;
   lead: string;
@@ -15,9 +16,10 @@ export function ArticleLayout({
   children: ReactNode;
   breadcrumbs?: ReactNode;
   related?: ReactNode;
+  surface?: "stage" | "data";
 }) {
   return (
-    <main>
+    <main className={`surface surface--${surface}`}>
       <header className="page-header">
         {breadcrumbs}
         <h1>{title}</h1>
@@ -25,9 +27,9 @@ export function ArticleLayout({
       </header>
       <div className="article-layout">
         <nav aria-label="On this page" className="article-toc">
-          <p>On this page</p>
+          <span className="kicker kicker--muted">On this page</span>
           {toc.map((item) => (
-            <Link href={item.href} key={item.href}>
+            <Link className="text-link" href={item.href} key={item.href}>
               {item.label}
             </Link>
           ))}

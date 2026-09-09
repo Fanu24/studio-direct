@@ -31,9 +31,13 @@ export function ResourceGrid({
 
   return (
     <ul className="resource-grid">
-      {resources.map((resource) => (
+      {resources.map((resource, index) => (
         <li key={resource.slug}>
-          <article className="resource-card">
+          <article
+            className="resource-card m-lift m-reveal"
+            data-reveal
+            data-reveal-delay={index % 3 === 0 ? undefined : index % 3 === 1 ? "1" : "2"}
+          >
             <div aria-hidden="true" className="resource-card__thumb">
               {thumbnailGlyph(resource.source)}
             </div>

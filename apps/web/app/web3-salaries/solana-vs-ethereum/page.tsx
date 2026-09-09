@@ -1,4 +1,4 @@
-import { formatSalaryRange, tagLabel } from "@gaming/shared";
+import { SENIORITY_SLUGS, formatSalaryRange, tagLabel } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -9,7 +9,11 @@ import { Breadcrumbs } from "../../_components/breadcrumbs";
 import { JobBoard } from "../../_components/job-board";
 import { TagChips } from "../../_components/job-row";
 import { JsonLd, absoluteUrl } from "../../_components/json-ld";
-import { SalaryBarChart, type SalaryChartRow } from "../../_components/salary-chart";
+import {
+  SalaryBarChart,
+  SalarySeniorityChart,
+  type SalaryChartRow,
+} from "../../_components/salary-chart";
 import { SalaryBreakdownTable, SalaryStatsTable } from "../../_components/salary-tables";
 import { buildJobPostingJsonLd } from "../../../lib/jobs/jsonld";
 import { buildLandingTitle } from "../../../lib/jobs/landing-meta";
@@ -162,6 +166,26 @@ export default async function SolanaVsEthereumSalaryPage() {
         ? `${solanaJobs.total}:0`
         : "0:0";
 
+  const solanaSeniorityPoints = SENIORITY_SLUGS.map((seniority) => {
+    const row = solanaSeniority.find((entry) => entry.slug === seniority);
+    return {
+      slug: seniority,
+      label: tagLabel(seniority),
+      href: `/web3-salaries/${seniority}`,
+      avg: row?.avg ?? null,
+      max: row?.max ?? null,
+    };
+  });
+  const ethereumSeniorityPoints = SENIORITY_SLUGS.map((seniority) => {
+    const row = ethereumSeniority.find((entry) => entry.slug === seniority);
+    return {
+      slug: seniority,
+      label: tagLabel(seniority),
+      avg: row?.avg ?? null,
+      max: row?.max ?? null,
+    };
+  });
+
   const origin = requestOrigin(await headers());
   const blogPostingJsonLd = {
     "@context": "https://schema.org",
@@ -175,24 +199,26 @@ export default async function SolanaVsEthereumSalaryPage() {
   };
 
   return (
-    <main className="board-main">
+    <main className="surface surface--data">
       <JsonLd data={blogPostingJsonLd} />
       {details.map((job) => (
         <JsonLd data={buildJobPostingJsonLd(job, origin)} key={job.id} />
       ))}
-      <header className="board-hero">
-        <Breadcrumbs
-          items={[
-            { href: "/jobs", label: "Jobs" },
-            { href: "/web3-salaries", label: "Web3 salaries" },
-            { label: "Solana vs Ethereum salary" },
-          ]}
-        />
-        <h1>{title}</h1>
-        <p className="lead">{deltaSentence(solana, ethereum)}</p>
+      <div className="container">
+        <header className="page-header">
+          <Breadcrumbs
+            items={[
+              { href: "/jobs", label: "Jobs" },
+              { href: "/web3-salaries", label: "Web3 salaries" },
+              { label: "Solana vs Ethereum salary" },
+            ]}
+          />
+          <h1>{title}</h1>
+          <p className="lead">{deltaSentence(solana, ethereum)}</p>
+        </header>
         <BoardSearch remoteHref="/remote-jobs" />
         <TagChips />
-      </header>
+      </div>
 
       <article className="container container--content">
         <h2>How do Solana and Ethereum salaries compare?</h2>
@@ -218,37 +244,47 @@ export default async function SolanaVsEthereumSalaryPage() {
 
         <h2>Salary by seniority</h2>
         <p>Average pay by seniority level for each stack, where Nodework has the data.</p>
-        <SalaryBreakdownTable
-          heading="Solana developer by seniority"
-          headingLevel="h3"
-          hrefFor={(slug) => `/web3-salaries/${slug}`}
-          labelHeader="Seniority"
-          rows={solanaSeniority}
+        <SalarySeniorityChart
+          compare={{ label: "Ethereum developer", points: ethereumSeniorityPoints }}
+          emptyMessage="No seniority breakdown available yet for either stack."
+          label="Solana developer"
+          points={solanaSeniorityPoints}
         />
-        <SalaryBreakdownTable
-          heading="Ethereum developer by seniority"
-          headingLevel="h3"
-          hrefFor={(slug) => `/web3-salaries/${slug}`}
-          labelHeader="Seniority"
-          rows={ethereumSeniority}
-        />
+        <div className="grid grid--2">
+          <SalaryBreakdownTable
+            heading="Solana developer by seniority"
+            headingLevel="h3"
+            hrefFor={(slug) => `/web3-salaries/${slug}`}
+            labelHeader="Seniority"
+            rows={solanaSeniority}
+          />
+          <SalaryBreakdownTable
+            heading="Ethereum developer by seniority"
+            headingLevel="h3"
+            hrefFor={(slug) => `/web3-salaries/${slug}`}
+            labelHeader="Seniority"
+            rows={ethereumSeniority}
+          />
+        </div>
 
         <h2>Salary by location</h2>
         <p>Average pay by country for each stack, where Nodework has the data.</p>
-        <SalaryBreakdownTable
-          heading="Solana developer by country"
-          headingLevel="h3"
-          hrefFor={(slug) => `/web3-salaries/${slug}`}
-          labelHeader="Country"
-          rows={solanaCountry}
-        />
-        <SalaryBreakdownTable
-          heading="Ethereum developer by country"
-          headingLevel="h3"
-          hrefFor={(slug) => `/web3-salaries/${slug}`}
-          labelHeader="Country"
-          rows={ethereumCountry}
-        />
+        <div className="grid grid--2">
+          <SalaryBreakdownTable
+            heading="Solana developer by country"
+            headingLevel="h3"
+            hrefFor={(slug) => `/web3-salaries/${slug}`}
+            labelHeader="Country"
+            rows={solanaCountry}
+          />
+          <SalaryBreakdownTable
+            heading="Ethereum developer by country"
+            headingLevel="h3"
+            hrefFor={(slug) => `/web3-salaries/${slug}`}
+            labelHeader="Country"
+            rows={ethereumCountry}
+          />
+        </div>
 
         <h2>Conclusion</h2>
         <p>{conclusionSentence(solana, ethereum, solanaJobs.total, ethereumJobs.total)}</p>

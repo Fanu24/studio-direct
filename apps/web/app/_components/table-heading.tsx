@@ -13,10 +13,10 @@ import type { CSSProperties } from "react";
  * `display: inline` also neutralises `text-wrap: balance`, which only applies
  * to block containers.
  *
- * The reset is inline rather than a class on purpose: `.salary-table` is
- * styled from the shared `styles/nodework.css`, and adding a component-level
+ * The reset is inline rather than a class on purpose: these rows use the
+ * shared `.table` primitive from `globals.css`, and adding a component-level
  * CSS import to reach it reorders the emitted CSS chunks (see the CSS
- * custom-property ordering trap in the parity brief).
+ * custom-property ordering trap in the design spec).
  */
 export const TABLE_HEADING_STYLE: CSSProperties = {
   color: "inherit",

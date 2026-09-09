@@ -36,10 +36,10 @@ function eventsJsonLd() {
 
 export default function CryptoEventsPage() {
   return (
-    <main className="marketing crypto-events">
+    <main className="surface surface--stage">
       <JsonLd data={eventsJsonLd()} />
 
-      <div className="container container--content">
+      <div className="container container--content section m-sheen">
         {PageHeader({
           kicker: "Events",
           title: "Web3 and crypto industry events",
@@ -59,13 +59,18 @@ export default function CryptoEventsPage() {
                   {events.length} recurring event{events.length === 1 ? "" : "s"}
                 </p>
                 <ul className="marketing-events" aria-label={`${region} events`}>
-                  {events.map((event) => {
+                  {events.map((event, index) => {
                     const cityHref = eventCityHref(event);
                     return (
-                      <li className="panel marketing-event" key={event.name}>
+                      <li
+                        className="panel marketing-event m-lift m-reveal"
+                        data-reveal
+                        data-reveal-delay={index % 3 === 0 ? undefined : index % 3 === 1 ? "1" : "2"}
+                        key={event.name}
+                      >
                         <div className="marketing-event__head">
                           <h3>{event.name}</h3>
-                          <span className="marketing-event__month">{event.month}</span>
+                          <time className="marketing-event__month">{event.month}</time>
                         </div>
                         <p className="marketing-event__place">
                           {eventCityLabel(event)}, {event.country}

@@ -1,3 +1,85 @@
+/* --- Article typography: the shell learn-web3, what-is-web3, crypto-events
+   and the funnel's legal/FAQ pages all render long-form copy into. Headings
+   and paragraph measure are set in globals.css; this fills in the elements a
+   real article eventually needs - lists, quotes, code, inline links. --- */
+
+.article ul,
+.article ol {
+  max-width: 68ch;
+  margin: 0 0 1em;
+  padding-left: 1.3em;
+  color: var(--dim);
+}
+
+.article ul {
+  list-style: disc;
+}
+
+.article ol {
+  list-style: decimal;
+}
+
+.article li + li {
+  margin-top: 0.45em;
+}
+
+.article li::marker {
+  color: var(--accent);
+}
+
+.article blockquote {
+  margin: 1.6em 0;
+  padding: 2px 0 2px 20px;
+  max-width: 62ch;
+  border-left: 2px solid var(--accent-line);
+  color: var(--dim);
+  font-style: italic;
+}
+
+.article blockquote p {
+  margin: 0;
+}
+
+.article code {
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  color: var(--cool);
+}
+
+.article pre {
+  margin: 1.4em 0;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--bg-deep);
+  overflow-x: auto;
+}
+
+.article pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dim);
+}
+
+.article h3 {
+  margin: 1.4em 0 0.5em;
+}
+
+.article a:not(.button):not(.chip):not(.text-link) {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
+.article a:not(.button):not(.chip):not(.text-link):hover {
+  color: var(--accent-strong);
+  text-decoration-color: var(--accent-strong);
+}
+
 .learn-facets {
   display: flex;
   flex-direction: column;
@@ -46,15 +128,18 @@
   grid-template-columns: 44px 1fr;
   gap: 14px;
   height: 100%;
-  padding: 18px;
+  padding: 20px;
   background: var(--bg-elev);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  transition: border-color 0.25s var(--ease-out), background 0.25s var(--ease-out);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--edge-light);
+  /* Hover elevation itself is .m-lift (motion.css); this only carries the
+     background swap m-lift does not know about. */
+  transition: background var(--dur-short) var(--ease-out);
 }
 
-.resource-card:hover {
-  border-color: var(--accent-line);
+.resource-card:hover,
+.resource-card:focus-within {
   background: var(--bg-hover);
 }
 

@@ -1,7 +1,14 @@
 /* Salary stats-article components: inline-SVG charts, breakdown tables, and
  * the callout/CTA blocks used across web3-salaries, web3-non-tech-salaries
  * and the solana-vs-ethereum comparison page. Imported from layout.tsx only;
- * consumes tokens from globals.css and declares none. */
+ * consumes tokens from globals.css and declares none.
+ *
+ * The headline figure, "highest/lowest paid" callouts and every data table on
+ * these pages are built from the shared primitives (.stat, .panel, .kicker,
+ * .table) declared in globals.css - this file only styles what is genuinely
+ * bespoke to a salary chart: the range-bar rows and the seniority line. */
+
+/* --- Range-bar chart (SalaryBarChart) -------------------------------------- */
 
 .salary-chart {
   display: flex;
@@ -15,6 +22,24 @@
   grid-template-columns: minmax(110px, 1fr) minmax(120px, 3fr) auto;
   align-items: center;
   gap: 12px;
+}
+
+/* A shared scale header names both ends of the domain every row below is
+ * plotted against, so the bars read as measurements rather than shapes. */
+.salary-chart__scale {
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.salary-chart__scale-track {
+  display: flex;
+  justify-content: space-between;
+}
+
+.salary-chart__scale-track .mono {
+  color: var(--muted);
+  font-size: 0.7rem;
 }
 
 .salary-chart__label {
@@ -36,10 +61,12 @@
   width: 100%;
   height: 12px;
   display: block;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
 .salary-chart__track {
-  fill: var(--bg-elev);
+  fill: var(--line-soft);
 }
 
 .salary-chart__range {
@@ -51,36 +78,115 @@
 }
 
 .salary-chart__value {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
+  font-weight: 600;
   white-space: nowrap;
   text-align: right;
-  color: var(--muted);
+  color: var(--text);
 }
 
 .salary-chart__empty {
   margin: 10px 0 22px;
 }
 
-.salary-line {
+/* --- Seniority line chart (SalarySeniorityChart) --------------------------- */
+
+.chart {
   margin: 14px 0 26px;
 }
 
-.salary-line__svg {
+.chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--dim);
+}
+
+.chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart__swatch {
+  display: inline-block;
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  font-style: normal;
+}
+
+.chart__swatch--primary {
+  background: var(--accent);
+}
+
+.chart__swatch--compare {
+  background-image: repeating-linear-gradient(90deg, var(--cool) 0 5px, transparent 5px 8px);
+}
+
+.chart__viz {
+  display: block;
+}
+
+.chart__plot {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.chart__axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2px 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.chart__axis .mono {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.chart__svg {
   width: 100%;
   height: 90px;
   display: block;
   overflow: visible;
 }
 
-.salary-line__path {
+.chart__gridline {
+  stroke: var(--line);
+  stroke-width: 0.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart__path {
   fill: none;
-  stroke: var(--accent);
   stroke-width: 1.6;
   vector-effect: non-scaling-stroke;
 }
 
-.salary-line__dot {
+.chart__path--primary {
+  stroke: var(--accent);
+}
+
+.chart__path--compare {
+  stroke: var(--cool);
+  stroke-dasharray: 3 2;
+}
+
+.chart__dot--primary {
   fill: var(--accent);
+}
+
+.chart__dot--compare {
+  fill: var(--cool);
 }
 
 .salary-line__labels {
@@ -98,10 +204,22 @@
   color: var(--muted);
 }
 
+/* The value is the answer the visitor came for; the level name above it is
+ * context, so only the figure gets full-contrast text and weight. */
+.salary-line__label .mono {
+  color: var(--text);
+  font-weight: 600;
+}
+
 /* A level nobody published pay for is dimmed as a whole, so the eye reads it as an absent
    measurement rather than as a value that failed to render. */
 .salary-line__label.is-empty {
   opacity: 0.55;
+}
+
+.salary-line__label.is-empty .mono {
+  color: var(--muted);
+  font-weight: 500;
 }
 
 .salary-line__note {
@@ -119,51 +237,23 @@
   color: var(--accent);
 }
 
-.salary-table-wrap {
-  overflow-x: auto;
+/* Table fallback: hidden by default, swapped in for .chart__viz below 480px
+ * (see the media query at the bottom of this file) rather than shrinking the
+ * line chart until its points collide. */
+.chart__table {
+  display: none;
+  margin-top: 10px;
 }
 
+/* --- Callouts kept as a thin wrapper: the boxes themselves are .panel. ----- */
+
 .salary-callouts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
   margin: 16px 0 28px;
 }
 
-.salary-callout {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 16px 18px;
-  background: var(--bg-elev);
-}
-
-.salary-callout__kicker {
-  display: block;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 6px;
-}
-
-.salary-callout p {
-  margin: 0;
-}
-
-.salary-stat-figure {
-  font-family: var(--display);
-  font-size: 2rem;
-  color: var(--text);
-  margin: 2px 0 8px;
-}
-
+/* The box itself is .panel; this only carries the vertical rhythm around it. */
 .salary-cta {
   margin: 32px 0;
-  padding: 22px 24px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  background: var(--bg-elev);
 }
 
 .salary-cta h2 {
@@ -171,9 +261,6 @@
 }
 
 .salary-cta__actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
   margin-top: 14px;
 }
 
@@ -183,7 +270,23 @@
     gap: 4px;
   }
 
+  .salary-chart__scale-track {
+    display: none;
+  }
+
   .salary-chart__value {
     text-align: left;
+  }
+}
+
+/* A cramped line chart is worse than a clean table at phone width: the chart
+ * (axis, plot and per-point label grid) hands off to the table entirely. */
+@media (max-width: 480px) {
+  .chart__viz {
+    display: none;
+  }
+
+  .chart__table {
+    display: block;
   }
 }

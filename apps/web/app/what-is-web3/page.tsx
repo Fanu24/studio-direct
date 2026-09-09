@@ -42,7 +42,8 @@ export default function WhatIsWeb3Page() {
       title="What is Web3"
       toc={TOC}
     >
-      <h2 id="web1-web2-web3">Web 1.0, Web 2.0, and Web 3.0</h2>
+      <section className="m-reveal" data-reveal>
+        <h2 id="web1-web2-web3">Web 1.0, Web 2.0, and Web 3.0</h2>
         <p>
           The useful story is about who could publish, who stored the result, and
           who could take it away. Web 1.0 was a read-mostly web: sites you visited,
@@ -67,7 +68,9 @@ export default function WhatIsWeb3Page() {
           than the software. Nodework cares about the software and the jobs, not
           about declaring the slogan finished.
         </p>
+      </section>
 
+      <section className="m-reveal" data-reveal>
         <h2 id="ownership">Ownership is a key, not a feeling</h2>
         <p>
           On a platform, ownership is a row in someone else's database plus a
@@ -87,7 +90,9 @@ export default function WhatIsWeb3Page() {
           to decide what the user can do when the page loads, and they still have
           to staff support when a transaction fails.
         </p>
+      </section>
 
+      <section className="m-reveal" data-reveal>
         <h2 id="blockchain">What a blockchain is doing in this story</h2>
         <p>
           A blockchain is a replicated log with rules for who may append the next
@@ -107,7 +112,9 @@ export default function WhatIsWeb3Page() {
           listing still has: a sequencer, a bridge, a custodian, an oracle, or a
           support agent with an admin tool.
         </p>
+      </section>
 
+      <section className="m-reveal" data-reveal>
         <h2 id="crypto-versus-web3">Crypto is not the same word as Web3</h2>
         <p>
           Cryptocurrency is an asset and a payment system. Bitcoin is a
@@ -124,7 +131,9 @@ export default function WhatIsWeb3Page() {
           minimum and a maximum. A Web3 URL is not proof you will be paid in a
           token. The posting has to say that.
         </p>
+      </section>
 
+      <section className="m-reveal" data-reveal>
         <h2 id="metaverse">The metaverse, briefly</h2>
         <p>
           The metaverse is a claim about a persistent shared space: avatars,
@@ -135,7 +144,9 @@ export default function WhatIsWeb3Page() {
           If a listing says metaverse, read for the engine, the live-ops plan,
           and whether the chain is in the critical path or only in the pitch.
         </p>
+      </section>
 
+      <section className="m-reveal" data-reveal>
         <h2 id="jobs">How the word shows up on Nodework</h2>
         <p>
           On Nodework, Web3 is also a hiring label. Employers use it for products
@@ -162,6 +173,7 @@ export default function WhatIsWeb3Page() {
           or filter to remote. If you are still mapping the space, the FAQ covers
           how Apply and salary rollups work on this site.
         </p>
+      </section>
     </ArticleLayout>
   );
 }

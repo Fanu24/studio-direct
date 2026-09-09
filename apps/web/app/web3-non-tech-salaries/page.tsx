@@ -140,42 +140,51 @@ export default async function Web3NonTechSalariesPage() {
   };
 
   return (
-    <main className="board-main">
+    <main className="surface surface--data">
       <JsonLd data={blogPostingJsonLd} />
       {details.map((job) => (
         <JsonLd data={buildJobPostingJsonLd(job, origin)} key={job.id} />
       ))}
-      <header className="board-hero">
-        <Breadcrumbs
-          items={[
-            { href: "/jobs", label: "Jobs" },
-            { href: "/web3-salaries", label: "Web3 salaries" },
-            { label: "Non-tech" },
-          ]}
-        />
-        <h1>{title}</h1>
-        <p className="lead">
-          Pay bands for product, go to market, design, and operations roles, aggregated from
-          listed jobs that published a minimum and a maximum.
-        </p>
+      <div className="container">
+        <header className="page-header">
+          <Breadcrumbs
+            items={[
+              { href: "/jobs", label: "Jobs" },
+              { href: "/web3-salaries", label: "Web3 salaries" },
+              { label: "Non-tech" },
+            ]}
+          />
+          <h1>{title}</h1>
+          <p className="lead">
+            Pay bands for product, go to market, design, and operations roles, aggregated from
+            listed jobs that published a minimum and a maximum.
+          </p>
+        </header>
         <BoardSearch remoteHref="/remote-jobs" />
         <TagChips />
-      </header>
+      </div>
 
       <section className="container">
         <h2>Average non-tech Web3 salary on Nodework</h2>
         {overview ? (
           <>
-            <p className="salary-stat-figure">{formatSalaryRange(overview.avg, overview.avg)}</p>
+            <div className="stat">
+              <span className="stat__value">
+                <span className="m-count" data-reveal>
+                  <span>{formatSalaryRange(overview.avg, overview.avg)}</span>
+                </span>
+              </span>
+              <span className="stat__label">Average non-tech salary</span>
+            </div>
             <p>
               That is the average of the {overview.roleCount} non-tech roles below with a
               published salary band right now, spanning{" "}
               {formatSalaryRange(overview.min, overview.max)} across the whole set.
             </p>
             <SalaryBarChart chartLabel="Highest paid non-tech roles" rows={roleChartRows} />
-            <div className="salary-callouts">
-              <div className="salary-callout">
-                <span className="salary-callout__kicker">Highest paid</span>
+            <div className="grid grid--2 salary-callouts">
+              <div className="panel panel--tight panel--accent m-reveal" data-reveal>
+                <span className="kicker">Highest paid</span>
                 <p>
                   <Link href={`/web3-non-tech-salaries/${highestPaid!.slug}`}>
                     {tagLabel(highestPaid!.slug)}
@@ -184,8 +193,12 @@ export default async function Web3NonTechSalariesPage() {
                   published band among non-tech Web3 roles on Nodework right now.
                 </p>
               </div>
-              <div className="salary-callout">
-                <span className="salary-callout__kicker">Lowest paid</span>
+              <div
+                className="panel panel--tight panel--cool m-reveal"
+                data-reveal
+                data-reveal-delay="1"
+              >
+                <span className="kicker kicker--cool">Lowest paid</span>
                 <p>
                   <Link href={`/web3-non-tech-salaries/${lowestPaid!.slug}`}>
                     {tagLabel(lowestPaid!.slug)}
