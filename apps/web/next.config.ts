@@ -41,6 +41,16 @@ const nextConfig: NextConfig = {
      * static generation - worth it for a build that finishes.
      */
     cpus: 1,
+    /**
+     * `@view-transition { navigation: auto }` in CSS only fires on full-document
+     * loads. Next `<Link>` navigation is same-document, so without this flag the
+     * page transitions in `motion.css` never run at all.
+     *
+     * This is an experimental flag. It degrades safely - a browser without the
+     * View Transitions API just navigates - but if it ever destabilises the build
+     * or the Workers bundle, deleting this line is the whole fix.
+     */
+    viewTransition: true,
   },
 };
 

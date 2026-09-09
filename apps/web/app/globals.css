@@ -35,7 +35,9 @@
 
   --accent: #ff2d87;
   --accent-strong: #ff5aa3;
-  --accent-ink: #ffffff;
+  /* Ink for text sitting ON --accent. White measures 3.51:1 there and fails AA
+     for normal text; this near-black measures 5.73:1 and passes at every size. */
+  --accent-ink: #06070c;
   --accent-soft: rgb(255 45 135 / 0.14);
   --accent-line: rgb(255 45 135 / 0.42);
 
