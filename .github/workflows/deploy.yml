@@ -1,0 +1,88 @@
+name: Deploy web to Cloudflare
+
+# Why this exists: `opennextjs-cloudflare build` cannot be run on Windows. It bakes
+# absolute Windows paths and backslash separators into the worker bundle - a local
+# build produced 3442 occurrences of `C:\Users\...\Saas JOBS` - and the resulting
+# worker fails at runtime in the POSIX-like Workers environment with
+# `Dynamic require of "/.next/server/middleware-manifest.json" is not supported`,
+# returning 500 on every route. The build has to happen on Linux, which is what
+# this workflow is for.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "package.json"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+# Never let two deploys race: a slower older run must not overwrite a newer one.
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        # Version comes from the `packageManager` field in the root package.json.
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build the Cloudflare worker
+        working-directory: apps/web
+        run: pnpm cf:build
+        # Note on prerendering: `.wrangler/` is gitignored, so the local D1 that
+        # OpenNext hands to the 122 prerendered pages is EMPTY here. Those pages are
+        # therefore built without data. They carry `revalidate = 300`, so each one
+        # refills from the real D1 on first request and then revalidates on its own.
+        # If empty-on-first-hit ever becomes unacceptable, the fix is to give the
+        # build remote bindings, not to commit database state.
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: apps/web
+          command: deploy
+          # account_id is already set in apps/web/wrangler.jsonc, so it needs no secret.
+
+      - name: Verify the deployment actually serves traffic
+        # A green deploy step only means the upload succeeded. The Windows build
+        # failure above uploaded perfectly and then returned 500 on every route, so
+        # this job does not report success until the live site answers.
+        run: |
+          set -euo pipefail
+          base="https://gaming-web.xavier-ff2.workers.dev"
+          sleep 10
+          failed=0
+          for path in / /jobs /web3-companies; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$base$path" || echo 000)
+            echo "$path -> $code"
+            if [ "$code" != "200" ]; then failed=1; fi
+          done
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::The worker deployed but is not serving 200. Roll back with: wrangler rollback"
+            exit 1
+          fi
+          echo "Live site verified at $base"
