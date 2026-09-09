@@ -77,7 +77,7 @@ function faqJsonLd() {
 
 export default function PostWeb3JobPage() {
   return (
-    <main className="marketing post-job">
+    <main className="surface surface--stage marketing post-job">
       <JsonLd data={faqJsonLd()} />
 
       <div className="container container--content">
@@ -164,7 +164,7 @@ export default function PostWeb3JobPage() {
             </p>
           </div>
           <div className="cluster">
-            <Link className="button button--lg" href="/login">
+            <Link className="button button--primary" href="/login">
               Create a free account
             </Link>
             <Link className="text-link" href="/post-web3-job/bundle">

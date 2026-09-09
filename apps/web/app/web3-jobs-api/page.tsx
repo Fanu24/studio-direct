@@ -101,7 +101,7 @@ function faqJsonLd() {
 
 export default function Web3JobsApiPage() {
   return (
-    <main className="marketing web3-jobs-api">
+    <main className="surface surface--stage marketing web3-jobs-api">
       <JsonLd data={faqJsonLd()} />
 
       <div className="container container--content">
@@ -173,7 +173,7 @@ export default function Web3JobsApiPage() {
             <h2 id="api-response">Example response</h2>
             <p>Field names match the job records the board already renders, one job shown for brevity.</p>
           </div>
-          <pre className="marketing-code">{SAMPLE_RESPONSE}</pre>
+          <pre className="panel panel--well marketing-code">{SAMPLE_RESPONSE}</pre>
 
           <div className="marketing-table-wrap">
             <table className="marketing-table">
@@ -208,7 +208,7 @@ export default function Web3JobsApiPage() {
             </p>
           </div>
           <div className="cluster">
-            <Link className="button button--lg" href="/login">
+            <Link className="button button--primary" href="/login">
               Create a free account
             </Link>
             <Link className="text-link" href="/jobs">
@@ -241,7 +241,7 @@ export default function Web3JobsApiPage() {
             Every field above already exists on jobs shown at <Link href="/jobs">/jobs</Link>.
           </p>
           <div className="cluster">
-            <Link className="button button--secondary" href="/about">
+            <Link className="button button--ghost" href="/about">
               How Nodework works
             </Link>
           </div>

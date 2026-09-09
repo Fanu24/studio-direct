@@ -19,7 +19,7 @@ const SECTIONS = [
 
 export default function TermsPage() {
   return (
-    <main className="legal-page">
+    <main className="surface surface--stage legal-page">
       <header className="legal-page__head">
         <span className="kicker">Legal</span>
         <h1>{TERMS_COPY.title}</h1>
@@ -35,7 +35,7 @@ export default function TermsPage() {
             ))}
           </ol>
         </nav>
-        <article className="legal-body">
+        <article className="legal-body measure">
           <section aria-labelledby="operator-title" id="operator">
             <h2 id="operator-title">Who operates this site</h2>
             <p>{TERMS_COPY.legalEntity}</p>

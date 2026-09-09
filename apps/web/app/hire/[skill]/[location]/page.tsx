@@ -16,6 +16,12 @@ import {
 } from "../../../../lib/jobs/queries";
 import { requireTenantId } from "../../../../lib/tenant";
 import { currentMonthYear, parseHireLocation, salaryRangePhrase } from "../../locations";
+import { HIRE_TAGS } from "../../tags";
+
+/** A handful of sibling skills to browse from a skill+location hire page, current tag excluded. */
+function siblingSkills(current: string, count = 8): string[] {
+  return HIRE_TAGS.filter((slug) => slug !== current).slice(0, count);
+}
 
 export const revalidate = 300;
 
@@ -89,9 +95,10 @@ export default async function HireSkillLocationPage({
   const { place, result, selected } = loaded;
   const label = tagLabel(skill);
   const path = `/hire/${skill}/${location.trim().toLowerCase()}`;
+  const siblings = siblingSkills(skill);
 
   return (
-    <main className="board-main">
+    <main className="surface surface--stage board-main">
       <header className="board-hero">
         <Breadcrumbs
           items={[
@@ -108,14 +115,13 @@ export default async function HireSkillLocationPage({
           public board, filtered to this location.
         </p>
         <p className="count">
-          <span className="jobs-num">{result.total}</span>{" "}
-          {result.total === 1 ? "job" : "jobs"} found
+          {result.total} {result.total === 1 ? "job" : "jobs"} found
         </p>
         <BoardSearch
           remoteHref={place.remoteOnly ? "/remote-jobs" : `/remote-${skill}-jobs`}
         />
         <TagChips active={skill} />
-        <div className="chips">
+        <div className="cluster">
           <Link className="chip" href={`/hire/${skill}`}>
             All {label} hiring
           </Link>
@@ -126,7 +132,7 @@ export default async function HireSkillLocationPage({
       </header>
       <JobBoard
         emptyActions={
-          <Link className="button button--secondary" href={`/hire/${skill}`}>
+          <Link className="button button--ghost" href={`/hire/${skill}`}>
             All {label} hiring
           </Link>
         }
@@ -135,6 +141,16 @@ export default async function HireSkillLocationPage({
         pager={<CatalogPager path={path} result={result} />}
         selected={selected}
       />
+      <div className="container hire-siblings">
+        <p className="hire-siblings__label">Other skills to hire</p>
+        <div className="cluster">
+          {siblings.map((slug) => (
+            <Link className="chip" href={`/hire/${slug}`} key={slug}>
+              {tagLabel(slug)}
+            </Link>
+          ))}
+        </div>
+      </div>
       <RelatedBrowseLinks tag={skill} />
     </main>
   );

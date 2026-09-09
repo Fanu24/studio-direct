@@ -17,7 +17,7 @@ const SECTIONS = [
 
 export default function PrivacyPage() {
   return (
-    <main className="legal-page">
+    <main className="surface surface--stage legal-page">
       <header className="legal-page__head">
         <span className="kicker">Legal</span>
         <h1>{PRIVACY_COPY.title}</h1>
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
             ))}
           </ol>
         </nav>
-        <article className="legal-body">
+        <article className="legal-body measure">
           <section aria-labelledby="operator-title" id="operator">
             <h2 id="operator-title">Who operates this site</h2>
             <p>{PRIVACY_COPY.legalEntity}</p>

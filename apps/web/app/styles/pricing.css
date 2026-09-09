@@ -5,12 +5,32 @@
    Pricing
    --------------------------------------------------------------------------- */
 
+/* .grid.grid--3 (globals.css) supplies the grid mechanics; this only adds the
+   plan-card-specific stretch and breathing room around it. */
 .price-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
   align-items: stretch;
   padding: 18px 0;
+}
+
+.price-billing-notice {
+  margin: 24px 0 0;
+  align-items: flex-start;
+}
+
+.price-billing-notice strong {
+  display: block;
+  color: var(--text);
+}
+
+.price-billing-notice p {
+  margin: 6px 0 0;
+  max-width: 58ch;
+  color: var(--dim);
+  font-size: 0.9rem;
+}
+
+.price-plan__list .check {
+  cursor: default;
 }
 
 .price-plan {
@@ -34,7 +54,7 @@
   padding: 34px 28px;
   border-color: var(--accent-line);
   background:
-    linear-gradient(180deg, rgb(196 163 90 / 0.12), transparent 55%),
+    linear-gradient(180deg, var(--accent-soft), transparent 55%),
     var(--bg-elev);
   box-shadow: var(--shadow-panel);
 }
@@ -79,8 +99,11 @@
 
 .price-plan h2 {
   margin: 0;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
   font-size: clamp(1.9rem, 3vw, 2.4rem);
-  letter-spacing: -0.045em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   line-height: 1.05;
 }
 
@@ -498,7 +521,7 @@
 
 .about-close {
   text-align: center;
-  background: radial-gradient(60% 90% at 50% 110%, rgb(196 163 90 / 0.12), transparent 70%);
+  background: radial-gradient(60% 90% at 50% 110%, var(--accent-soft), transparent 70%);
 }
 
 .about-close h2 {
@@ -564,10 +587,11 @@
   border-left-color: var(--accent-line);
 }
 
+/* .measure (globals.css) caps the reading width; this only adds the vertical
+   rhythm between sections. */
 .legal-body {
   display: grid;
   gap: clamp(32px, 4vw, 44px);
-  max-width: 65ch;
   min-width: 0;
 }
 

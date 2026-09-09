@@ -115,7 +115,7 @@ export default async function HireHubPage() {
   };
 
   return (
-    <main>
+    <main className="surface surface--stage">
       <JsonLd data={jsonLd} />
       <header className="page-header">
         <Breadcrumbs items={[{ href: "/jobs", label: "Jobs" }, { label: "Hire" }]} />
@@ -153,7 +153,7 @@ export default async function HireHubPage() {
         {hireGroups().map((group) => (
           <div className="hire-directory__group" key={group.key}>
             <h2 className="hire-directory__label">{group.label}</h2>
-            <div className="chips">
+            <div className="cluster">
               {group.slugs.map((slug) => (
                 <Link className="chip" href={`/hire/${slug}`} key={slug}>
                   {tagLabel(slug)}
@@ -164,20 +164,17 @@ export default async function HireHubPage() {
         ))}
       </nav>
 
-      <section aria-label="Skills to hire" className="jobs-results">
-        <div className="jobs-results__head">
+      <section aria-label="Skills to hire" className="container hire-skills">
+        <div className="hire-skills__head">
           <p className="count">
-            <span className="jobs-num">{cards.length}</span> skills tracked,{" "}
-            <span className="jobs-num">{totalOpenRoles}</span> open roles live
+            {cards.length} skills tracked, {totalOpenRoles} open roles live
           </p>
-          <div className="jobs-results__aside">
-            <Link className="text-link" href="/web3-companies">
-              Companies
-              <ArrowRightIcon size={15} />
-            </Link>
-          </div>
+          <Link className="text-link" href="/web3-companies">
+            Companies
+            <ArrowRightIcon size={15} />
+          </Link>
         </div>
-        <ul className="jobs-role-grid">
+        <ul className="grid grid--3">
           {cards.map((card) => {
             const label = tagLabel(card.slug);
             const roleWord = card.total === 1 ? "role" : "roles";
@@ -188,14 +185,14 @@ export default async function HireHubPage() {
                     .join("; ")}.`
                 : "";
             return (
-              <li className="jobs-role-card" key={card.slug}>
-                <h2 className="jobs-role-card__title">
+              <li className="panel hire-card m-lift" key={card.slug}>
+                <h2 className="hire-card__title">
                   <Link href={`/hire/${card.slug}`}>Hire {label}</Link>
                 </h2>
-                <p className="jobs-role-card__note">
+                <p className="hire-card__note">
                   {card.total} live {roleWord} for {label} on Nodework.{previewText}
                 </p>
-                <Link className="jobs-role-card__skill chip" href={`/${card.slug}-jobs`}>
+                <Link className="chip hire-card__skill" href={`/${card.slug}-jobs`}>
                   {label} jobs
                 </Link>
               </li>

@@ -102,17 +102,19 @@ export function LoginForm({
       />
       {error ? (
         <p className="notice notice--danger" role="alert">
+          <strong>Error. </strong>
           {error}
         </p>
       ) : null}
       {message ? (
         <p className="notice notice--accent" role="status">
+          <strong>Sent. </strong>
           {message}
         </p>
       ) : null}
-      <form className="login__form" onSubmit={onSubmit}>
+      <form className="auth-form" onSubmit={onSubmit}>
         {items}
-        <div className="cf-turnstile" data-sitekey={siteKey} />
+        <div className="auth-form__turnstile cf-turnstile" data-sitekey={siteKey} />
         {submit}
       </form>
     </>
@@ -130,7 +132,7 @@ export function GoogleSignInButton({
 }) {
   return (
     <button
-      className="button button--secondary button--block"
+      className="button button--ghost button--block"
       type="button"
       onClick={() => {
         void authClient.signIn.social({

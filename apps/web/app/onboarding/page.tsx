@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { CheckIcon } from "../_components/icons";
 import { createAuth, type AuthEnv } from "../../lib/auth/index";
 import { submitOnboarding } from "./actions";
 import {
@@ -59,9 +60,18 @@ export default async function OnboardingPage({
   }
 
   return (
-    <main className="acct-main acct-onboard">
+    <main className="surface surface--stage auth auth-onboard">
       <div className="container container--content">
-        <section aria-labelledby="onboarding-title" className="panel panel--lg acct-card">
+        <section aria-labelledby="onboarding-title" className="panel panel--lg auth-card auth-onboard-card">
+          <ol aria-label="Sign-in progress" className="auth-progress">
+            <li className="auth-progress__step is-done">
+              <CheckIcon size={14} />
+              Account
+            </li>
+            <li aria-current="step" className="auth-progress__step is-current">
+              Profile
+            </li>
+          </ol>
           <div>
             <span className="kicker">One step before you unlock</span>
             <h1 id="onboarding-title">Finish your profile</h1>
@@ -71,39 +81,41 @@ export default async function OnboardingPage({
               later.
             </p>
           </div>
-          <form action={submitOnboarding} className="acct-form">
+          <form action={submitOnboarding} className="auth-form">
             <input name="next" type="hidden" value={next} />
-            <label htmlFor="onboarding-display-name">
-              <span>Display name</span>
+            <div className="field">
+              <label className="field__label" htmlFor="onboarding-display-name">Display name</label>
               <input
                 autoComplete="name"
+                className="field__input"
                 id="onboarding-display-name"
                 name="display_name"
                 required
                 type="text"
               />
-            </label>
-            <label htmlFor="onboarding-target-role">
-              <span>Target role</span>
+            </div>
+            <div className="field">
+              <label className="field__label" htmlFor="onboarding-target-role">Target role</label>
               <input
+                className="field__input"
                 id="onboarding-target-role"
                 name="target_role"
                 placeholder="Gameplay programmer, technical artist, producer"
                 required
                 type="text"
               />
-            </label>
-            <label htmlFor="onboarding-remote-pref">
-              <span>Remote preference</span>
-              <select id="onboarding-remote-pref" name="remote_pref" required>
+            </div>
+            <div className="field">
+              <label className="field__label" htmlFor="onboarding-remote-pref">Remote preference</label>
+              <select className="field__input" id="onboarding-remote-pref" name="remote_pref" required>
                 <option value="">Select a preference</option>
                 <option value="remote">Remote</option>
                 <option value="hybrid">Hybrid</option>
                 <option value="onsite">On-site</option>
               </select>
-            </label>
-            <button className="button button--block" type="submit">
-              Continue
+            </div>
+            <button className="button button--primary button--block" type="submit">
+              Save and continue
             </button>
           </form>
         </section>

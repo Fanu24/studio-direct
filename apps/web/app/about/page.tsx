@@ -99,7 +99,7 @@ function faqJsonLd() {
 
 export default function AboutPage() {
   return (
-    <main className="marketing about">
+    <main className="surface surface--stage marketing about">
       <JsonLd data={faqJsonLd()} />
 
       <div className="container container--content">
@@ -193,10 +193,10 @@ export default function AboutPage() {
         <div className="container container--content">
           <h2 id="about-close">See the board.</h2>
           <div className="cluster">
-            <Link className="button button--lg" href="/jobs">
+            <Link className="button button--primary" href="/jobs">
               Browse jobs
             </Link>
-            <Link className="button button--secondary button--lg" href="/remote-jobs">
+            <Link className="button button--ghost" href="/remote-jobs">
               Remote jobs
             </Link>
             <Link className="text-link" href="/pricing">

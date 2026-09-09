@@ -63,7 +63,7 @@ function faqJsonLd() {
 
 export default function AdsPage() {
   return (
-    <main className="marketing ads">
+    <main className="surface surface--stage marketing ads">
       <JsonLd data={faqJsonLd()} />
 
       <div className="container container--content">
@@ -136,7 +136,7 @@ export default function AdsPage() {
             </p>
           </div>
           <div className="cluster">
-            <Link className="button button--lg" href="/login">
+            <Link className="button button--primary" href="/login">
               Create a free account
             </Link>
             <Link className="text-link" href="/post-web3-job">

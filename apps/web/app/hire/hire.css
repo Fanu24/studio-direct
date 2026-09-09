@@ -1,7 +1,10 @@
 /*
- * /hire directory bands. Scoped entirely under .hire-directory and defines no
- * custom properties, so the bundler is free to emit this chunk in any order
- * without touching the palette (see the nodework CSS-order note in globals.css).
+ * /hire hub, skill and skill+location pages. Scoped entirely under hire-
+ * prefixed classes and defines no custom properties, so the bundler is free
+ * to emit this chunk in any order without touching the palette (see the
+ * nodework CSS-order note in globals.css). Vocabulary primitives (.container,
+ * .grid, .panel, .chip, .cluster, .count, .empty) supply the mechanics;
+ * these rules only add the hire-specific shape on top of them.
  */
 
 .hire-directory {
@@ -22,11 +25,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted, #8a8f98);
-}
-
-.hire-directory .chips {
-  gap: 8px;
+  color: var(--muted);
 }
 
 @media (min-width: 860px) {
@@ -35,4 +34,80 @@
     align-items: baseline;
     gap: 8px 18px;
   }
+}
+
+/* --- Skill count cards (the hub's main grid) ------------------------------ */
+
+.hire-skills {
+  margin-top: clamp(40px, 5vw, 64px);
+}
+
+.hire-skills__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.hire-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  height: 100%;
+}
+
+.hire-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.015em;
+}
+
+.hire-card__title a {
+  text-decoration: none;
+  color: var(--text);
+}
+
+.hire-card__title a:hover {
+  color: var(--accent-strong);
+}
+
+.hire-card__note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.hire-card__skill {
+  justify-self: start;
+}
+
+/* --- Skill / skill+location pages ------------------------------------------
+   These pages embed the shared <JobBoard>, which expects to sit inside
+   main.board-main / header.board-hero (owned by the Board and Directory
+   lanes' stylesheets); this file only adds the hire-specific header row and
+   the sibling-browse cluster underneath the board. */
+
+.hire-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin: 4px 0 16px;
+}
+
+.hire-siblings {
+  margin-top: clamp(32px, 4vw, 48px);
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.hire-siblings__label {
+  margin: 0 0 12px;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
 }

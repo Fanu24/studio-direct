@@ -33,9 +33,9 @@ export default async function LoginPage({
   const startingFresh = intent === "start";
 
   return (
-    <main className="acct-main login">
-      <div className="container login__grid">
-        <section aria-labelledby="login-title" className="login__brand">
+    <main className="surface surface--stage auth">
+      <div className="container auth-grid">
+        <section aria-labelledby="login-title" className="auth-brand">
           <span className="kicker">{startingFresh ? "Get started" : "Your account"}</span>
           <h1 id="login-title">Sign in to Nodework</h1>
           <p className="lead">
@@ -46,8 +46,8 @@ export default async function LoginPage({
           <p>
             You can send another magic link from this page if the email does not arrive.
           </p>
-          <p className="login__perks-label">What an account gives you</p>
-          <ul className="login__perks">
+          <p className="auth-perks-label">What an account gives you</p>
+          <ul className="auth-perks">
             {ACCOUNT_PERKS.map((perk) => (
               <li key={perk}>
                 <CheckIcon size={16} />
@@ -57,40 +57,43 @@ export default async function LoginPage({
           </ul>
         </section>
 
-        <div className="panel panel--lg login__card">
+        <div className="panel panel--lg auth-card">
           {sent ? (
             <p className="notice notice--accent" role="status">
+              <strong>Sent. </strong>
               Check your email for a sign-in link. You can send another magic link below.
             </p>
           ) : null}
           {error ? (
             <p className="notice notice--danger" role="alert">
+              <strong>Error. </strong>
               {error}
             </p>
           ) : null}
           <LoginForm callbackURL={callbackURL} newUserCallbackURL={newUserCallbackURL} siteKey={siteKey}>
-            <label htmlFor="login-email">
-              <span>Email</span>
+            <div className="field">
+              <label className="field__label" htmlFor="login-email">Email</label>
               <input
                 autoComplete="email"
+                className="field__input"
                 id="login-email"
                 name="email"
                 placeholder="you@example.com"
                 required
                 type="email"
               />
-            </label>
-            <button className="button button--block" type="submit">
+            </div>
+            <button className="button button--primary button--block" type="submit">
               Send magic link
             </button>
           </LoginForm>
-          <p className="login__or">
+          <p className="auth-or">
             <span>or</span>
           </p>
           <GoogleSignInButton callbackURL={callbackURL} newUserCallbackURL={newUserCallbackURL}>
             Continue with Google
           </GoogleSignInButton>
-          <p className="login__fine">
+          <p className="auth-fine">
             New here? Your account is created the first time you sign in. We then ask for
             a display name and a target role.
           </p>

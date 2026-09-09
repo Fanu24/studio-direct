@@ -125,7 +125,7 @@ function faqJsonLd() {
 
 export default function PostWeb3JobBundlePage() {
   return (
-    <main className="marketing post-job">
+    <main className="surface surface--stage marketing post-job">
       <JsonLd data={faqJsonLd()} />
 
       <div className="container container--content">
@@ -175,13 +175,13 @@ export default function PostWeb3JobBundlePage() {
               is published, which is the only reason a bundle exists at all.
             </p>
           </div>
-          <div className="salary-table-wrap">
-            <table className="salary-table">
+          <div className="marketing-table-wrap">
+            <table className="marketing-table">
               <thead>
                 <tr>
-                  <th>Pack</th>
-                  <th>Who it is for</th>
-                  <th>Why that size</th>
+                  <th scope="col">Pack</th>
+                  <th scope="col">Who it is for</th>
+                  <th scope="col">Why that size</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,7 +189,7 @@ export default function PostWeb3JobBundlePage() {
                   <tr key={pack.size}>
                     <td>{pack.size}</td>
                     <td>{pack.fit}</td>
-                    <td>{pack.detail}</td>
+                    <td className="marketing-table__desc">{pack.detail}</td>
                   </tr>
                 ))}
               </tbody>
@@ -251,7 +251,7 @@ export default function PostWeb3JobBundlePage() {
             </p>
           </div>
           <div className="cluster">
-            <Link className="button button--lg" href="/login">
+            <Link className="button button--primary" href="/login">
               Create a free account
             </Link>
             <Link className="text-link" href="/post-web3-job">

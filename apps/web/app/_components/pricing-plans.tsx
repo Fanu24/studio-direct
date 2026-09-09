@@ -20,7 +20,7 @@ function featureList(items: { label: string; tag?: string }[]) {
   return (
     <ul className="price-plan__list">
       {items.map((item) => (
-        <li key={item.label}>
+        <li className="check" key={item.label}>
           <CheckIcon size={16} />
           <span className="price-plan__feature">
             {item.label}
@@ -40,7 +40,7 @@ function checkout(plan: "monthly" | "yearly", billingLive: boolean, primary: boo
     <form action="/api/stripe/checkout" className="price-plan__form" method="post">
       <input name="plan" type="hidden" value={plan} />
       <button
-        className={primary ? "button button--block" : "button button--secondary button--block"}
+        className={primary ? "button button--primary button--block" : "button button--ghost button--block"}
         type="submit"
       >
         Continue to checkout
@@ -56,7 +56,7 @@ function checkout(plan: "monthly" | "yearly", billingLive: boolean, primary: boo
 export function PricingPlans({ billingLive }: { billingLive: boolean }) {
   return (
     <section aria-label="Plans" className="price-plans">
-      <div className="price-grid">
+      <div className="grid grid--3 price-grid">
         <article className="price-plan price-plan--free">
           <header className="price-plan__head">
             <div className="price-plan__tags">
@@ -68,7 +68,7 @@ export function PricingPlans({ billingLive }: { billingLive: boolean }) {
           <p className="price-plan__intro">What you get today.</p>
           {featureList(FREE_FEATURES.map((label) => ({ label })))}
           <div className="price-plan__cta">
-            <Link className="button button--secondary button--block" href="/jobs">
+            <Link className="button button--ghost button--block" href="/jobs">
               Browse jobs
             </Link>
             <p className="price-plan__hint">

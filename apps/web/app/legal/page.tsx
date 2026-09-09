@@ -26,7 +26,7 @@ const PRIVACY_TOPICS = [
 
 export default function LegalPage() {
   return (
-    <main className="marketing legal">
+    <main className="surface surface--stage marketing legal">
       <div className="container container--content">
         {PageHeader({
           kicker: "Legal",

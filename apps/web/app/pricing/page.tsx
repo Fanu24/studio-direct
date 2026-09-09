@@ -2,7 +2,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ArrowRightIcon, CheckIcon } from "../_components/icons";
+import { ArrowRightIcon, CheckIcon, LockIcon } from "../_components/icons";
 import { JsonLd } from "../_components/json-ld";
 import { PageHeader } from "../_components/page-header";
 import { PricingPlans } from "../_components/pricing-plans";
@@ -66,51 +66,67 @@ export default async function PricingPage() {
   );
 
   return (
-    <main className="price">
-      <JsonLd data={faqJsonLd()} />
+    <main className="surface surface--stage price">
+      <div className="container">
+        <JsonLd data={faqJsonLd()} />
 
-      {PageHeader({
-        kicker: "Plans",
-        title: PRICING_COPY.title,
-        lead: billingLive ? PRICING_COPY.billingLive : PRICING_COPY.billingNotLive,
-      })}
+        {PageHeader({
+          kicker: "Plans",
+          title: PRICING_COPY.title,
+          lead: billingLive ? PRICING_COPY.billingLive : PRICING_COPY.billingNotLive,
+        })}
 
-      {PricingPlans({ billingLive })}
-
-      <ul aria-label="Included in every plan" className="price-includes">
-        {INCLUDED.map((item) => (
-          <li key={item}>
-            <CheckIcon size={16} />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-
-      <section aria-labelledby="pricing-faq" className="price-faq">
-        <div className="section-head price-faq__head">
-          <h2 id="pricing-faq">Questions</h2>
-          <p>Short answers. The terms page has the full wording.</p>
-        </div>
-        <dl className="price-faq__list">
-          {FAQ.map((item) => (
-            <div className="price-faq__item" key={item.question}>
-              <dt>{item.question}</dt>
-              <dd>{item.answer}</dd>
+        {!billingLive ? (
+          <div className="notice notice--accent price-billing-notice" role="status">
+            <LockIcon size={18} />
+            <div>
+              <strong>{PRICING_COPY.billingNotLive}</strong>
+              <p>
+                We are holding checkout until the catalog holds roughly 300 real
+                career-page jobs, not seed data, so a paid plan is worth paying for. The
+                figures below are what it will cost when that switch flips.
+              </p>
             </div>
-          ))}
-        </dl>
-      </section>
+          </div>
+        ) : null}
 
-      <div className="price-close">
-        <p>Not sure yet? The catalog is free to read, and Apply is public on every plan.</p>
-        <div className="cluster">
-          <Link className="button button--secondary" href="/jobs">
-            Browse jobs
-          </Link>
-          <Link className="text-link" href="/about">
-            How Nodework works
-            <ArrowRightIcon size={16} />
-          </Link>
+        {PricingPlans({ billingLive })}
+
+        <ul aria-label="Included in every plan" className="price-includes">
+          {INCLUDED.map((item) => (
+            <li key={item}>
+              <CheckIcon size={16} />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+
+        <section aria-labelledby="pricing-faq" className="price-faq">
+          <div className="section-head price-faq__head">
+            <h2 id="pricing-faq">Questions</h2>
+            <p>Short answers. The terms page has the full wording.</p>
+          </div>
+          <dl className="price-faq__list">
+            {FAQ.map((item) => (
+              <div className="price-faq__item" key={item.question}>
+                <dt>{item.question}</dt>
+                <dd>{item.answer}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <div className="price-close">
+          <p>Not sure yet? The catalog is free to read, and Apply is public on every plan.</p>
+          <div className="cluster">
+            <Link className="button button--ghost" href="/jobs">
+              Browse jobs
+            </Link>
+            <Link className="text-link" href="/about">
+              How Nodework works
+              <ArrowRightIcon size={16} />
+            </Link>
+          </div>
         </div>
       </div>
     </main>
