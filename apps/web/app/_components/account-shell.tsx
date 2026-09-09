@@ -21,9 +21,9 @@ export function AccountShell({
   children: ReactNode;
 }) {
   return (
-    <main className="acct-main">
+    <main className="surface surface--data acct-main">
       <header className="acct-head">
-        <div className="container container--content">
+        <div className="container container--content acct-head__content">
           <span className="kicker">Account</span>
           <h1 className="acct-head__title">{title}</h1>
           {lead ? <p className="lead acct-head__lead">{lead}</p> : null}
@@ -40,7 +40,11 @@ export function AccountShell({
           </nav>
         </div>
       </header>
-      <div className="container container--content acct-body">{children}</div>
+      <div className="container container--content acct-body">
+        <div className="stack stack--lg">
+          {children}
+        </div>
+      </div>
     </main>
   );
 }
