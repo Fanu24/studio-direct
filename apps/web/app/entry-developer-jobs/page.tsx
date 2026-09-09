@@ -41,7 +41,7 @@ export default async function EntryDeveloperJobsPage({
   const { result, selected } = await loadCatalogJobs({ ...FILTERS, page });
 
   return (
-    <main className="board-main">
+    <main className="surface surface--data board-main">
       <header className="board-hero">
         <Breadcrumbs
           items={[

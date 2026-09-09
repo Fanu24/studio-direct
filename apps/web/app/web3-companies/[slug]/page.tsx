@@ -236,7 +236,7 @@ export default async function CompanyPage({
   };
 
   return (
-    <main>
+    <main className="surface surface--data">
       <JsonLd data={organization} />
       {jobPostings.map((posting, index) => (
         <JsonLd data={posting} key={`jobposting-${index}`} />
@@ -250,24 +250,65 @@ export default async function CompanyPage({
             { label: company.name },
           ]}
         />
-        <div className="jobs-studio-header__row">
-          <span aria-hidden="true" className="jobs-studio-mark">
-            {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img alt="" className="jobs-studio-logo" src={logoUrl} />
-            ) : (
-              initial
-            )}
-          </span>
-          <div>
-            <h1>{company.name} Jobs</h1>
-            <p className="lead">{roleCountSentence(result.total, company.name)}</p>
-            {company.domain ? (
-              <p className="small muted">
-                <a href={`https://${company.domain}`} rel="nofollow noopener">
-                  {company.domain}
-                </a>
-              </p>
+        {/*
+          The profile shape: monogram, name, a real location and skill read,
+          then the open-roles figure as a .stat - a page about one employer
+          reads as a profile, not as a search result that happens to be
+          alone. The filter chips below stay the interactive control; these
+          are the summary.
+        */}
+        <div className="panel panel--lg company-profile">
+          <div className="jobs-studio-header__row company-profile__id">
+            <span aria-hidden="true" className="jobs-studio-mark">
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img alt="" className="jobs-studio-logo" src={logoUrl} />
+              ) : (
+                initial
+              )}
+            </span>
+            <div>
+              <h1>{company.name} Jobs</h1>
+              <p className="lead">{roleCountSentence(result.total, company.name)}</p>
+              {company.domain || locations.length > 0 ? (
+                <p className="company-profile__meta muted">
+                  {company.domain ? (
+                    <a href={`https://${company.domain}`} rel="nofollow noopener">
+                      {company.domain}
+                    </a>
+                  ) : null}
+                  {company.domain && locations.length > 0 ? " · " : null}
+                  {locations.length > 0
+                    ? locations
+                        .slice(0, 3)
+                        .map((row) => tagLabel(row.slug))
+                        .join(", ")
+                    : null}
+                </p>
+              ) : null}
+            </div>
+          </div>
+          <div className="company-profile__aside">
+            <div className="stat">
+              <span className="stat__value stat__value--sm">
+                {result.total > 0 ? (
+                  <span className="m-count" data-reveal>
+                    <span>{result.total}</span>
+                  </span>
+                ) : (
+                  result.total
+                )}
+              </span>
+              <span className="stat__label">{result.total === 1 ? "open role" : "open roles"}</span>
+            </div>
+            {topTags.length > 0 ? (
+              <div className="company-profile__tags">
+                {topTags.slice(0, 4).map((row) => (
+                  <span className="chip chip--sm" key={row.slug}>
+                    {tagLabel(row.slug)}
+                  </span>
+                ))}
+              </div>
             ) : null}
           </div>
         </div>

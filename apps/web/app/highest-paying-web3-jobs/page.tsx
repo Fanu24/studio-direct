@@ -86,7 +86,7 @@ export default async function HighestPayingWeb3JobsPage() {
   };
 
   return (
-    <main className="board-main">
+    <main className="surface surface--data board-main">
       <JsonLd data={blogPostingJsonLd} />
       {details.map((job) => (
         <JsonLd data={buildJobPostingJsonLd(job, origin)} key={job.id} />

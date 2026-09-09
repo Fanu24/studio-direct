@@ -72,8 +72,8 @@ export function CompanyDirectoryTable({
   }
 
   return (
-    <div className="jobs-company-table-wrap">
-      <table className="salary-table jobs-company-table">
+    <div className="jobs-company-table-wrap m-reveal" data-reveal>
+      <table className="salary-table salary-table--ranked jobs-company-table">
         <thead>
           <tr>
             <th scope="col">Rank</th>
@@ -141,6 +141,85 @@ export function CompanyDirectoryTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+/**
+ * The company card shape: monogram/logo, name, a short descriptor, one
+ * category chip, and the open-role count as a .stat with tabular figures.
+ * Sits above CompanyDirectoryTable as a quick-scan "leaders" grid - the full
+ * ranked table below stays the exhaustive, test-locked view (it mirrors the
+ * reference's column inventory, see web3-companies/page.test.tsx), so this
+ * grid is additive rather than a replacement. Companies with zero listed
+ * roles are excluded: a leaders grid showing a zero role count is not a
+ * leader, and .m-count must never animate a real zero.
+ *
+ * Exported as a plain function and called as `{CompanyLeaderGrid(...)}` so
+ * its markup lands directly in the page's element tree for the tree-walk
+ * page tests.
+ */
+export function CompanyLeaderGrid({
+  companies,
+  limit = 6,
+}: {
+  companies: readonly CompanyDirectoryItem[];
+  limit?: number;
+}) {
+  const leaders = companies.filter((company) => company.jobCount > 0).slice(0, limit);
+  if (leaders.length === 0) return null;
+
+  return (
+    <ul className="grid grid--3 company-grid m-reveal" data-reveal>
+      {leaders.map((company) => {
+        const initial = company.name.trim().charAt(0).toUpperCase();
+        return (
+          <li key={company.id}>
+            <article className="company-card m-lift">
+              <div className="company-card__head">
+                <span aria-hidden="true" className="company-card__mark">
+                  {company.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt="" className="company-card__logo" src={company.logoUrl} />
+                  ) : (
+                    initial
+                  )}
+                </span>
+                <div className="company-card__id">
+                  <p className="company-card__name">
+                    <Link className="company-card__link" href={companyHref(company.slug)}>
+                      {company.name}
+                    </Link>
+                  </p>
+                  <p className="company-card__note">
+                    {company.category ? `${tagLabel(company.category)} studio` : "Web3 employer"}
+                  </p>
+                </div>
+              </div>
+              {company.category ? (
+                <div className="company-card__tags">
+                  <Link
+                    className="chip chip--sm"
+                    href={`/web3-companies/tag/${company.category}`}
+                  >
+                    {tagLabel(company.category)}
+                  </Link>
+                </div>
+              ) : null}
+              <div className="stat company-card__stat">
+                <span className="stat__value stat__value--sm">
+                  <span className="m-count" data-reveal>
+                    <span>{company.jobCount}</span>
+                  </span>
+                </span>
+                <span className="stat__label">
+                  {company.jobCount === 1 ? "open role" : "open roles"}
+                </span>
+              </div>
+            </article>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

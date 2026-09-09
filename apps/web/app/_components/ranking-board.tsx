@@ -39,7 +39,7 @@ export async function RankingJobsPage({
   const { result, selected } = await loadCatalogJobs({ ...filters, page });
 
   return (
-    <main className="board-main">
+    <main className="surface surface--data board-main">
       <header className="board-hero">
         <Breadcrumbs items={[{ href: "/jobs", label: "Jobs" }, { label: title }]} />
         <h1>{title}</h1>

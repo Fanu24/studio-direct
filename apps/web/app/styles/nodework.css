@@ -17,23 +17,40 @@
   padding: 16px 18px;
   background: var(--bg-elev);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--radius);
+  box-shadow: var(--edge-light);
+  transition:
+    border-color var(--dur-short) var(--ease-out),
+    background var(--dur-short) var(--ease-out),
+    transform var(--dur-short) var(--ease-out);
 }
 
 .job-row--hl {
-  background: #1a1014;
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+
+.job-row:hover {
+  border-color: var(--line-strong);
+  background: var(--bg-hover);
+  transform: translateY(-2px);
+}
+
+.job-row--hl:hover {
+  background: var(--accent-soft);
   border-color: var(--accent);
 }
 
 .job-row__title {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 17px;
+  font-size: var(--step-0);
   text-decoration: none;
+  color: var(--text);
 }
 
 .job-row__title:hover {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .job-row__company {
@@ -64,8 +81,8 @@
   font-size: 0.66rem;
   font-weight: 600;
   line-height: 1;
-  border-radius: 4px;
-  border: 1px solid #444;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
   background: transparent;
 }
 
@@ -87,7 +104,7 @@
 .chip--more {
   margin-top: 8px;
   cursor: pointer;
-  border: 1px solid #444;
+  border: 1px solid var(--line-strong);
 }
 
 .chip--more-close {
@@ -130,9 +147,14 @@
   gap: 10px;
   height: 46px;
   padding: 0 14px;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  background: #050505;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-pill);
+  background: var(--bg-deep);
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.search-bar .field:focus-within {
+  border-color: var(--accent);
 }
 
 .search-bar .field input {
@@ -153,20 +175,31 @@
   gap: 8px;
   height: 40px;
   padding: 0 14px 0 10px;
-  border: 1px solid #444;
-  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.88rem;
+  color: var(--text);
+  transition: border-color var(--dur-short) var(--ease-out), background var(--dur-short) var(--ease-out);
+}
+
+.remote-toggle:hover {
+  border-color: var(--accent-line);
+  background: var(--bg-hover);
 }
 
 .remote-toggle__track {
   width: 28px;
   height: 16px;
-  border-radius: 999px;
-  background: #333;
-  box-shadow: inset 8px 0 0 #fff;
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+  box-shadow: inset 8px 0 0 var(--text);
 }
+
+/* --- Ranked / dense tables (company directory, growth board, city index). ---
+   Numbers get .mono in the markup for tabular figures; this file only adds the
+   row rhythm and the optional top-three emphasis via .salary-table--ranked. */
 
 .salary-table {
   width: 100%;
@@ -176,8 +209,31 @@
 .salary-table th,
 .salary-table td {
   text-align: left;
-  padding: 10px 8px;
+  padding: 12px 10px;
   border-bottom: 1px solid var(--line);
+}
+
+.salary-table th {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+
+.salary-table tbody tr {
+  transition: background var(--dur-instant) linear;
+}
+
+.salary-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.salary-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .salary-table a {
@@ -187,6 +243,31 @@
 .salary-table .muted {
   color: var(--muted);
   font-weight: 400;
+}
+
+/* Rank column: mono tabular figure, dimmed until it earns emphasis. */
+.salary-table td:first-child.mono {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Top three get a quiet accent treatment - no medals, just weight and colour
+   on the rank figure itself, plus a hairline of accent on the row. */
+.salary-table--ranked tbody tr:nth-child(-n + 3) {
+  background: var(--accent-soft);
+}
+
+.salary-table--ranked tbody tr:nth-child(-n + 3):hover {
+  background: var(--accent-soft);
+}
+
+.salary-table--ranked tbody tr:nth-child(-n + 3) td:first-child.mono {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.salary-table--ranked tbody tr:nth-child(1) td:first-child.mono {
+  color: var(--accent);
 }
 
 .profile-banner {
@@ -199,10 +280,11 @@
   gap: 16px;
   margin: 16px 0 8px;
   padding: 16px 20px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius);
   background:
-    repeating-conic-gradient(#1a0008 0% 25%, #000 0% 50%) 100% 0 / 120px 120px,
-    #0a0005;
+    linear-gradient(180deg, rgb(255 45 135 / 0.1), transparent 60%),
+    var(--bg-deep);
 }
 
 .profile-banner__kicker {
@@ -252,6 +334,7 @@
   margin: 0;
   padding: 16px;
   border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--bg-elev);
 }
 
@@ -310,7 +393,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 @media (max-width: 720px) {

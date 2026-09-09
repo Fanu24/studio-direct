@@ -45,7 +45,7 @@ export function RankingsChips({ exclude }: { exclude?: string }) {
   if (links.length === 0) return null;
 
   return (
-    <nav aria-label="Other rankings" className="chips chips--rankings">
+    <nav aria-label="Other rankings" className="cluster m-reveal" data-reveal>
       {links.map((link) => (
         <Link className="chip" href={link.href} key={link.href}>
           {link.label}

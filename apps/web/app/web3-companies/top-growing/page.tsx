@@ -84,7 +84,7 @@ export default async function TopGrowingWeb3CompaniesPage() {
   };
 
   return (
-    <main className="board-main">
+    <main className="surface surface--data board-main">
       <JsonLd data={jsonLd} />
       <header className="board-hero">
         <Breadcrumbs
@@ -109,8 +109,8 @@ export default async function TopGrowingWeb3CompaniesPage() {
         </p>
       </header>
 
-      <div className="jobs-table-wrap">
-        <table className="salary-table jobs-growth-table">
+      <div className="jobs-table-wrap m-reveal" data-reveal>
+        <table className="salary-table salary-table--ranked jobs-growth-table">
           <thead>
             <tr>
               <th scope="col">Rank</th>

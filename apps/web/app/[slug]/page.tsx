@@ -253,7 +253,7 @@ export default async function LandingPage({
   });
 
   return (
-    <main className="board-main">
+    <main className="surface surface--data board-main">
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -276,7 +276,11 @@ export default async function LandingPage({
           ]}
         />
         <h1>{headline}</h1>
-        <p className="lead">{catalogMonthLabel()}</p>
+        <p className="lead">
+          {headline} pulled from the live Nodework catalog and refreshed for{" "}
+          {catalogMonthLabel()}. Filter by tag below, or search the full board for something
+          more specific.
+        </p>
         <p className="count">
           <span className="jobs-num">{result.total.toLocaleString("en-US")}</span>{" "}
           {result.total === 1 ? "job found" : "jobs found"}
@@ -295,7 +299,7 @@ export default async function LandingPage({
         pager={<CatalogPager path={path} result={result} />}
         selected={selected}
       />
-      <section className="container jobs-more">
+      <section className="container jobs-more m-reveal" data-reveal>
         <div className="jobs-more__head">
           <div>
             <h2>{headline} by the numbers</h2>
@@ -318,9 +322,9 @@ export default async function LandingPage({
         </dl>
       </section>
       <BoardFaq featured={featured} items={faq} />
-      <section className="container jobs-more">
+      <section className="container jobs-more m-reveal" data-reveal>
         <h2>Related pages</h2>
-        <div className="chips">
+        <div className="cluster">
           {relatedLinks.map((link) => (
             <Link className="chip" href={link.href} key={link.href}>
               {link.label}

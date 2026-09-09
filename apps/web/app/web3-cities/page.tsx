@@ -57,7 +57,7 @@ export default async function Web3CitiesPage() {
   const cityRows = await listLocationJobCounts(db, tenantId, "city");
 
   return (
-    <main>
+    <main className="surface surface--data">
       <header className="page-header">
         <h1>Top web3 cities in the world</h1>
         <p className="lead">{introSentence(cityRows)}</p>
@@ -75,7 +75,7 @@ export default async function Web3CitiesPage() {
             <p>No city has a live Web3 role right now.</p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
+          <div className="m-reveal" data-reveal style={{ overflowX: "auto" }}>
             <table className="salary-table">
               <thead>
                 <tr>

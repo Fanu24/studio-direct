@@ -8,6 +8,7 @@ import { cache } from "react";
 import {
   CompanyCategoryChips,
   CompanyDirectoryTable,
+  CompanyLeaderGrid,
   companyListJsonLd,
   joinNatural,
 } from "../../_directory";
@@ -87,7 +88,7 @@ export default async function Web3CompanyCategoryPage({
   const roles = companies.reduce((total, company) => total + company.jobCount, 0);
 
   return (
-    <main className="board-main">
+    <main className="surface surface--data board-main">
       <JsonLd
         data={companyListJsonLd(`Web3 companies hiring for ${label} work`, companies)}
       />
@@ -122,6 +123,13 @@ export default async function Web3CompanyCategoryPage({
           </Link>
         </p>
       </header>
+
+      {companies.some((company) => company.jobCount > 0) ? (
+        <section aria-labelledby="company-leaders" className="container jobs-more">
+          <h2 id="company-leaders">Leading {label} employers</h2>
+          {CompanyLeaderGrid({ companies, limit: 3 })}
+        </section>
+      ) : null}
 
       {CompanyDirectoryTable({
         companies,

@@ -29,7 +29,7 @@ export default function RolesPage() {
   };
 
   return (
-    <main>
+    <main className="surface surface--data">
       <JsonLd data={jsonLd} />
 
       <header className="page-header">
@@ -53,7 +53,7 @@ export default function RolesPage() {
           </div>
         </div>
 
-        <ul className="jobs-role-grid">
+        <ul className="jobs-role-grid m-reveal" data-reveal>
           {FEATURED_TAG_CHIPS.map((slug) => {
             const label = tagLabel(slug);
             return (
