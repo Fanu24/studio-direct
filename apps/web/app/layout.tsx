@@ -4,7 +4,13 @@ import type { ReactNode } from "react";
 
 import { SiteChrome } from "./_components/site-chrome";
 import { HOMEPAGE_CLAIM } from "../lib/copy";
+// Every stylesheet is imported here and nowhere else. globals.css is the only
+// :root; motion.css is the only @keyframes. Chunk order is the bundler's, so a
+// component-level import anywhere would reorder the emitted CSS and revert tokens.
 import "./globals.css";
+import "./styles/motion.css";
+import "./styles/chrome.css";
+import "./styles/footer.css";
 import "./styles/theaters.css";
 import "./styles/home.css";
 import "./styles/jobs.css";
@@ -15,6 +21,9 @@ import "./styles/nodework.css";
 import "./styles/board.css";
 import "./styles/learn.css";
 import "./styles/marketing.css";
+import "./styles/salary.css";
+import "./faq/faq.css";
+import "./hire/hire.css";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],

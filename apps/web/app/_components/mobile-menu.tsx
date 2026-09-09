@@ -2,23 +2,47 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { CloseIcon, MenuIcon } from "./icons";
+import { ArrowRightIcon, CloseIcon, MenuIcon } from "./icons";
+import { NavAccount } from "./nav-account";
 import type { NavMenu } from "./nav-data";
 import { isCurrent } from "./nav-links";
 
-export function MobileMenu({
-  menus,
-}: {
-  menus: readonly NavMenu[];
-}) {
+/**
+ * Below the mega-menu breakpoint the primary nav becomes a full-height sheet
+ * under the header. Each group is its hub link plus its sub-links as chips, and
+ * the account controls close the sheet. The toggle sets aria-expanded, Escape
+ * closes and returns focus to it, and the page behind stops scrolling while open.
+ */
+export function MobileMenu({ menus }: { menus: readonly NavMenu[] }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const toggle = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      toggle.current?.focus();
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      root.style.overflow = previous;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   return (
     <>
@@ -28,6 +52,7 @@ export function MobileMenu({
         aria-label={open ? "Close menu" : "Open menu"}
         className="menu-button"
         onClick={() => setOpen((value) => !value)}
+        ref={toggle}
         type="button"
       >
         {open ? <CloseIcon size={20} /> : <MenuIcon size={20} />}
@@ -37,17 +62,24 @@ export function MobileMenu({
           <div className="mobile-menu__group" key={menu.label}>
             <Link
               aria-current={isCurrent(pathname, menu.href) ? "page" : undefined}
+              className="mobile-menu__hub"
               href={menu.href}
             >
               {menu.label}
+              <ArrowRightIcon size={18} />
             </Link>
-            {menu.links.map((link) => (
-              <Link href={link.href} key={`${menu.label}-${link.href}`}>
-                {link.label}
-              </Link>
-            ))}
+            <div className="mobile-menu__links">
+              {menu.links.map((link) => (
+                <Link className="chip" href={link.href} key={`${menu.label}-${link.href}`}>
+                  {link.label}
+                </Link>
+              ))}
+            </div>
           </div>
         ))}
+        <div className="mobile-menu__account">
+          <NavAccount variant="menu" />
+        </div>
       </nav>
     </>
   );

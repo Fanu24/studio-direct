@@ -1,8 +1,7 @@
 /* Salary stats-article components: inline-SVG charts, breakdown tables, and
  * the callout/CTA blocks used across web3-salaries, web3-non-tech-salaries
- * and the solana-vs-ethereum comparison page. Imported directly from
- * salary-chart.tsx (not layout.tsx) - same "import css from the component
- * that needs it" pattern site-chrome.tsx already uses for footer.css. */
+ * and the solana-vs-ethereum comparison page. Imported from layout.tsx only;
+ * consumes tokens from globals.css and declares none. */
 
 .salary-chart {
   display: flex;

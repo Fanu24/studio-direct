@@ -3,7 +3,6 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import "./faq.css";
 import { ArticleLayout } from "../_components/article-layout";
 import { JsonLd } from "../_components/json-ld";
 import { listJobs, type JobsDatabase } from "../../lib/jobs/queries";

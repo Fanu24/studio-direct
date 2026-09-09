@@ -6,6 +6,31 @@ import { usePathname } from "next/navigation";
 import { isCurrent } from "./nav-links";
 import type { NavMenu } from "./nav-data";
 
+function Caret() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="nav-mega__caret"
+      fill="none"
+      focusable="false"
+      height="10"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.6"
+      viewBox="0 0 10 10"
+      width="10"
+    >
+      <path d="M2 3.5 5 6.5 8 3.5" />
+    </svg>
+  );
+}
+
+/**
+ * Primary navigation. Each trigger is a real link to its hub, and the panel
+ * opens on hover or focus-within, so it works with no JavaScript and is fully
+ * keyboard reachable: Tab into a trigger opens its panel, Tab on through it.
+ */
 export function NavMega({ menus }: { menus: readonly NavMenu[] }) {
   const pathname = usePathname();
 
@@ -19,16 +44,22 @@ export function NavMega({ menus }: { menus: readonly NavMenu[] }) {
             href={menu.href}
           >
             {menu.label}
-            <span aria-hidden="true" className="nav-mega__caret">
-              ▾
-            </span>
+            <Caret />
           </Link>
-          <div className="nav-mega__panel">
-            {menu.links.map((link) => (
-              <Link href={link.href} key={`${menu.label}-${link.href}`}>
-                {link.label}
-              </Link>
-            ))}
+          <div className="nav-mega__panel" data-cols={menu.links.length > 8 ? 2 : 1}>
+            <div className="nav-mega__links">
+              {menu.links.map((link) => (
+                <Link
+                  aria-current={
+                    link.href !== menu.href && isCurrent(pathname, link.href) ? "page" : undefined
+                  }
+                  href={link.href}
+                  key={`${menu.label}-${link.href}`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       ))}

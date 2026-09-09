@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import "../styles/learn.css";
 import { learnCategoryLabel } from "../learn-web3/categories";
 import type { LearnResource } from "../learn-web3/resources";
 

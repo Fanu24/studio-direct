@@ -455,13 +455,6 @@
   }
 }
 
-@keyframes jd-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-}
-
 /* Responsive: the apply panel sits under the header, above the description */
 
 @media (max-width: 1024px) {

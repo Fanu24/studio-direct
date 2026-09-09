@@ -1,8 +1,6 @@
 import { formatSalaryRange, tagLabel } from "@gaming/shared";
 import Link from "next/link";
 
-import "../styles/salary.css";
-
 /**
  * Server-rendered inline SVG charts for the salary stats articles - no chart
  * library (custom-CSS-only constraint), no client JS, degrades to an honest

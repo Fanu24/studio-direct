@@ -124,13 +124,6 @@
   }
 }
 
-@keyframes hero-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-}
-
 /* Studio ticker */
 
 .ticker {

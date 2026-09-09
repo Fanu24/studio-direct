@@ -1,6 +1,5 @@
 import { tagLabel } from "@gaming/shared";
 
-import "./hire.css";
 import { HIRE_TAGS, hireGroups } from "./tags";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
