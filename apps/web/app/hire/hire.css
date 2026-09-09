@@ -1,0 +1,38 @@
+/*
+ * /hire directory bands. Scoped entirely under .hire-directory and defines no
+ * custom properties, so the bundler is free to emit this chunk in any order
+ * without touching the palette (see the nodework CSS-order note in globals.css).
+ */
+
+.hire-directory {
+  display: grid;
+  gap: 22px;
+  margin: 32px auto 8px;
+}
+
+.hire-directory__group {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.hire-directory__label {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #8a8f98);
+}
+
+.hire-directory .chips {
+  gap: 8px;
+}
+
+@media (min-width: 860px) {
+  .hire-directory__group {
+    grid-template-columns: 170px minmax(0, 1fr);
+    align-items: baseline;
+    gap: 8px 18px;
+  }
+}

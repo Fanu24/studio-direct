@@ -7,11 +7,18 @@ import type {
 } from "../pipeline/exclusivity";
 import type { CareerCompany, CareerCompanyRepo } from "../sources/career";
 import type {
+  CompanyProfileRepository,
+  CompanyProfileUpsert,
   JobRecord,
   JobsRepository,
   JobSighting,
   JobUpsert,
 } from "./types";
+
+/** The remote value as it is physically stored: NOT NULL, so the honest
+ * "not specified" state is encoded as the sentinel string "unknown" and
+ * decoded back to null by mapJob (see JobRecord["remote"]). */
+type StoredRemote = "remote" | "hybrid" | "onsite" | "unknown";
 
 type JobRow = {
   id: string;
@@ -22,10 +29,16 @@ type JobRow = {
   title_norm: string;
   slug: string;
   location: string | null;
-  remote: JobRecord["remote"];
+  remote: StoredRemote;
   description_html: string;
   apply_url: string;
   salary_text: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  source: JobRecord["source"];
+  external_id: string | null;
+  featured_until: string | null;
+  highlight: number;
   exclusivity: JobRecord["exclusivity"];
   seen_on_indeed: number;
   posted_at: string | null;
@@ -71,10 +84,16 @@ function mapJob(row: JobRow): JobRecord {
     titleNorm: row.title_norm,
     slug: row.slug,
     location: row.location,
-    remote: row.remote,
+    remote: row.remote === "unknown" ? null : row.remote,
     descriptionHtml: row.description_html,
     applyUrl: row.apply_url,
     salaryText: row.salary_text,
+    salaryMin: row.salary_min,
+    salaryMax: row.salary_max,
+    source: row.source,
+    externalId: row.external_id,
+    featuredUntil: row.featured_until,
+    highlight: row.highlight,
     exclusivity: row.exclusivity,
     seenOnIndeed: row.seen_on_indeed,
     postedAt: row.posted_at,
@@ -86,7 +105,8 @@ function mapJob(row: JobRow): JobRecord {
 
 const JOB_COLUMNS = `id, tenant_id, company_id, canonical_key, title,
   title_norm, slug, location, remote, description_html, apply_url,
-  salary_text, exclusivity, seen_on_indeed, posted_at, listed,
+  salary_text, salary_min, salary_max, source, external_id, featured_until,
+  highlight, exclusivity, seen_on_indeed, posted_at, listed,
   created_at, updated_at`;
 
 function parseLinkedinRunStats(statsJson: string): {
@@ -113,8 +133,45 @@ function parseLinkedinRunStats(statsJson: string): {
   }
 }
 
-export class D1JobsRepository implements CareerConsumerRepository {
+export class D1JobsRepository
+  implements CareerConsumerRepository, CompanyProfileRepository
+{
   constructor(private readonly db: D1Database) {}
+
+  /**
+   * Idempotent company upsert keyed by (tenant_id, name_norm). Never
+   * overwrites an already-stored non-null domain/logo_url with null -
+   * COALESCE prefers the existing stored value whenever it is non-null.
+   */
+  async upsertCompanyProfile(input: CompanyProfileUpsert): Promise<{ id: string }> {
+    const id = `company:${input.nameNorm}`;
+    await this.db
+      .prepare(
+        `INSERT INTO companies (id, tenant_id, name, name_norm, domain, logo_url, listed, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+         ON CONFLICT (tenant_id, name_norm) DO UPDATE SET
+           name = excluded.name,
+           domain = COALESCE(companies.domain, excluded.domain),
+           logo_url = COALESCE(companies.logo_url, excluded.logo_url)`,
+      )
+      .bind(
+        id,
+        input.tenantId,
+        input.name,
+        input.nameNorm,
+        input.domain,
+        input.logoUrl,
+        input.createdAt,
+      )
+      .run();
+
+    const row = await this.db
+      .prepare(`SELECT id FROM companies WHERE tenant_id = ? AND name_norm = ? LIMIT 1`)
+      .bind(input.tenantId, input.nameNorm)
+      .first<{ id: string }>();
+
+    return { id: row?.id ?? id };
+  }
 
   async getById(id: string): Promise<CareerConsumerCompany | null> {
     const row = await this.db
@@ -213,7 +270,7 @@ export class D1JobsRepository implements CareerConsumerRepository {
     const row = await this.db
       .prepare(
         `INSERT INTO jobs (${JOB_COLUMNS})
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (tenant_id, canonical_key) DO UPDATE SET
            company_id = excluded.company_id,
            title = excluded.title,
@@ -224,6 +281,12 @@ export class D1JobsRepository implements CareerConsumerRepository {
            description_html = excluded.description_html,
            apply_url = excluded.apply_url,
            salary_text = excluded.salary_text,
+           salary_min = excluded.salary_min,
+           salary_max = excluded.salary_max,
+           source = excluded.source,
+           external_id = excluded.external_id,
+           featured_until = excluded.featured_until,
+           highlight = excluded.highlight,
            exclusivity = excluded.exclusivity,
            seen_on_indeed = excluded.seen_on_indeed,
            posted_at = excluded.posted_at,
@@ -240,10 +303,16 @@ export class D1JobsRepository implements CareerConsumerRepository {
         job.titleNorm,
         job.slug,
         job.location,
-        job.remote,
+        job.remote ?? "unknown",
         job.descriptionHtml,
         job.applyUrl,
         job.salaryText,
+        job.salaryMin,
+        job.salaryMax,
+        job.source,
+        job.externalId,
+        job.featuredUntil,
+        job.highlight,
         job.exclusivity,
         job.seenOnIndeed,
         job.postedAt,

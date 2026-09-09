@@ -1,0 +1,100 @@
+/* Site footer. Owned by site-chrome.tsx; imported there, not from layout.tsx.
+   Three columns on desktop, one on mobile, closing on a full-bleed copyright bar --
+   the same information architecture as the reference board's footer. */
+
+.site-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  background: var(--bg-deep);
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.site-footer__columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px 24px;
+  padding-top: 48px;
+  padding-bottom: 40px;
+}
+
+.footer-column {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+.footer-column h2 {
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  margin: 0 0 4px;
+}
+
+.footer-column h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.footer-column h2 a:hover {
+  color: var(--text);
+}
+
+.footer-column__links {
+  display: grid;
+  gap: 9px;
+}
+
+.footer-column__links a {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.86rem;
+  width: fit-content;
+}
+
+.footer-column__links a:hover {
+  color: var(--text);
+}
+
+.site-footer__legal {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  padding-bottom: 28px;
+  font-size: 0.82rem;
+  color: var(--dim);
+  text-align: center;
+}
+
+.site-footer__legal p {
+  margin: 0;
+  color: inherit;
+  max-width: 68ch;
+  margin-inline: auto;
+}
+
+.site-footer__legal a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.site-footer__legal a:hover {
+  color: var(--text);
+}
+
+@media (max-width: 900px) {
+  .site-footer__columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .site-footer__columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding-top: 36px;
+    padding-bottom: 32px;
+  }
+}

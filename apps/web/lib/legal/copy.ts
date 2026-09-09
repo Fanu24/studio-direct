@@ -10,7 +10,7 @@ export const TERMS_COPY = {
   thirdParties:
     "Job listings come from third parties, including studio career pages and other public sources. We republish those listings so you can find them in one place.",
   incomplete:
-    "Our inventory may be incomplete. We do not list every gaming role that exists, and a missing listing is not a promise that the role is unavailable.",
+    "Our inventory may be incomplete. We do not list every Web3 role that exists, and a missing listing is not a promise that the role is unavailable.",
   noRealtimeLinkedIn:
     "We do not provide real-time LinkedIn coverage. A missing LinkedIn match reflects our last successful index, not a live check of LinkedIn at the moment you view a job.",
   badgeMeaning: LINKEDIN_EXCLUSIVITY_TOOLTIP,
@@ -20,7 +20,7 @@ export const PRIVACY_COPY = {
   title: "Privacy Policy",
   legalEntity: LEGAL_ENTITY_PLACEHOLDER,
   jobProductPurpose:
-    "Purpose 1 — job-board product: we use your account, profile, unlocks, CV, and billing data to operate Studio Direct as a job board (sign-in, search, apply links, quota, and paid plans).",
+    "Purpose 1 — job-board product: we use your account, profile, unlocks, CV, and billing data to operate Nodework as a job board (sign-in, search, apply links, quota, and paid plans).",
   recruiterOptInPurpose:
     "Purpose 2 — recruiter talent pool: sharing your profile with verified studios and recruiters is a separate purpose. It is opt-in and off by default. Applying for a job does not opt you in.",
 } as const;

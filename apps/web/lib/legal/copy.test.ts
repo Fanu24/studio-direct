@@ -85,7 +85,7 @@ describe("legal copy honesty", () => {
     expect(legalText()).not.toContain("100%");
     expect(HOMEPAGE_CLAIM).not.toContain("100%");
     expect(HOMEPAGE_CLAIM).toBe(
-      "Jobs from studio career pages, including roles not posted on LinkedIn.",
+      "Browse Web3, blockchain and crypto jobs. Filter by skill, location and salary.",
     );
   });
 });

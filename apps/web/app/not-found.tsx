@@ -21,8 +21,8 @@ export default function NotFound() {
           <Link className="button" href="/jobs">
             Browse jobs
           </Link>
-          <Link className="button button--secondary" href="/hidden-jobs">
-            Jobs not on LinkedIn
+          <Link className="button button--secondary" href="/remote-jobs">
+            Remote jobs
           </Link>
           <Link className="text-link" href="/">
             Back to the homepage

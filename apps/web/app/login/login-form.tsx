@@ -16,17 +16,21 @@ export function resetTurnstileWidget(
 }
 
 export async function submitLoginMagicLink({
+  callbackURL = "/",
   email,
+  newUserCallbackURL = "/onboarding",
   token,
 }: {
+  callbackURL?: string;
   email: string;
+  newUserCallbackURL?: string;
   token: string;
 }) {
   try {
     return await authClient.signIn.magicLink({
       email,
-      callbackURL: "/",
-      newUserCallbackURL: "/onboarding",
+      callbackURL,
+      newUserCallbackURL,
       fetchOptions: {
         headers: {
           "x-captcha-response": token,
@@ -44,10 +48,14 @@ export async function submitLoginMagicLink({
  * above the button in both DOM and visual order.
  */
 export function LoginForm({
+  callbackURL = "/",
   children,
+  newUserCallbackURL = "/onboarding",
   siteKey,
 }: {
+  callbackURL?: string;
   children: ReactNode;
+  newUserCallbackURL?: string;
   siteKey: string;
 }) {
   const [message, setMessage] = useState<string | null>(null);
@@ -64,7 +72,12 @@ export function LoginForm({
         ?.value ?? "";
 
     setError(null);
-    const { error: sendError } = await submitLoginMagicLink({ email, token });
+    const { error: sendError } = await submitLoginMagicLink({
+      callbackURL,
+      email,
+      newUserCallbackURL,
+      token,
+    });
 
     if (sendError) {
       setError(
@@ -106,7 +119,15 @@ export function LoginForm({
   );
 }
 
-export function GoogleSignInButton({ children }: { children: ReactNode }) {
+export function GoogleSignInButton({
+  callbackURL = "/",
+  children,
+  newUserCallbackURL = "/onboarding",
+}: {
+  callbackURL?: string;
+  children: ReactNode;
+  newUserCallbackURL?: string;
+}) {
   return (
     <button
       className="button button--secondary button--block"
@@ -114,8 +135,8 @@ export function GoogleSignInButton({ children }: { children: ReactNode }) {
       onClick={() => {
         void authClient.signIn.social({
           provider: "google",
-          callbackURL: "/",
-          newUserCallbackURL: "/onboarding",
+          callbackURL,
+          newUserCallbackURL,
         });
       }}
     >

@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { CloseIcon, MenuIcon } from "./icons";
+import type { NavMenu } from "./nav-data";
 import { isCurrent } from "./nav-links";
 
 export function MobileMenu({
-  links,
+  menus,
 }: {
-  links: ReadonlyArray<{ href: string; label: string }>;
+  menus: readonly NavMenu[];
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -32,16 +33,21 @@ export function MobileMenu({
         {open ? <CloseIcon size={20} /> : <MenuIcon size={20} />}
       </button>
       <nav aria-label="Mobile" className="mobile-menu" hidden={!open} id="mobile-menu">
-        {links.map((link) => (
-          <Link
-            aria-current={isCurrent(pathname, link.href) ? "page" : undefined}
-            href={link.href}
-            key={link.href}
-          >
-            {link.label}
-          </Link>
+        {menus.map((menu) => (
+          <div className="mobile-menu__group" key={menu.label}>
+            <Link
+              aria-current={isCurrent(pathname, menu.href) ? "page" : undefined}
+              href={menu.href}
+            >
+              {menu.label}
+            </Link>
+            {menu.links.map((link) => (
+              <Link href={link.href} key={`${menu.label}-${link.href}`}>
+                {link.label}
+              </Link>
+            ))}
+          </div>
         ))}
-        <Link href="/about">About</Link>
       </nav>
     </>
   );

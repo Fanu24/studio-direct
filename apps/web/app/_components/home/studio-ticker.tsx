@@ -21,7 +21,7 @@ export function StudioTicker({
         {items.map((studio, index) => (
           <Link
             className="ticker__item"
-            href={`/companies/${studio.slug}`}
+            href={`/web3-companies/${studio.slug}`}
             key={`${studio.slug}-${index}`}
             tabIndex={index >= studios.length ? -1 : undefined}
           >

@@ -35,6 +35,11 @@ export function jobPublicSlug(companyName: string, title: string): string {
   return `${slugTitle(normalizeCompanyName(companyName))}-${slugTitle(title)}`;
 }
 
+/** web3.career-style slug: `{title}-{company}` */
+export function jobSeoSlug(title: string, companyName: string): string {
+  return `${slugTitle(title)}-${slugTitle(normalizeCompanyName(companyName))}`;
+}
+
 export function canonicalApplyUrl(url: string): string {
   let parsed: URL;
   try {

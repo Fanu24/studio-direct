@@ -1,12 +1,10 @@
 import {
-  REMOTE_GAMING_QUERIES,
+  API_SWEEP_COUNTRIES,
+  API_SWEEP_TAGS,
   type QueueMessage,
 } from "@gaming/shared";
 
-type CronEnv = Pick<
-  Env,
-  "DB" | "CRAWL_CAREER" | "CRAWL_LINKEDIN" | "CRAWL_INDEED"
->;
+type CronEnv = Pick<Env, "DB" | "CRAWL_CAREER" | "CRAWL_LINKEDIN" | "CRAWL_INDEED">;
 
 async function send(queue: Queue, message: QueueMessage): Promise<void> {
   await queue.send(message);
@@ -14,25 +12,21 @@ async function send(queue: Queue, message: QueueMessage): Promise<void> {
 
 export async function enqueueCronWork(
   env: CronEnv,
-): Promise<{ enqueuedCareer: number }> {
-  const { results: companies } = await env.DB.prepare(
-    `SELECT id
-     FROM companies
-     WHERE career_url IS NOT NULL
-     ORDER BY id`,
-  ).all<{ id: string }>();
+): Promise<{ enqueuedApi: number }> {
+  let enqueuedApi = 0;
 
-  for (const company of companies) {
-    await send(env.CRAWL_CAREER, {
-      kind: "career",
-      companyId: company.id,
-    });
+  await send(env.CRAWL_CAREER, { kind: "web3_api", remote: true });
+  enqueuedApi += 1;
+
+  for (const tag of API_SWEEP_TAGS) {
+    await send(env.CRAWL_CAREER, { kind: "web3_api", tag });
+    enqueuedApi += 1;
   }
 
-  for (const query of REMOTE_GAMING_QUERIES) {
-    await send(env.CRAWL_LINKEDIN, { kind: "linkedin", query });
-    await send(env.CRAWL_INDEED, { kind: "indeed", query });
+  for (const country of API_SWEEP_COUNTRIES) {
+    await send(env.CRAWL_CAREER, { kind: "web3_api", country });
+    enqueuedApi += 1;
   }
 
-  return { enqueuedCareer: companies.length };
+  return { enqueuedApi };
 }

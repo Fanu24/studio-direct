@@ -6,6 +6,8 @@ interface __BaseEnv_Env {
 	FILES: R2Bucket;
 	DB: D1Database;
 	EMAIL: SendEmail;
+	EMAIL_FROM: string;
+	WEB3_CAREER_API_TOKEN: string;
 	CRAWL_CAREER: Queue;
 	CRAWL_LINKEDIN: Queue;
 	CRAWL_INDEED: Queue;

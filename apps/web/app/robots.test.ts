@@ -18,20 +18,20 @@ describe("resolveRobotsSitemap", () => {
     );
   });
 
-  it("returns null when SITE_URL is missing, blank, or not an absolute URL", () => {
-    expect(resolveRobotsSitemap(undefined)).toBeNull();
-    expect(resolveRobotsSitemap(null)).toBeNull();
-    expect(resolveRobotsSitemap("")).toBeNull();
-    expect(resolveRobotsSitemap("   ")).toBeNull();
-    expect(resolveRobotsSitemap("jobs.example.com")).toBeNull();
-    expect(resolveRobotsSitemap("/sitemap.xml")).toBeNull();
-    expect(resolveRobotsSitemap("not a url")).toBeNull();
+  it("falls back to a relative /sitemap.xml when SITE_URL is missing, blank, or not an absolute URL", () => {
+    expect(resolveRobotsSitemap(undefined)).toBe("/sitemap.xml");
+    expect(resolveRobotsSitemap(null)).toBe("/sitemap.xml");
+    expect(resolveRobotsSitemap("")).toBe("/sitemap.xml");
+    expect(resolveRobotsSitemap("   ")).toBe("/sitemap.xml");
+    expect(resolveRobotsSitemap("jobs.example.com")).toBe("/sitemap.xml");
+    expect(resolveRobotsSitemap("/sitemap.xml")).toBe("/sitemap.xml");
+    expect(resolveRobotsSitemap("not a url")).toBe("/sitemap.xml");
   });
 
-  it("returns null for non-http schemes and the reserved example origin", () => {
-    expect(resolveRobotsSitemap("ftp://jobs.example.com")).toBeNull();
-    expect(resolveRobotsSitemap("mailto:hello@example.com")).toBeNull();
-    expect(resolveRobotsSitemap("https://studio-direct.example")).toBeNull();
+  it("falls back to a relative /sitemap.xml for non-http schemes and the reserved example origin", () => {
+    expect(resolveRobotsSitemap("ftp://jobs.example.com")).toBe("/sitemap.xml");
+    expect(resolveRobotsSitemap("mailto:hello@example.com")).toBe("/sitemap.xml");
+    expect(resolveRobotsSitemap("https://studio-direct.example")).toBe("/sitemap.xml");
   });
 });
 
@@ -54,10 +54,10 @@ describe("buildRobots", () => {
     expect(result.sitemap).toBe("https://jobs.example.com/sitemap.xml");
   });
 
-  it("omits the sitemap key entirely when SITE_URL is unusable", () => {
-    expect(buildRobots(undefined)).not.toHaveProperty("sitemap");
-    expect(buildRobots("not a url")).not.toHaveProperty("sitemap");
-    expect(buildRobots("https://studio-direct.example")).not.toHaveProperty("sitemap");
+  it("still emits a Sitemap line pointing at the relative fallback when SITE_URL is unusable", () => {
+    expect(buildRobots(undefined).sitemap).toBe("/sitemap.xml");
+    expect(buildRobots("not a url").sitemap).toBe("/sitemap.xml");
+    expect(buildRobots("https://studio-direct.example").sitemap).toBe("/sitemap.xml");
   });
 });
 
@@ -71,12 +71,12 @@ describe("robots route", () => {
     expect(robots().sitemap).toBe("https://jobs.example.com/sitemap.xml");
   });
 
-  it("still serves rules without a sitemap when SITE_URL is unset", () => {
+  it("still serves a Sitemap line when SITE_URL is unset", () => {
     vi.stubEnv("SITE_URL", "");
     const result = robots();
     const rules = Array.isArray(result.rules) ? result.rules : [result.rules];
 
-    expect(result).not.toHaveProperty("sitemap");
+    expect(result.sitemap).toBe("/sitemap.xml");
     expect(rules[0]?.disallow).toContain("/api/");
   });
 });

@@ -82,7 +82,7 @@ export default async function ProfilePage() {
   const userId = await sessionUserId(env);
 
   if (!userId) {
-    redirect("/login");
+    redirect("/login?next=/profile");
   }
 
   const [completeness, profile, experience, selectedSkills] = await Promise.all([

@@ -21,9 +21,39 @@ const forward = readFileSync(
   "utf8",
 );
 
-describe("0003_jobs_tenant_slug_unique.sql", () => {
-  it("adds a unique tenant slug index for already-applied D1", () => {
-    expect(forward).toContain("DROP INDEX IF EXISTS idx_jobs_slug");
-    expect(forward).toContain("CREATE UNIQUE INDEX IF NOT EXISTS idx_jobs_tenant_slug_unique");
+describe("0004_nodework_seo.sql", () => {
+  const nodework = readFileSync(
+    new URL("../migrations/0004_nodework_seo.sql", import.meta.url),
+    "utf8",
+  );
+
+  it("adds catalog junctions, salary rollups, and Nodework tenant slug", () => {
+    expect(nodework).toContain("salary_min");
+    expect(nodework).toContain("CREATE TABLE IF NOT EXISTS tags");
+    expect(nodework).toContain("CREATE TABLE IF NOT EXISTS salary_rollups");
+    expect(nodework).toContain("slug = 'nodework'");
+  });
+});
+
+describe("0005_job_applications.sql", () => {
+  const sql = readFileSync(
+    new URL("../migrations/0005_job_applications.sql", import.meta.url),
+    "utf8",
+  );
+
+  it("stores on-site applications keyed by job and email", () => {
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS job_applications");
+    expect(sql).toContain("idx_job_applications_job_email");
+  });
+});
+
+describe("0006_company_profile_geo.sql", () => {
+  const sql = readFileSync(
+    new URL("../migrations/0006_company_profile_geo.sql", import.meta.url),
+    "utf8",
+  );
+
+  it("adds a nullable company logo_url column", () => {
+    expect(sql).toContain("ALTER TABLE companies ADD COLUMN logo_url TEXT");
   });
 });

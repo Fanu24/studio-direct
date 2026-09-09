@@ -500,3 +500,164 @@
     font-size: 1.35rem;
   }
 }
+
+/* --- Job detail parity blocks: hiring line, inline apply, sidebar facts, tail panels --- */
+
+main.jd {
+  max-width: 1180px;
+}
+
+.jd-hero__hiring {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  color: var(--accent);
+  text-transform: none;
+}
+
+/* Repeat of the primary call to action at the foot of the description, where the
+   sticky sidebar has usually scrolled past on narrow desktops. */
+.jd-apply-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.jd-apply-inline__label {
+  margin: 0;
+  max-width: none;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+
+.jd-apply__studio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  max-width: none;
+}
+
+.jd-apply__studio-link {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.jd-apply__studio-link:hover {
+  text-decoration: underline;
+}
+
+.jd-apply__facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.jd-apply__facts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.jd-apply__facts dt {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+
+.jd-apply__facts dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.jd-apply__rule {
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--line);
+}
+
+.jd-apply__more-label {
+  margin: 0;
+  max-width: none;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+
+.jd-apply__more {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+/* Tail sections: role salary, more jobs on the tag, other roles at the studio, hire. */
+.jd-panel {
+  margin-top: clamp(32px, 5vw, 56px);
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+
+.jd-panel__title {
+  margin: 0 0 14px;
+  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+  letter-spacing: -0.02em;
+}
+
+.jd-panel__lead {
+  margin: 0 0 16px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.jd-panel__link {
+  margin: 16px 0 0;
+  max-width: none;
+}
+
+.jd-table-wrap {
+  overflow-x: auto;
+}
+
+.jd-table {
+  width: 100%;
+}
+
+.board-col-apply {
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .jd-apply-inline {
+    margin-top: 24px;
+    padding-top: 18px;
+  }
+
+  .jd-hero__title {
+    max-width: none;
+  }
+}

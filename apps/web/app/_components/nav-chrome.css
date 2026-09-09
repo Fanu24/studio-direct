@@ -1,0 +1,46 @@
+/* Header chrome. Owned by site-chrome.tsx; imported there, not from layout.tsx.
+   globals.css sizes the navbar; this file only handles the account cluster and the
+   mobile collapse, which the base sheet never had a hook for.
+
+   Below the mega-menu breakpoint the reference navbar keeps only the wordmark, the
+   post-a-job call to action and the menu toggle. Ours did not collapse at all, so the
+   login and get-started buttons pushed the toggle off-screen and every page scrolled
+   sideways. */
+
+.site-nav .nav-account {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.site-nav .site-nav__inner {
+  min-width: 0;
+  overflow: visible;
+}
+
+@media (max-width: 900px) {
+  .site-nav .nav-account {
+    display: none;
+  }
+
+  .site-nav .nav-actions {
+    gap: 8px;
+  }
+
+  .site-nav .nav-actions .button {
+    padding: 9px 14px;
+    font-size: 0.86rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .site-nav .wordmark {
+    font-size: 1rem;
+  }
+
+  .site-nav .nav-actions .button {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+}

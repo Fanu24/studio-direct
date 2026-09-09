@@ -18,7 +18,8 @@
     {
       "binding": "DB",
       "database_name": "gaming-jobs",
-      "database_id": "83a17a11-c365-4d1b-a52e-86fb44817f3c"
+      "database_id": "83a17a11-c365-4d1b-a52e-86fb44817f3c",
+      "migrations_dir": "../../packages/db/migrations"
     }
   ],
   "r2_buckets": [

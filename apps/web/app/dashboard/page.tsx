@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Dashboard",
   description:
-    "Your Studio Direct dashboard: unlocks this week, profile completeness, plan, recent unlocks and the latest jobs not on LinkedIn.",
+    "Your Nodework dashboard: profile, plan and recent activity.",
   robots: { index: false, follow: false },
   alternates: { canonical: "/dashboard" },
 };
@@ -65,17 +65,17 @@ export default async function DashboardPage() {
   const userId = await sessionUserId(env);
 
   if (!userId) {
-    redirect("/login");
+    redirect("/login?next=/dashboard");
   }
 
   const now = new Date();
   const tenantId = await env.DB
     .prepare("SELECT id FROM tenants WHERE slug = ?")
-    .bind("gaming")
+    .bind("nodework")
     .first<string>("id");
 
   if (!tenantId) {
-    throw new Error("Gaming tenant was not found");
+    throw new Error("Nodework tenant was not found");
   }
 
   const [completeness, profile, used, subscription, recent, latest] = await Promise.all([
@@ -84,7 +84,7 @@ export default async function DashboardPage() {
     countUnlocksThisWeek(env.DB, userId, now),
     loadSubscriptionStatus(env.DB, userId, now),
     listRecentUnlocks(env.DB, userId, 5),
-    listJobs(env.DB, tenantId, { hidden: true, pageSize: 4 }),
+    listJobs(env.DB, tenantId, { pageSize: 4 }),
   ]);
 
   const displayName = profile?.display_name?.trim();
@@ -186,23 +186,22 @@ export default async function DashboardPage() {
 
       <section aria-labelledby="dash-latest" className="dash-section">
         <div className="dash-section__head">
-          <h2 id="dash-latest">Latest jobs not on LinkedIn</h2>
+          <h2 id="dash-latest">Latest jobs</h2>
           <p className="count">{latest.total} right now</p>
         </div>
         {latest.jobs.length === 0 ? (
           <div className="empty">
-            <p>No confirmed hidden jobs are available right now.</p>
+            <p>No listed jobs are available right now.</p>
           </div>
         ) : (
           <ul className="job-grid">
-            {/* Called as a function so the job title stays in the element tree the page tests walk. */}
             {latest.jobs.map((job) => (
               <li key={job.id}>{JobCard({ job })}</li>
             ))}
           </ul>
         )}
-        <Link className="text-link" href="/hidden-jobs">
-          View all jobs not on LinkedIn
+        <Link className="text-link" href="/jobs">
+          Browse all jobs
           <ArrowRightIcon size={16} />
         </Link>
       </section>
@@ -216,9 +215,9 @@ export default async function DashboardPage() {
         </section>
         <section aria-labelledby="digest-title" className="panel acct-soon__panel">
           <h3 id="digest-title">
-            Hidden digest <span className="tag">Paid plan, not live yet</span>
+            Job alerts <span className="tag">Not available yet</span>
           </h3>
-          <p>A short email when the index finds new roles that are not on LinkedIn.</p>
+          <p>Email alerts when new matching Web3 roles are imported.</p>
         </section>
       </div>
     </AccountShell>

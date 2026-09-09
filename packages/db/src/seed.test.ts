@@ -31,8 +31,19 @@ class MemoryStatement {
     }
 
     if (this.sql.includes("INSERT OR IGNORE INTO companies")) {
-      const [id, tenantId, name, nameNorm, domain, careerUrl, atsType, atsSlug, listed] =
-        this.values as [string, string, string, string, string, string, string, string, number];
+      const [id, tenantId, name, nameNorm, domain, logoUrl, careerUrl, atsType, atsSlug, listed] =
+        this.values as [
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          string,
+          number,
+        ];
       const uniqueKey = `${tenantId}:${nameNorm}`;
       if (this.db.companyKeys.has(uniqueKey)) return { changes: 0 };
       this.db.companyKeys.add(uniqueKey);
@@ -41,6 +52,7 @@ class MemoryStatement {
         name,
         nameNorm,
         domain,
+        logoUrl,
         careerUrl,
         atsType,
         atsSlug,
@@ -64,6 +76,7 @@ class MemorySeedDatabase implements SeedDatabase {
       name: string;
       nameNorm: string;
       domain: string;
+      logoUrl: string;
       careerUrl: string;
       atsType: string;
       atsSlug: string;
@@ -78,8 +91,8 @@ class MemorySeedDatabase implements SeedDatabase {
 
 describe("seed", () => {
   it("uses tenant gaming and five HTTPS companies", () => {
-    expect(TENANT_SLUG).toBe("gaming");
-    expect(TENANT_NAME).toBe("Studio Direct");
+    expect(TENANT_SLUG).toBe("nodework");
+    expect(TENANT_NAME).toBe("Nodework");
     expect(SEED_COMPANIES).toHaveLength(5);
     expect(SEED_COMPANIES.every((company) => company.career_url.startsWith("https://"))).toBe(
       true,
@@ -95,6 +108,15 @@ describe("seed", () => {
 
     expect(db.tenants.size).toBe(1);
     expect(db.companies.size).toBe(5);
-    expect([...db.tenants.values()]).toEqual([{ slug: "gaming", name: "Studio Direct" }]);
+    expect([...db.tenants.values()]).toEqual([{ slug: "nodework", name: "Nodework" }]);
+  });
+
+  it("derives a logo_url from each seeded company's domain", async () => {
+    const db = new MemorySeedDatabase();
+    await seedLocal(db);
+
+    for (const company of db.companies.values()) {
+      expect(company.logoUrl).toBe(`https://logo.clearbit.com/${company.domain}`);
+    }
   });
 });

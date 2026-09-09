@@ -1,0 +1,122 @@
+.learn-facets {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 8px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.learn-facet-group h2 {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.learn-facet-group .chips {
+  margin-top: 0;
+}
+
+/* Resource grid */
+
+.learn-resources__head {
+  margin-bottom: 16px;
+}
+
+.learn-resources__head h2 {
+  margin-bottom: 4px;
+}
+
+.learn-resources__head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.resource-grid {
+  list-style: none;
+  margin: 0 0 32px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.resource-card {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+  height: 100%;
+  padding: 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color 0.25s var(--ease-out), background 0.25s var(--ease-out);
+}
+
+.resource-card:hover {
+  border-color: var(--accent-line);
+  background: var(--bg-hover);
+}
+
+.resource-card__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.resource-card__body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.resource-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.resource-card__source {
+  font-size: 0.76rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resource-card__title {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.resource-card__summary {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.resource-card__topics {
+  margin-top: 2px;
+}
+
+.resource-card__cta {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .resource-grid {
+    grid-template-columns: 1fr;
+  }
+}

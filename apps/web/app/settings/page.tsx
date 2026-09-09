@@ -41,7 +41,7 @@ export default async function SettingsPage() {
   const userId = await sessionUserId(env);
 
   if (!userId) {
-    redirect("/login");
+    redirect("/login?next=/settings");
   }
 
   const optedIn = await loadTalentPoolOptIn(env.DB, userId);

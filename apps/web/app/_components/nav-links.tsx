@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 export type NavLink = { href: string; label: string };
 
-/** True for the link itself and for anything nested under it, so /companies/riot marks Studios. */
+/** True for the link itself and for anything nested under it, so /web3-companies/riot marks Studios. */
 export function isCurrent(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);

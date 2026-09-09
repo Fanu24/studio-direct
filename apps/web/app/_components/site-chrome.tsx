@@ -1,29 +1,16 @@
-import { hubSlugLabel, type HubRoleSlug } from "@gaming/shared";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { FOOTER_COLUMNS } from "./footer-data";
 import { MobileMenu } from "./mobile-menu";
-import { NavLinks } from "./nav-links";
 import { NavAccount } from "./nav-account";
+import { NAV_MENUS } from "./nav-data";
+import { NavMega } from "./nav-mega";
 import { RevealObserver } from "./reveal-observer";
+import "./nav-chrome.css";
+import "../styles/footer.css";
 
-const NAV_LINKS = [
-  { href: "/jobs", label: "Jobs" },
-  { href: "/hidden-jobs", label: "Not on LinkedIn" },
-  { href: "/companies", label: "Studios" },
-  { href: "/pricing", label: "Pricing" },
-] as const;
-
-const FOOTER_ROLES: HubRoleSlug[] = [
-  "gameplay-programmer",
-  "engine-programmer",
-  "technical-artist",
-  "game-designer",
-  "producer",
-  "qa",
-  "unreal",
-  "unity",
-];
+const LAUNCH_YEAR = 2026;
 
 export function SiteChrome({ children }: { children: ReactNode }) {
   return (
@@ -35,63 +22,49 @@ export function SiteChrome({ children }: { children: ReactNode }) {
         <div className="container site-nav__inner">
           <Link className="wordmark" href="/">
             <span aria-hidden="true" className="wordmark__mark" />
-            Studio Direct
+            Nodework
           </Link>
-          <NavLinks links={NAV_LINKS} />
+          <NavMega menus={NAV_MENUS} />
           <div className="nav-actions">
             <NavAccount />
-            <MobileMenu links={NAV_LINKS} />
+            <Link className="button button--primary" href="/post-web3-job">
+              Post a job
+            </Link>
+            <MobileMenu menus={NAV_MENUS} />
           </div>
         </div>
       </header>
       <div id="content">{children}</div>
       <RevealObserver />
       <footer className="site-footer">
-        <div className="container site-footer__grid">
-          <div className="site-footer__brand">
-            <Link className="wordmark" href="/">
-              <span aria-hidden="true" className="wordmark__mark" />
-              Studio Direct
-            </Link>
-            <p>
-              Remote and hybrid gaming jobs, collected from studio career pages and
-              listed with an honest signal about LinkedIn.
-            </p>
-          </div>
-          <nav aria-label="Browse">
-            <h2>Browse</h2>
-            <Link href="/jobs">All jobs</Link>
-            <Link href="/hidden-jobs">Not on LinkedIn</Link>
-            <Link href="/companies">Studios</Link>
-            <Link href="/roles">Roles</Link>
-          </nav>
-          <nav aria-label="Account">
-            <h2>Account</h2>
-            <Link href="/login">Sign in</Link>
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/pricing">Pricing</Link>
-          </nav>
-          <nav aria-label="Company">
-            <h2>Company</h2>
-            <Link href="/about">How it works</Link>
-            <Link href="/terms">Terms</Link>
-            <Link href="/privacy">Privacy</Link>
-          </nav>
-        </div>
-        <div className="container site-footer__roles">
-          <span>Popular roles</span>
-          {FOOTER_ROLES.map((slug) => (
-            <Link href={`/remote-${slug}-jobs`} key={slug}>
-              Remote {hubSlugLabel(slug)} jobs
-            </Link>
+        <div className="container site-footer__columns">
+          {FOOTER_COLUMNS.map((column) => (
+            <nav aria-label={column.heading} className="footer-column" key={column.heading}>
+              <h2>
+                {column.hubHref ? (
+                  <Link href={column.hubHref}>{column.heading}</Link>
+                ) : (
+                  column.heading
+                )}
+              </h2>
+              <div className="footer-column__links">
+                {column.links.map((link) => (
+                  <Link href={link.href} key={`${column.heading}-${link.href}`}>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </nav>
           ))}
         </div>
-        <div className="container site-footer__legal">
-          <p>Studio Direct. Roles from studio career pages.</p>
-          <p>
-            Listings come from studio career pages and other public sources.
-            Not affiliated with LinkedIn.
-          </p>
+        <div className="site-footer__legal">
+          <div className="container">
+            <p>
+              &copy; {LAUNCH_YEAR} <Link href="/">Nodework</Link>. An index of Web3,
+              blockchain and crypto roles, with salary bands built from the jobs
+              themselves.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

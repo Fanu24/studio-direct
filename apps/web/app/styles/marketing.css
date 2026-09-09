@@ -1,0 +1,272 @@
+/* API docs, ads, events, post-a-job and legal hub pages. Prefix: marketing-.
+   Design system tokens and primitives live in globals.css; this file only adds
+   layout shapes those existing primitives do not already cover. */
+
+.marketing-section {
+  padding-top: calc(var(--section) * 0.6);
+  padding-bottom: calc(var(--section) * 0.6);
+}
+
+.marketing-section .section-head {
+  margin-bottom: clamp(28px, 3.5vw, 40px);
+}
+
+/* ---------------------------------------------------------------------------
+   Generic two/three column card grids (legal hub, ads placement, event cards)
+   --------------------------------------------------------------------------- */
+
+.marketing-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.marketing-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.marketing-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.marketing-card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.marketing-card h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.marketing-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.marketing-card__list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.marketing-card__list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.marketing-card__list svg {
+  margin-top: 3px;
+  flex: none;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------------
+   Notice / status banners (billing not live, access by request, pre-launch)
+   --------------------------------------------------------------------------- */
+
+.marketing-notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 20px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+
+.marketing-notice svg {
+  margin-top: 2px;
+  flex: none;
+  color: var(--accent);
+}
+
+.marketing-notice p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------------------
+   API reference: endpoint line, parameter table, JSON sample
+   --------------------------------------------------------------------------- */
+
+.marketing-endpoint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  font-family: var(--mono);
+  font-size: 0.92rem;
+}
+
+.marketing-endpoint__method {
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.marketing-endpoint__path {
+  color: var(--text);
+  word-break: break-all;
+}
+
+.marketing-table-wrap {
+  overflow-x: auto;
+}
+
+.marketing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.marketing-table th,
+.marketing-table td {
+  padding: 10px 14px 10px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.marketing-table th {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  font-weight: 500;
+}
+
+.marketing-table td:first-child {
+  font-family: var(--mono);
+  color: var(--accent-strong);
+  white-space: nowrap;
+}
+
+.marketing-table td.marketing-table__desc {
+  color: var(--muted);
+}
+
+.marketing-code {
+  margin: 0;
+  padding: 20px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--dim);
+  white-space: pre;
+}
+
+/* ---------------------------------------------------------------------------
+   Events directory
+   --------------------------------------------------------------------------- */
+
+.marketing-region {
+  padding-top: clamp(36px, 4vw, 56px);
+  border-top: 1px solid var(--line);
+}
+
+.marketing-region:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.marketing-region h2 {
+  margin: 0 0 4px;
+}
+
+.marketing-region__count {
+  margin: 0 0 20px;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+}
+
+.marketing-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.marketing-event {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.marketing-event__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.marketing-event__head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.marketing-event__month {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  color: var(--accent-strong);
+  white-space: nowrap;
+}
+
+.marketing-event__place {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.marketing-event__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.marketing-event__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  margin-top: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+   Responsive
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 860px) {
+  .marketing-grid--2,
+  .marketing-grid--3 {
+    grid-template-columns: 1fr;
+  }
+
+  .marketing-events {
+    grid-template-columns: 1fr;
+  }
+}

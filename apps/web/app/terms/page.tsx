@@ -5,7 +5,7 @@ import { TERMS_COPY } from "../../lib/legal/copy";
 export const metadata: Metadata = {
   title: TERMS_COPY.title,
   description:
-    "Terms of Service for Studio Direct: listings come from third parties and may be incomplete, and we do not provide real-time LinkedIn coverage.",
+    "Terms of Service for Nodework: listings come from third parties and may be incomplete.",
   alternates: { canonical: "/terms" },
 };
 

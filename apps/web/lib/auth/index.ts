@@ -1,10 +1,11 @@
+import { TENANT_SLUG } from "@gaming/shared";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { magicLink } from "better-auth/plugins";
 
 import { sendMagicLinkEmail } from "./email";
 
-export const GAMING_TENANT_SLUG = "gaming";
+export const GAMING_TENANT_SLUG = TENANT_SLUG;
 
 const snakeCaseFields = {
   emailVerified: "email_verified",
@@ -124,7 +125,7 @@ export function createAuth(env: AuthEnv) {
               .first<string>("id");
 
             if (!tenantId) {
-              throw new Error("Gaming tenant was not found");
+              throw new Error("Nodework tenant was not found");
             }
 
             return {

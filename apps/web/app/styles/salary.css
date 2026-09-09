@@ -1,0 +1,190 @@
+/* Salary stats-article components: inline-SVG charts, breakdown tables, and
+ * the callout/CTA blocks used across web3-salaries, web3-non-tech-salaries
+ * and the solana-vs-ethereum comparison page. Imported directly from
+ * salary-chart.tsx (not layout.tsx) - same "import css from the component
+ * that needs it" pattern site-chrome.tsx already uses for footer.css. */
+
+.salary-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0 26px;
+}
+
+.salary-chart__row {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(120px, 3fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.salary-chart__label {
+  font-size: 0.85rem;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.salary-chart__label a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.salary-chart__label a:hover {
+  color: var(--accent);
+}
+
+.salary-chart__bar {
+  width: 100%;
+  height: 12px;
+  display: block;
+}
+
+.salary-chart__track {
+  fill: var(--bg-elev);
+}
+
+.salary-chart__range {
+  fill: var(--accent-soft);
+}
+
+.salary-chart__avg {
+  fill: var(--accent);
+}
+
+.salary-chart__value {
+  font-size: 0.78rem;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--muted);
+}
+
+.salary-chart__empty {
+  margin: 10px 0 22px;
+}
+
+.salary-line {
+  margin: 14px 0 26px;
+}
+
+.salary-line__svg {
+  width: 100%;
+  height: 90px;
+  display: block;
+  overflow: visible;
+}
+
+.salary-line__path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.salary-line__dot {
+  fill: var(--accent);
+}
+
+.salary-line__labels {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.salary-line__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* A level nobody published pay for is dimmed as a whole, so the eye reads it as an absent
+   measurement rather than as a value that failed to render. */
+.salary-line__label.is-empty {
+  opacity: 0.55;
+}
+
+.salary-line__note {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.salary-line__label a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.salary-line__label a:hover {
+  color: var(--accent);
+}
+
+.salary-table-wrap {
+  overflow-x: auto;
+}
+
+.salary-callouts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin: 16px 0 28px;
+}
+
+.salary-callout {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  background: var(--bg-elev);
+}
+
+.salary-callout__kicker {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.salary-callout p {
+  margin: 0;
+}
+
+.salary-stat-figure {
+  font-family: var(--display);
+  font-size: 2rem;
+  color: var(--text);
+  margin: 2px 0 8px;
+}
+
+.salary-cta {
+  margin: 32px 0;
+  padding: 22px 24px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+}
+
+.salary-cta h2 {
+  margin-top: 0;
+}
+
+.salary-cta__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .salary-chart__row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .salary-chart__value {
+    text-align: left;
+  }
+}

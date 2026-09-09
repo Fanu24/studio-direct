@@ -150,7 +150,7 @@ describe("POST /api/account/delete", () => {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
-      INSERT INTO tenants (id, slug) VALUES ('tenant-1', 'gaming');
+      INSERT INTO tenants (id, slug) VALUES ('tenant-1', 'nodework');
       INSERT INTO users (id, tenant_id, name, email, created_at)
       VALUES ('user-1', 'tenant-1', 'Ada', 'ada@example.com', '2026-01-01T00:00:00.000Z');
       INSERT INTO profiles (user_id, cv_r2_key) VALUES ('user-1', 'cv/user-1/current.pdf');

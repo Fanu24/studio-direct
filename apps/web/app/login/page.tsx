@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { CheckIcon } from "../_components/icons";
+import { onboardingLocation, safeNextPath } from "../../lib/profile/gate";
 import { GoogleSignInButton, LoginForm } from "./login-form";
 
 export const dynamic = "force-dynamic";
@@ -8,33 +9,40 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Sign in",
   description:
-    "Sign in to Studio Direct with a magic link or with Google to unlock studio apply links, keep a profile, and see your unlock history.",
+    "Sign in to Nodework with a magic link or with Google to keep a profile and saved account details.",
   alternates: { canonical: "/login" },
 };
 
 /* Only things the account actually does. Studios never see a profile unless the
    talent pool is switched on from Settings, and that is off by default. */
 const ACCOUNT_PERKS = [
-  "5 free unlocks per UTC week",
   "A profile and PDF CV you fill in once",
-  "Your unlock history",
+  "Saved account settings",
+  "Employer posting later, when billing is live",
 ];
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; sent?: string }>;
+  searchParams: Promise<{ error?: string; intent?: string; next?: string; sent?: string }>;
 }) {
-  const { error, sent } = await searchParams;
+  const { error, intent, next, sent } = await searchParams;
   const siteKey = process.env.TURNSTILE_SITE_KEY ?? "";
+  const callbackURL = safeNextPath(next) ?? "/";
+  const newUserCallbackURL = onboardingLocation(next);
+  const startingFresh = intent === "start";
 
   return (
     <main className="acct-main login">
       <div className="container login__grid">
         <section aria-labelledby="login-title" className="login__brand">
-          <span className="kicker">Your account</span>
-          <h1 id="login-title">Sign in to Studio Direct</h1>
-          <p className="lead">Send a magic link to your email, or continue with Google.</p>
+          <span className="kicker">{startingFresh ? "Get started" : "Your account"}</span>
+          <h1 id="login-title">Sign in to Nodework</h1>
+          <p className="lead">
+            {startingFresh
+              ? "Create your account in one step. Send a magic link or continue with Google, no separate signup form."
+              : "Send a magic link to your email, or continue with Google."}
+          </p>
           <p>
             You can send another magic link from this page if the email does not arrive.
           </p>
@@ -60,7 +68,7 @@ export default async function LoginPage({
               {error}
             </p>
           ) : null}
-          <LoginForm siteKey={siteKey}>
+          <LoginForm callbackURL={callbackURL} newUserCallbackURL={newUserCallbackURL} siteKey={siteKey}>
             <label htmlFor="login-email">
               <span>Email</span>
               <input
@@ -79,7 +87,9 @@ export default async function LoginPage({
           <p className="login__or">
             <span>or</span>
           </p>
-          <GoogleSignInButton>Continue with Google</GoogleSignInButton>
+          <GoogleSignInButton callbackURL={callbackURL} newUserCallbackURL={newUserCallbackURL}>
+            Continue with Google
+          </GoogleSignInButton>
           <p className="login__fine">
             New here? Your account is created the first time you sign in. We then ask for
             a display name and a target role.

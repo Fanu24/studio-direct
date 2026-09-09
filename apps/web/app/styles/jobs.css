@@ -301,6 +301,60 @@
   border-radius: 16px;
 }
 
+.jobs-studio-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+}
+
+/* Ranked tables: company index and top-growing companies both scroll
+   horizontally on narrow viewports instead of widening the page. */
+
+.jobs-company-table-wrap,
+.jobs-table-wrap {
+  overflow-x: auto;
+}
+
+.jobs-company-table {
+  min-width: 640px;
+}
+
+.jobs-company-table__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.jobs-company-table__name:hover {
+  color: var(--accent);
+}
+
+.jobs-studio-mark--sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  flex: none;
+}
+
+/* Company detail: tag/location filters */
+
+.jobs-company-filters {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+/* Top-growing companies: ranked table */
+
+.jobs-growth-table {
+  min-width: 620px;
+}
+
 /* Role hubs index */
 
 .jobs-role-grid {
@@ -444,4 +498,21 @@
     height: 44px;
     font-size: 1.15rem;
   }
+}
+
+/* Job list row heading
+   ------------------------------------------------------------------
+   JobRow wraps its title link in a real heading so each listing shows up in
+   the document outline. The wrapper carries no typography of its own - the
+   element-level heading rules from globals.css are neutralised here and
+   .job-row__title on the link keeps supplying the row's look, so the change
+   is markup-only. A new class name, so nothing in nodework.css is overridden.
+*/
+.job-row__heading {
+  margin: 0;
+  font: inherit;
+  letter-spacing: normal;
+  line-height: inherit;
+  text-wrap: normal;
+  color: inherit;
 }

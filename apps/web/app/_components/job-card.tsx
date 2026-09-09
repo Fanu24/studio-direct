@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { LINKEDIN_EXCLUSIVITY_TOOLTIP } from "../../lib/copy";
 import { showBadge } from "../../lib/jobs/exclusivity";
-import type { JobListItem } from "../../lib/jobs/queries";
+import { jobPublicHref, type JobListItem } from "../../lib/jobs/queries";
 
 const POSTED_FORMAT = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -11,11 +11,17 @@ const POSTED_FORMAT = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
+/**
+ * Only these three arrangement values have a real label. Everything else -
+ * including the literal string "unknown", which 952 of 1042 local rows
+ * carry - falls to "" rather than rendering the raw column value verbatim
+ * in a live meta description or on-page badge.
+ */
 export function remoteLabel(remote: string): string {
   if (remote === "remote") return "Remote";
   if (remote === "hybrid") return "Hybrid";
   if (remote === "onsite") return "On-site";
-  return remote;
+  return "";
 }
 
 export function formatPosted(iso: string | null): string | null {
@@ -34,12 +40,13 @@ export function JobCard({
 }) {
   const Heading = headingLevel;
   const posted = formatPosted(job.postedAt);
+  const remote = remoteLabel(job.remote);
 
   return (
     <article className="job-card">
       <div className="job-card__head">
         {job.companySlug ? (
-          <Link className="job-card__company" href={`/companies/${job.companySlug}`}>
+          <Link className="job-card__company" href={`/web3-companies/${job.companySlug}`}>
             {job.companyName}
           </Link>
         ) : (
@@ -52,11 +59,11 @@ export function JobCard({
         ) : null}
       </div>
       <Heading className="job-card__title">
-        <Link href={`/jobs/${job.slug}`}>{job.title}</Link>
+        <Link href={jobPublicHref(job)}>{job.title}</Link>
       </Heading>
       <p className="job-card__meta">
-        {remoteLabel(job.remote)}
-        {job.location ? ` · ${job.location}` : ""}
+        {remote}
+        {job.location ? `${remote ? " · " : ""}${job.location}` : ""}
       </p>
       <div className="job-card__foot">
         {showBadge(job.exclusivity) ? (

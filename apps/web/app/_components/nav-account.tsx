@@ -9,7 +9,7 @@ export function NavAccount() {
 
   if (session?.user) {
     return (
-      <>
+      <div className="nav-account">
         <button
           className="nav-ghost"
           onClick={async () => {
@@ -23,13 +23,18 @@ export function NavAccount() {
         <Link className="button" href="/dashboard">
           Dashboard
         </Link>
-      </>
+      </div>
     );
   }
 
   return (
-    <Link className="button" href="/login">
-      Sign in
-    </Link>
+    <div className="nav-account">
+      <Link className="button button--outline" href="/login">
+        Login
+      </Link>
+      <Link className="button" href="/login?intent=start">
+        Get started
+      </Link>
+    </div>
   );
 }

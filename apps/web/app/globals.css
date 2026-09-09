@@ -3,22 +3,22 @@
 :root {
   color-scheme: dark;
 
-  --bg: #14161c;
-  --bg-deep: #0f1116;
-  --bg-elev: #1b1e26;
-  --bg-hover: #232733;
-  --line: #2b2f3b;
-  --line-strong: #3b4150;
-  --text: #eceae4;
-  --muted: #9b978c;
-  --dim: #8a857b;
-  --accent: #c4a35a;
-  --accent-strong: #d9b96a;
-  --accent-soft: rgb(196 163 90 / 0.14);
-  --accent-line: rgb(196 163 90 / 0.35);
-  --accent-ink: #16140f;
-  --ok: #7d9a72;
-  --danger: #d46a6a;
+  --bg: #000000;
+  --bg-deep: #050505;
+  --bg-elev: #0a0a0a;
+  --bg-hover: #141414;
+  --line: #2a2a2a;
+  --line-strong: #ff2d87;
+  --text: #ffffff;
+  --muted: #b8b8b8;
+  --dim: #d0d0d0;
+  --accent: #ff2d87;
+  --accent-strong: #ff5aa3;
+  --accent-soft: rgb(255 45 135 / 0.16);
+  --accent-line: rgb(255 45 135 / 0.45);
+  --accent-ink: #ffffff;
+  --ok: #ff2d87;
+  --danger: #ff6b6a;
 
   --radius-pill: 999px;
   --radius: 12px;
@@ -67,7 +67,7 @@ body {
   line-height: 1.6;
   color: var(--text);
   background:
-    radial-gradient(1100px 620px at 88% -8%, rgb(196 163 90 / 0.11), transparent 58%),
+    radial-gradient(1100px 620px at 88% -8%, rgb(255 45 135 / 0.11), transparent 58%),
     radial-gradient(900px 560px at -12% 108%, rgb(86 104 138 / 0.14), transparent 52%),
     var(--bg);
   overflow-x: clip;
@@ -84,7 +84,7 @@ body::before {
 }
 
 ::selection {
-  background: rgb(196 163 90 / 0.35);
+  background: rgb(255 45 135 / 0.35);
   color: var(--text);
 }
 
@@ -263,6 +263,61 @@ main.marketing {
 
 .container--content {
   max-width: var(--content);
+}
+
+.article h2 {
+  margin: 1.8em 0 0.6em;
+  font-size: 1.2rem;
+}
+
+.article h2:first-child {
+  margin-top: 0;
+}
+
+.article p,
+.article li {
+  max-width: 68ch;
+}
+
+.article-toc {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 28px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-elev);
+}
+
+.article-toc a {
+  width: fit-content;
+}
+
+.article-layout {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--gutter) 48px;
+}
+
+@media (min-width: 960px) {
+  .article-layout {
+    grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .article-layout .article-toc {
+    position: sticky;
+    top: 88px;
+    margin-bottom: 0;
+  }
+
+  .article-layout .container--content {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 .section {
@@ -464,114 +519,7 @@ main.marketing {
   }
 }
 
-/* Footer */
-
-.site-footer {
-  margin-top: auto;
-  border-top: 1px solid var(--line);
-  background: var(--bg-deep);
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-.site-footer__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
-  gap: 40px;
-  padding-top: 56px;
-  padding-bottom: 40px;
-}
-
-.site-footer__brand p {
-  margin-top: 14px;
-  max-width: 34ch;
-}
-
-.site-footer nav {
-  display: grid;
-  gap: 10px;
-  align-content: start;
-}
-
-.site-footer nav h2 {
-  font-size: 0.78rem;
-  font-family: var(--mono);
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  color: var(--dim);
-  margin-bottom: 4px;
-}
-
-.site-footer nav a {
-  text-decoration: none;
-  color: var(--muted);
-  width: fit-content;
-}
-
-.site-footer nav a:hover {
-  color: var(--text);
-}
-
-/* The rule is drawn by a pseudo-element inset by the gutter, so it ends where the text ends
-   instead of running the full padded width of the container. */
-.site-footer__roles,
-.site-footer__legal {
-  position: relative;
-}
-
-.site-footer__roles::before,
-.site-footer__legal::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: var(--gutter);
-  right: var(--gutter);
-  height: 1px;
-  background: var(--line);
-}
-
-.site-footer__roles {
-  padding-top: 20px;
-  padding-bottom: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
-  align-items: baseline;
-}
-
-.site-footer__roles span {
-  font-family: var(--mono);
-  font-size: 0.74rem;
-  letter-spacing: 0.06em;
-  color: var(--dim);
-}
-
-.site-footer__roles a {
-  text-decoration: none;
-  color: var(--muted);
-  font-size: 0.88rem;
-}
-
-.site-footer__roles a:hover {
-  color: var(--text);
-}
-
-.site-footer__legal {
-  padding-top: 20px;
-  padding-bottom: 32px;
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 0.82rem;
-  color: var(--dim);
-}
-
-.site-footer__legal p {
-  margin: 0;
-  color: inherit;
-  max-width: none;
-}
+/* Footer: styled in styles/footer.css, imported from site-chrome.tsx. */
 
 /* Buttons */
 
@@ -754,7 +702,7 @@ textarea:hover {
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid rgb(196 163 90 / 0.45);
+  outline: 2px solid rgb(255 45 135 / 0.45);
   outline-offset: 1px;
   border-color: var(--accent);
 }
@@ -893,12 +841,13 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: var(--radius-pill);
+  padding: 5px 10px;
+  min-height: 24px;
+  border-radius: 4px;
   border: 1px solid var(--line);
   background: var(--bg-elev);
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: 0.66rem;
   text-decoration: none;
   white-space: nowrap;
   transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
@@ -948,7 +897,7 @@ a.chip--on:hover {
 .panel--accent {
   border-color: var(--accent-line);
   background:
-    linear-gradient(180deg, rgb(196 163 90 / 0.08), transparent 60%),
+    linear-gradient(180deg, rgb(255 45 135 / 0.08), transparent 60%),
     var(--bg-elev);
 }
 
@@ -1330,7 +1279,7 @@ a.chip--on:hover {
   aspect-ratio: var(--pv-aspect);
   container-type: inline-size;
   background:
-    radial-gradient(80% 70% at 50% 0%, rgb(196 163 90 / 0.07), transparent 70%),
+    radial-gradient(80% 70% at 50% 0%, rgb(255 45 135 / 0.07), transparent 70%),
     var(--bg-deep);
 }
 
@@ -1379,7 +1328,7 @@ a.chip--on:hover {
   width: 76px;
   height: 76px;
   transform: translate(-50%, -50%);
-  background: rgb(196 163 90 / 0.92);
+  background: rgb(255 45 135 / 0.92);
   color: var(--accent-ink);
   border-color: transparent;
 }
@@ -1621,10 +1570,6 @@ button.secondary {
   .hub-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .site-footer__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 900px) {
@@ -1665,12 +1610,6 @@ button.secondary {
 @media (max-width: 640px) {
   .hub-grid {
     grid-template-columns: 1fr;
-  }
-
-  .site-footer__grid {
-    grid-template-columns: 1fr;
-    gap: 28px;
-    padding-top: 40px;
   }
 
   .button--lg {

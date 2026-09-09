@@ -14,28 +14,29 @@ export const PRIVATE_PATHS = [
 export const dynamic = "force-dynamic";
 
 /**
- * Returns the absolute sitemap URL for a valid http(s) SITE_URL, or null when the value is
- * missing, blank, not an absolute URL, not http(s), or the reserved example origin.
+ * Returns the absolute sitemap URL for a valid http(s) SITE_URL, or the relative
+ * "/sitemap.xml" fallback when the value is missing, blank, not an absolute URL, not
+ * http(s), or the reserved example origin. Always returns a usable value so robots.txt
+ * always advertises its sitemap.
  */
-export function resolveRobotsSitemap(siteUrl: string | null | undefined): string | null {
+export function resolveRobotsSitemap(siteUrl: string | null | undefined): string {
   const trimmed = siteUrl?.trim();
-  if (!trimmed) return null;
+  if (!trimmed) return "/sitemap.xml";
 
   let parsed: URL;
   try {
     parsed = new URL(trimmed);
   } catch {
-    return null;
+    return "/sitemap.xml";
   }
 
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-  if (parsed.origin === RESERVED_ORIGIN) return null;
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "/sitemap.xml";
+  if (parsed.origin === RESERVED_ORIGIN) return "/sitemap.xml";
 
   return `${parsed.origin}/sitemap.xml`;
 }
 
 export function buildRobots(siteUrl: string | null | undefined): MetadataRoute.Robots {
-  const sitemap = resolveRobotsSitemap(siteUrl);
   return {
     rules: [
       {
@@ -44,7 +45,7 @@ export function buildRobots(siteUrl: string | null | undefined): MetadataRoute.R
         disallow: [...PRIVATE_PATHS],
       },
     ],
-    ...(sitemap ? { sitemap } : {}),
+    sitemap: resolveRobotsSitemap(siteUrl),
   };
 }
 

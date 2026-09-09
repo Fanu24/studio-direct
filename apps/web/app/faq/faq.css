@@ -1,0 +1,42 @@
+/*
+ * /faq question blocks.
+ *
+ * The page used to render its questions as a two-column <dl>. A definition
+ * list is fine markup, but it produces a page whose document outline has no
+ * headings at all below the h1, which is the one structural thing every other
+ * FAQ-shaped page on the web (and the reference IA this site mirrors) gets
+ * right: each question is a heading, so it is linkable, skimmable in a
+ * screen-reader heading list, and addressable by the on-this-page nav.
+ *
+ * Selectors are doubled up (.faq-qa .faq-qa__question) purely to outrank
+ * `.article h2` in globals.css, which would otherwise impose the article
+ * heading scale and margins on a question block.
+ *
+ * Scoped under .faq-qa and defines no custom properties, so the bundler may
+ * emit this chunk in any order without touching the palette.
+ */
+
+.faq-qa {
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.faq-qa + .faq-qa {
+  margin-top: 28px;
+}
+
+.faq-qa .faq-qa__question {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.faq-qa .faq-qa__answer {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+  text-wrap: pretty;
+}

@@ -1,0 +1,767 @@
+main.board-main {
+  max-width: 1440px;
+  padding-top: 16px;
+  padding-bottom: 40px;
+}
+
+.board p {
+  max-width: none;
+}
+
+.board-hero {
+  margin-bottom: 12px;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.board-hero h1 {
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  margin-bottom: 8px;
+}
+
+.board-hero .lead {
+  margin-bottom: 0;
+}
+
+.board-hero .count {
+  margin-top: 12px;
+}
+
+.board-hero--home h1 {
+  font-size: clamp(2.2rem, 6vw, 3.5rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 0 18px rgb(255 45 135 / 0.85), 0 0 42px rgb(255 45 135 / 0.4);
+  margin-bottom: 12px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  border-radius: 4px;
+  overflow: hidden;
+  min-height: min(78vh, 920px);
+  max-width: 100%;
+}
+
+.board__list,
+.board__pane {
+  min-width: 0;
+  max-height: min(78vh, 920px);
+  overflow: auto;
+  overflow-x: hidden;
+}
+
+.board__list {
+  border-right: 1px solid var(--line);
+  /*
+   * This pane scrolls, so its bottom edge lands mid-row and the cut reads as a
+   * rendering fault rather than as "there is more below". A short fade at the bottom
+   * makes the truncation legible as scrollable content. It is masked out once the
+   * reader reaches the end.
+   */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent 100%);
+}
+
+@supports not (mask-image: linear-gradient(#000, #000)) {
+  .board__list {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}
+
+.board-table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.board-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-elev);
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.board-table thead th:nth-child(1) {
+  width: 42%;
+}
+
+.board-table thead th:nth-child(2) {
+  width: 68px;
+}
+
+.board-table thead th:nth-child(3) {
+  width: 12%;
+}
+
+.board-table thead th:nth-child(4) {
+  width: 16%;
+}
+
+.board-table thead th:nth-child(5) {
+  width: 18%;
+}
+
+.board-table thead th:first-child {
+  padding-left: 14px;
+}
+
+.board-table thead th:last-child {
+  padding-right: 14px;
+}
+
+.board-tr {
+  position: relative;
+}
+
+.board-tr td {
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.board-col-job {
+  width: 42%;
+  overflow: hidden;
+}
+
+.board-col-posted {
+  width: 68px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.board-col-loc {
+  width: 12%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-col-pay {
+  width: 16%;
+  font-variant-numeric: tabular-nums;
+}
+
+.board-col-tags {
+  width: 18%;
+  position: relative;
+  z-index: 1;
+}
+
+.board-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  width: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.board-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.board-tr:hover {
+  background: var(--bg-hover);
+}
+
+.board-tr.is-active {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.board-tr.is-active:hover {
+  background: var(--accent-soft);
+}
+
+.board-row__mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.board-row__identity {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  width: 100%;
+}
+
+/* Each listing title is a real heading (h2, or h3 where a section h2 introduces the
+   board), so the job inventory lands in the document outline. The element-level
+   heading typography from globals.css is neutralised here - the row keeps the exact
+   compact metrics it had as a span. */
+.board-row__title {
+  display: block;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  letter-spacing: normal;
+  margin: 0;
+  text-wrap: normal;
+  text-decoration: none;
+  color: var(--text);
+  /*
+   * Two lines, not one. The job column is 42% of a half-width pane - about 291px at 1440 -
+   * and a single clamped line was cutting real titles by up to 227px ("Binance Accelerator
+   * Program - ..."). Clamping at two lines roughly doubles what survives without touching
+   * the column grid or the row rhythm, since the row already stacks title over company.
+   * `white-space: normal` is required: nowrap would keep it on one line and the clamp would
+   * never engage.
+   */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Where the clamp is unsupported, fall back to the previous single-line ellipsis rather
+   than letting a long title push the row open. */
+@supports not (-webkit-line-clamp: 2) {
+  .board-row__title {
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+.board-tr:hover .board-row__title {
+  color: var(--accent-strong);
+}
+
+.board-row__company {
+  display: block;
+  margin: 2px 0 0;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: normal;
+  text-wrap: normal;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-row__pay {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.board-row__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+/*
+ * The Tags column is 18% of the table, about 125px at 1440. A flex item refuses to
+ * shrink below its own content width, so a long chip such as "Business Development"
+ * (118px) simply spilled out of a 103px slot and painted over the column edge. These
+ * three properties let it shrink and end in an ellipsis instead.
+ *
+ * Raising the chips to the 24px WCAG tap-target minimum widened them by 4px and made
+ * this visible; the overflow was latent before that.
+ */
+.board-row__tags .chip {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board .chip {
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  min-height: 24px;
+}
+
+.board-col-tags .chip {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+}
+
+.board__pane {
+  padding: 0;
+  background: var(--bg);
+}
+
+.board-apply {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px 14px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--line);
+}
+
+.board-apply__copy {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-width: 0;
+  flex: 1;
+}
+
+.board-apply__meta {
+  min-width: 0;
+}
+
+.board-apply__company {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.board-apply__company a {
+  color: inherit;
+  text-decoration: none;
+  position: relative;
+  z-index: 1;
+}
+
+.board-apply__company a:hover {
+  color: var(--accent-strong);
+}
+
+.board-apply__title {
+  font-size: 1.2rem;
+  margin: 4px 0 6px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.board-apply__place {
+  margin: 0;
+  font-size: 0.84rem;
+  max-width: none;
+  overflow-wrap: anywhere;
+}
+
+.board-apply__btn {
+  flex-shrink: 0;
+  min-height: 44px;
+  min-width: 96px;
+}
+
+.board-body {
+  padding: 18px 20px 28px;
+  max-width: none;
+  color: var(--text);
+}
+
+.board-body p,
+.board-body li {
+  color: var(--muted);
+  max-width: none;
+}
+
+.board-body h1,
+.board-body h2,
+.board-body h3 {
+  font-size: 1.05rem;
+  margin: 1.2em 0 0.5em;
+}
+
+.board-pane-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 20px 28px;
+}
+
+.board-pane-empty {
+  padding: 32px 20px;
+  color: var(--muted);
+}
+
+.board .pager {
+  margin: 16px;
+}
+
+/* Small-viewport fixed Apply bar: hidden by default, shown under the mobile breakpoint below
+   so Apply stays reachable without scrolling back up past the job list. */
+.board-apply-fixed {
+  display: none;
+}
+
+.apply-main {
+  max-width: 640px;
+}
+
+.apply-form {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.apply-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.apply-form label span {
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
+.apply-form input,
+.apply-form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.apply-form__ok,
+.apply-form__err {
+  margin: 0;
+  max-width: none;
+}
+
+.apply-form__ok {
+  color: var(--ok);
+}
+
+.apply-form__err {
+  color: var(--danger);
+}
+
+@media (max-width: 959px) {
+  main.board-main {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .board {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .board-main--job .board {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .board-main--job .board__pane {
+    order: -1;
+  }
+
+  .board__list,
+  .board__pane {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .board__list {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .board-table,
+  .board-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .board-table thead {
+    display: none;
+  }
+
+  .board-tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "job posted"
+      "job loc"
+      "job pay"
+      "tags tags";
+    gap: 2px 12px;
+    padding: 12px 14px;
+    align-items: start;
+    min-height: 44px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .board-tr td {
+    display: block;
+    width: auto;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .board-col-job {
+    grid-area: job;
+  }
+
+  .board-col-posted {
+    grid-area: posted;
+    text-align: right;
+    font-size: 0.78rem;
+    padding-top: 4px;
+  }
+
+  .board-col-loc {
+    grid-area: loc;
+    text-align: right;
+    font-size: 0.78rem;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .board-col-pay {
+    grid-area: pay;
+    text-align: right;
+  }
+
+  .board-col-tags {
+    grid-area: tags;
+    margin-top: 8px;
+  }
+
+  .board-apply {
+    top: var(--nav-h);
+    flex-wrap: wrap;
+    padding: 14px 16px;
+  }
+
+  .board-apply__copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .board-apply__btn {
+    width: 100%;
+  }
+
+  .board-apply__title {
+    font-size: 1.1rem;
+  }
+
+  .board-apply-fixed {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    background: var(--bg-elev);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -8px 24px rgb(0 0 0 / 0.35);
+  }
+
+  .board-apply-fixed__title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.86rem;
+    color: var(--text);
+  }
+
+  .board-apply-fixed__btn {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 540px) {
+  .board-row__mark,
+  .board-apply__copy .board-row__mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .board-apply__copy {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Homepage "How people use Nodework" carousel.
+
+   Same slot the reference board fills with a testimonial carousel. Interaction
+   is CSS only - one hidden radio per slide, labels acting as Previous/Next -
+   so the homepage stays a server component with no client bundle. The base
+   .home-reviews / .home-reviews blockquote / .home-reviews footer rules live in
+   nodework.css; everything below is additive and uses new class names, so no
+   rule here depends on which sheet the bundler emits first.
+   --------------------------------------------------------------------------- */
+
+.home-reviews__note {
+  max-width: 72ch;
+  color: var(--muted);
+}
+
+.home-reviews__carousel {
+  position: relative;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.home-reviews__radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.home-reviews__track {
+  display: flex;
+  transition: transform 240ms ease;
+}
+
+.home-reviews__slide {
+  box-sizing: border-box;
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+.home-reviews__slide p {
+  margin: 0;
+  max-width: 72ch;
+}
+
+.home-reviews__controls {
+  margin-top: 16px;
+}
+
+.home-reviews__nav {
+  display: none;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-reviews__count {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#home-review-catalog:checked ~ .home-reviews__track {
+  transform: translateX(0);
+}
+
+#home-review-filters:checked ~ .home-reviews__track {
+  transform: translateX(-100%);
+}
+
+#home-review-apply:checked ~ .home-reviews__track {
+  transform: translateX(-200%);
+}
+
+#home-review-catalog:checked ~ .home-reviews__controls .home-reviews__nav--catalog,
+#home-review-filters:checked ~ .home-reviews__controls .home-reviews__nav--filters,
+#home-review-apply:checked ~ .home-reviews__controls .home-reviews__nav--apply {
+  display: flex;
+}
+
+.home-reviews__radio:focus-visible ~ .home-reviews__carousel,
+.home-reviews__carousel:focus-within {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-reviews__track {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Homepage FAQ: an h2 question plus a disclosure toggle, matching the
+   reference's six-entry accordion. .faq-item / .faq-item summary come from
+   nodework.css; these only add the flex row and size the heading, so the h2
+   does not inherit the UA 1.5em bump on top of the summary font size.
+   --------------------------------------------------------------------------- */
+
+.faq-item__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.faq-item__q {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.faq-item__toggle {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: translateY(-3px) rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.faq-item[open] .faq-item__toggle {
+  transform: translateY(1px) rotate(-135deg);
+}
+
+@media (max-width: 720px) {
+  .home-reviews__nav {
+    flex-wrap: wrap;
+  }
+}

@@ -44,6 +44,6 @@ describe("crawler wrangler", () => {
   it("names EMAIL_FROM without a digest service secret", () => {
     expect(config.vars.EMAIL_FROM).toBe("noreply@studio-direct.example");
     expect(raw).not.toMatch(/DIGEST_SECRET/);
-    expect(config.secrets).toBeUndefined();
+    expect(config.secrets.required).toEqual(["WEB3_CAREER_API_TOKEN"]);
   });
 });

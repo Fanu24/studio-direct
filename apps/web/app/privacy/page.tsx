@@ -5,7 +5,7 @@ import { PRIVACY_COPY } from "../../lib/legal/copy";
 export const metadata: Metadata = {
   title: PRIVACY_COPY.title,
   description:
-    "Privacy Policy for Studio Direct: we use data for the job-board product. Recruiter talent-pool sharing is a separate opt-in purpose and is off by default.",
+    "Privacy Policy for Nodework: we use data for the job-board product. Recruiter talent-pool sharing is a separate opt-in purpose and is off by default.",
   alternates: { canonical: "/privacy" },
 };
 
