@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<!-- Required for Chromium's mobile emulation (isMobile: true) to use the
+     real device width as its layout viewport. Without this tag, Chromium
+     falls back to the legacy desktop-compat default layout viewport
+     (980px, matching real Android Chrome's behavior on non-mobile-
+     optimized pages) and clientWidth stops being 390 - a second, unrelated
+     way to get a wrong overflow reading that this fixture caught on first
+     run. Firefox and WebKit did not exhibit this without the tag; Chromium
+     did. Every real app page under test already ships this meta tag via
+     Next.js's default viewport export, so this is fixture hygiene, not a
+     harness workaround. -->
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>overflow fixture</title>
+<style>
+  /* No margin/padding tricks - the point of this fixture is a single
+     element that is exactly 900px wide, so that at a 390px viewport
+     width the page overflows by exactly 900 - 390 = 510px. This is the
+     same fixture shape the design spec measured by hand: "Measured on a
+     fixture overflowing by 510px: innerWidth 900, clientWidth 390,
+     scrollWidth 900." */
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+  .wide {
+    width: 900px;
+    height: 60px;
+    background: hotpink;
+    color: #000;
+    font: 14px sans-serif;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+  <div class="wide">This element is fixed at 900px wide regardless of viewport.</div>
+</body>
+</html>
