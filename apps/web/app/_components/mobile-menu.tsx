@@ -19,6 +19,7 @@ export function MobileMenu({ menus }: { menus: readonly NavMenu[] }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const toggle = useRef<HTMLButtonElement>(null);
+  const sheet = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setOpen(false);
@@ -32,10 +33,43 @@ export function MobileMenu({ menus }: { menus: readonly NavMenu[] }) {
     root.style.overflow = "hidden";
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setOpen(false);
-      toggle.current?.focus();
+      if (event.key === "Escape") {
+        setOpen(false);
+        toggle.current?.focus();
+        return;
+      }
+
+      // The sheet covers the page, but covering it visually does not remove the
+      // page from the tab order: QA walked 60 real Tab presses straight through
+      // the menu and on into the search and filter controls hidden behind the
+      // overlay. Cycle focus between the toggle and the sheet's own links.
+      if (event.key !== "Tab") return;
+
+      const panel = sheet.current;
+      if (!panel) return;
+
+      const stops = [
+        toggle.current,
+        ...panel.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ].filter((node): node is HTMLElement => node !== null && node.offsetParent !== null);
+
+      if (stops.length === 0) return;
+
+      const first = stops[0];
+      const last = stops[stops.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
+
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
@@ -57,7 +91,7 @@ export function MobileMenu({ menus }: { menus: readonly NavMenu[] }) {
       >
         {open ? <CloseIcon size={20} /> : <MenuIcon size={20} />}
       </button>
-      <nav aria-label="Mobile" className="mobile-menu" hidden={!open} id="mobile-menu">
+      <nav aria-label="Mobile" className="mobile-menu" hidden={!open} id="mobile-menu" ref={sheet}>
         {menus.map((menu) => (
           <div className="mobile-menu__group" key={menu.label}>
             <Link

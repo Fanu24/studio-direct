@@ -97,6 +97,25 @@ export default async function SettingsPage() {
             cannot be undone.
           </p>
           <form action="/api/account/delete" method="post">
+            <div className="field">
+              <label className="field__label" htmlFor="delete-confirm">
+                Type DELETE to confirm
+              </label>
+              <input
+                autoComplete="off"
+                className="field__input"
+                id="delete-confirm"
+                name="confirm"
+                pattern="DELETE"
+                required
+                title="Type DELETE in capital letters to confirm."
+                type="text"
+              />
+              <p className="field__hint">
+                We ask for this because deleting cannot be undone. The server checks
+                it too, so a stray click cannot remove your account.
+              </p>
+            </div>
             <button className="button button--danger" type="submit">
               Delete my account
             </button>

@@ -12,7 +12,17 @@ export function resetTurnstileWidget(
     turnstile?: TurnstileApi;
   }).turnstile,
 ): void {
-  turnstile?.reset?.();
+  // Resetting the widget is best-effort housekeeping, never a reason to fail a
+  // sign-in. Turnstile throws from reset() when no widget was ever rendered,
+  // and because this runs in submitLoginMagicLink's finally block, that throw
+  // replaced the real result of the sign-in: the form showed neither an error
+  // nor a confirmation, and the rejection went unhandled. Reachable in
+  // production any time the script is blocked or slow to initialise.
+  try {
+    turnstile?.reset?.();
+  } catch {
+    // The widget was never mounted, or Turnstile is unavailable. Nothing to reset.
+  }
 }
 
 export async function submitLoginMagicLink({

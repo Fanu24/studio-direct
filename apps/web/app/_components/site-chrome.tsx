@@ -70,7 +70,12 @@ export function SiteChrome({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <div id="content">{children}</div>
+      {/* tabIndex -1 makes this a valid focus target. Without it the skip link
+          moves the scroll position but leaves focus on <body>, so the next Tab
+          returns the reader to the top of the navigation they just skipped. */}
+      <div id="content" tabIndex={-1}>
+        {children}
+      </div>
       <RevealObserver />
       <footer className="site-footer">
         <div className="container site-footer__inner">
