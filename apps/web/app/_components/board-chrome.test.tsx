@@ -2,7 +2,7 @@ import { landingPath, type LandingKind } from "@gaming/shared";
 import React, { type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import { remoteFilterHref } from "./board-chrome";
+import { BoardSearch, remoteFilterHref, remoteToggleState } from "./board-chrome";
 import { TagChips } from "./tag-chips";
 
 vi.mock("next/link", () => ({
@@ -120,5 +120,53 @@ describe("TagChips", () => {
     const onHrefs = chips.map((chip) => chip.props.href);
     expect(onHrefs).toContain("/design-jobs");
     expect(onHrefs).toContain("/marketing-jobs");
+  });
+});
+
+
+/**
+ * The control is drawn as a switch, so these assert it behaves like one. It
+ * used to be a one-way link: on `/remote-jobs` it still pointed at
+ * `/remote-jobs` and carried no on state, so it never looked set and clicking
+ * it did nothing. Both halves are covered here - where it goes, and what it
+ * says about itself - because either one alone would have passed against the
+ * broken version.
+ */
+describe("the remote switch", () => {
+  it("turns on from an unfiltered page", () => {
+    const state = remoteToggleState();
+    expect(state.active).toBe(false);
+    expect(state.href).toBe("/remote-jobs");
+  });
+
+  it("turns off again from a remote page, rather than pointing at itself", () => {
+    const state = remoteToggleState({ kind: "remote" });
+    expect(state.active).toBe(true);
+    expect(state.href).toBe("/jobs");
+    expect(state.href).not.toBe("/remote-jobs");
+  });
+
+  it("drops only the remote part from a remote-tag page, keeping the tags", () => {
+    const landing: LandingKind = { kind: "remote-tag", tag: "solidity", tags: ["solidity"] };
+    const state = remoteToggleState(landing);
+    expect(state.active).toBe(true);
+    expect(state.href).toBe(landingPath({ kind: "tag", tag: "solidity", tags: ["solidity"] }));
+  });
+
+  it("says which way it is set, for anything that cannot see the colour", () => {
+    const off = elements(BoardSearch({ remoteHref: "/remote-jobs" })).find(
+      (el) => typeof el.props.className === "string" &&
+        el.props.className.includes("remote-toggle"),
+    );
+    expect(off?.props["aria-pressed"]).toBe(false);
+    expect(off?.props.role).toBe("switch");
+    expect(String(off?.props.className)).not.toContain("remote-toggle--on");
+
+    const on = elements(BoardSearch({ remoteHref: "/jobs", remoteActive: true })).find(
+      (el) => typeof el.props.className === "string" &&
+        el.props.className.includes("remote-toggle"),
+    );
+    expect(on?.props["aria-pressed"]).toBe(true);
+    expect(String(on?.props.className)).toContain("remote-toggle--on");
   });
 });

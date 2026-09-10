@@ -194,7 +194,26 @@
   height: 16px;
   border-radius: var(--radius-pill);
   background: var(--line-strong);
+  /* The knob. An inset shadow rather than a pseudo-element so the switch has
+     no second box to keep aligned; the inset side is what moves. */
   box-shadow: inset 8px 0 0 var(--text);
+  transition:
+    background var(--dur-short) var(--ease-out),
+    box-shadow var(--dur-short) var(--ease-out);
+}
+
+/* The on state. Without it the control was a switch that never looked set,
+   on a page that was already filtered - which is what made it read as broken
+   rather than merely plain. */
+.remote-toggle--on {
+  border-color: var(--accent-line);
+  background: var(--accent-soft, var(--bg-hover));
+  color: var(--text);
+}
+
+.remote-toggle--on .remote-toggle__track {
+  background: var(--accent);
+  box-shadow: inset -8px 0 0 var(--bg);
 }
 
 /* --- Ranked / dense tables (company directory, growth board, city index). ---

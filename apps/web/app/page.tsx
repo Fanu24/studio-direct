@@ -131,6 +131,11 @@ export default async function HomePage({
           <div className="home-hero__search">
             <BoardSearch remoteHref={remoteFilterHref()} />
           </div>
+          {/* The tag chips narrow the board, so they belong next to the search
+              that does the same job - not under the results they filter. The
+              compact set plus "Show more" keeps this to one or two rows, which
+              is what the jobs can afford above the fold. */}
+          <TagChips />
         </div>
       </section>
 
@@ -138,9 +143,6 @@ export default async function HomePage({
         {/* Job board: this is the page, per web3.career's own header row. */}
         <section className="home-section m-reveal" data-reveal data-reveal-delay="1">
           <div className="container">
-            {/* The only visible (non-title-attribute) home for what the "Not on
-                LinkedIn" badge means - a title= tooltip is invisible on touch. */}
-            <p className="small muted">{LINKEDIN_EXCLUSIVITY_TOOLTIP}</p>
             <JobBoard
               emptyMessage="No roles are listed right now. New ones appear here as soon as we index them."
               details={jobDetails}
@@ -149,19 +151,16 @@ export default async function HomePage({
               pager={<CatalogPager path="/" result={listed} />}
               selected={selected}
             />
+            {/* The only visible (non-title-attribute) home for what the "Not on
+                LinkedIn" badge means - a title= tooltip is invisible on touch.
+                It sits under the board rather than over it: it explains a badge
+                in the rows, and above them it was 51px between the search and
+                the first job. */}
+            <p className="small muted">{LINKEDIN_EXCLUSIVITY_TOOLTIP}</p>
           </div>
         </section>
 
-        {/* Tag chips sit under the board, not above it. They are a browse aid,
-            and above the fold they were 118px of chips between the search box
-            and the first job on a phone. */}
         <section className="home-section m-reveal" data-reveal data-reveal-delay="2">
-          <div className="container">
-            <TagChips />
-          </div>
-        </section>
-
-        <section className="home-section m-reveal" data-reveal data-reveal-delay="3">
           <HomeMegaLinks />
         </section>
       </div>

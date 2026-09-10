@@ -19,7 +19,18 @@
 
 .home-hero .container {
   display: grid;
-  gap: 10px;
+  gap: 8px;
+}
+
+/* The chips are a filter row, not a section: they sit tight under the search
+   they belong with, and the compact set plus "Show more" keeps them to one or
+   two lines. Every line here is a job row the reader does not see. */
+.home-hero .tag-chip-board {
+  margin-top: 2px;
+}
+
+.home-hero .chips--catalog {
+  margin-top: 4px;
 }
 
 .home-hero h1 {

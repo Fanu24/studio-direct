@@ -42,6 +42,34 @@ export function catalogMonthLabel(date = new Date()): string {
  * never emits one - so those fall through to the plain remote landing
  * rather than silently guessing an unresolvable URL.
  */
+/**
+ * The remote control is drawn as a switch, so it has to behave like one: show
+ * which way it is set, and turn back off. It used to be a one-way link -
+ * `/remote-jobs` pointed at `/remote-jobs`, with no on state in the markup or
+ * the CSS - so on a remote page it still looked off and clicking it did
+ * nothing. A switch that cannot be switched reads as broken, and it was.
+ *
+ * `active` is whether the page being viewed is already filtered to remote;
+ * `href` is where the switch goes from here, which is the opposite state.
+ */
+export function remoteToggleState(landing?: LandingKind): {
+  href: string;
+  active: boolean;
+} {
+  if (landing?.kind === "remote") {
+    // Off from a bare remote landing is the whole catalogue.
+    return { href: "/jobs", active: true };
+  }
+  if (landing?.kind === "remote-tag") {
+    // Off keeps the tags and drops only the remote part.
+    return {
+      href: landingPath({ kind: "tag", tag: landing.tag, tags: landing.tags }),
+      active: true,
+    };
+  }
+  return { href: remoteFilterHref(landing), active: false };
+}
+
 export function remoteFilterHref(landing?: LandingKind): string {
   if (!landing) return landingPath({ kind: "remote" });
   switch (landing.kind) {
@@ -93,9 +121,11 @@ export function roleFaqItem(
 
 export function BoardSearch({
   remoteHref,
+  remoteActive = false,
   defaultQuery,
 }: {
   remoteHref: string;
+  remoteActive?: boolean;
   defaultQuery?: string;
 }) {
   return (
@@ -113,7 +143,12 @@ export function BoardSearch({
       <button className="visually-hidden" type="submit">
         Search
       </button>
-      <Link className="remote-toggle" href={remoteHref}>
+      <Link
+        aria-pressed={remoteActive}
+        className={`remote-toggle${remoteActive ? " remote-toggle--on" : ""}`}
+        href={remoteHref}
+        role="switch"
+      >
         <span aria-hidden="true" className="remote-toggle__track" />
         Remote
       </Link>

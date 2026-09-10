@@ -21,7 +21,7 @@ import {
   BoardFaq,
   BoardSearch,
   catalogMonthLabel,
-  remoteFilterHref,
+  remoteToggleState,
   roleFaqItem,
   salaryHrefForTag,
 } from "../_components/board-chrome";
@@ -285,7 +285,10 @@ export default async function LandingPage({
           <span className="jobs-num">{result.total.toLocaleString("en-US")}</span>{" "}
           {result.total === 1 ? "job found" : "jobs found"}
         </p>
-        <BoardSearch remoteHref={remoteFilterHref(landing)} />
+        <BoardSearch
+          remoteActive={remoteToggleState(landing).active}
+          remoteHref={remoteToggleState(landing).href}
+        />
         <TagChips active={chipTags} remote={chipRemote} />
       </header>
       <JobBoard
