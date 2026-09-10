@@ -21,6 +21,15 @@ const LONG_TEMPLATES = [
   "company-detail",
 ].map((id) => templates.find((t) => t.id === id));
 
+// Known false positive: on /web3-salaries this reports 4 stuck elements on
+// every run, every engine. `page.click("body")` there lands on the page's
+// search input (not inert body chrome), so the "End" keypress moves the input
+// caret instead of scrolling the page - scrollTop never reaches max, the
+// waitForFunction below times out, the .catch(() => {}) swallows that
+// silently, and the page is judged "stuck" without ever having scrolled.
+// Diagnosed and left unpatched (out of scope for the task that found it) -
+// do not re-diagnose this from the output, and do not treat /web3-salaries's
+// 4-element count as a real regression signal.
 async function scrollToBottomRealistic(page) {
   await page.click("body");
   await page.keyboard.press("End");

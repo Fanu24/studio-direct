@@ -99,6 +99,7 @@ export interface CompanyHub {
   name: string;
   slug: string;
   domain: string | null;
+  description: string | null;
 }
 
 export interface SitemapJob {
@@ -314,19 +315,26 @@ export async function getCompanyBySlug(
 
   const company = await db
     .prepare(
-      `SELECT id, name, name_norm AS nameNorm, domain
+      `SELECT id, name, name_norm AS nameNorm, domain, description
       FROM companies
       WHERE tenant_id = ? AND name_norm = ? AND listed = 1
       LIMIT 1`,
     )
     .bind(tenantId, slug)
-    .first<{ id: string; name: string; nameNorm: string; domain: string | null }>();
+    .first<{
+      id: string;
+      name: string;
+      nameNorm: string;
+      domain: string | null;
+      description: string | null;
+    }>();
   return company
     ? {
         id: company.id,
         name: company.name,
         slug: slugTitle(company.nameNorm),
         domain: company.domain ?? null,
+        description: company.description ?? null,
       }
     : null;
 }

@@ -11,7 +11,6 @@ import "./globals.css";
 import "./styles/motion.css";
 import "./styles/chrome.css";
 import "./styles/footer.css";
-import "./styles/theaters.css";
 import "./styles/home.css";
 import "./styles/jobs.css";
 import "./styles/job-detail.css";

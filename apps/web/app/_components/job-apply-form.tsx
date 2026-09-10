@@ -10,7 +10,7 @@ export function JobApplyForm({ jobId, next, sent, error }: ApplyFormProps) {
     return (
       <p className="apply-form__ok" role="status">
         Application received. We stored it against this listing on Nodework and did not
-        hand your profile to the studio.
+        hand your profile to the company.
       </p>
     );
   }

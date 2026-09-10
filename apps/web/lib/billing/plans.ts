@@ -1,3 +1,4 @@
+import { TENANT_NAME } from "@gaming/shared";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const PLAN_CURRENCY = "eur" as const;
@@ -63,7 +64,7 @@ export function checkoutFormForPlan(
   body.set("line_items[0][quantity]", "1");
   body.set("line_items[0][price_data][currency]", PLAN_CURRENCY);
   body.set("line_items[0][price_data][unit_amount]", String(plan.amountCents));
-  body.set("line_items[0][price_data][product_data][name]", "Studio Direct");
+  body.set("line_items[0][price_data][product_data][name]", TENANT_NAME);
   body.set("line_items[0][price_data][recurring][interval]", plan.interval);
   return body;
 }

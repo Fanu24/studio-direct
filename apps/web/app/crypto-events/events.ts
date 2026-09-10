@@ -75,7 +75,7 @@ export const CRYPTO_EVENTS: CryptoEvent[] = [
     category: "NFT & culture",
     url: "https://www.nft.nyc",
     description:
-      "A conference for NFT collectors, artists and studios, with side events across New York City.",
+      "A conference for NFT collectors, artists and creators, with side events across New York City.",
   },
   {
     name: "Bitcoin Conference",

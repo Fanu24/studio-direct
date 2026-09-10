@@ -1,14 +1,7 @@
 import React, { type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  HOME_FAQ_QUESTIONS,
-  HomeCareerFaq,
-  HomeMegaLinks,
-  HomeReviews,
-  ProfileBanner,
-  homeCareerFaq,
-} from "./home-mega";
+import { HomeMegaLinks } from "./home-mega";
 import { TagChips } from "./tag-chips";
 
 type TestElement = ReactElement<
@@ -54,59 +47,6 @@ describe("home mega chrome", () => {
     expect(hrefs).toContain("/learn-web3/article");
     expect(copy).not.toMatch(/Bondex|wagmi|WxRK/i);
     expect(copy).not.toMatch(/[–—]/);
-  });
-
-  it("renders a Nodework profile banner and an honestly labelled review carousel", () => {
-    const banner = ProfileBanner();
-    const reviews = HomeReviews();
-    const faq = HomeCareerFaq({ jobCount: 12 });
-
-    expect(text(banner)).toContain("Stop applying. Get discovered by hiring teams.");
-    expect(elements(banner).some((el) => el.props.href === "/onboarding")).toBe(true);
-    expect(text(reviews)).toContain("How people use Nodework");
-    expect(text(reviews)).toContain("Illustrative examples written by us");
-    // No invented testimonials: we have collected no customer reviews, so no
-    // card may carry a "Name, Job Title" attribution.
-    expect(text(reviews)).not.toMatch(/[A-Z][a-z]+, (?:Full Stack|Senior|Lead|Head) /);
-    expect(text(faq)).not.toMatch(/Bondex|wagmi|WxRK/i);
-    expect(`${text(banner)}${text(reviews)}${text(faq)}`).not.toMatch(/[–—]/);
-  });
-
-  it("drives the review carousel from radios with per-slide Previous/Next labels", () => {
-    const reviews = HomeReviews();
-    const nodes = elements(reviews);
-    const radios = nodes.filter(
-      (el) => el.type === "input" && el.props.type === "radio",
-    );
-    const labelTargets = nodes
-      .filter((el) => el.type === "label")
-      .map((el) => el.props.htmlFor as string);
-
-    expect(radios).toHaveLength(3);
-    expect(radios.filter((el) => el.props.defaultChecked === true)).toHaveLength(1);
-    expect(radios.every((el) => el.props.name === "home-review")).toBe(true);
-    expect(text(reviews)).toContain("Previous");
-    expect(text(reviews)).toContain("Next");
-    expect(text(reviews)).toContain("1 / 3");
-    // Every Previous/Next label points at a radio that exists, so the pure-CSS
-    // carousel cannot dead-end on a missing id.
-    const ids = new Set(radios.map((el) => el.props.id as string));
-    expect(labelTargets).toHaveLength(6);
-    expect(labelTargets.every((target) => ids.has(target))).toBe(true);
-  });
-
-  it("ends on six FAQ entries, each an h2 inside its own disclosure", () => {
-    const faq = HomeCareerFaq({ jobCount: 12 });
-    const nodes = elements(faq);
-    const details = nodes.filter((el) => el.type === "details");
-    const headings = nodes.filter((el) => el.type === "h2");
-
-    expect(HOME_FAQ_QUESTIONS).toHaveLength(6);
-    expect(homeCareerFaq(12)).toHaveLength(6);
-    expect(details).toHaveLength(6);
-    expect(headings).toHaveLength(6);
-    expect(headings.map((el) => text(el))).toEqual([...HOME_FAQ_QUESTIONS]);
-    expect(text(faq)).toContain("Is a Web3 career legit?");
   });
 
   it("carries the reference link inventory in every browse section", () => {

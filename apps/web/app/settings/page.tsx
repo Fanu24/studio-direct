@@ -1,3 +1,4 @@
+import { TENANT_NAME } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Settings",
   description:
-    "Studio Direct account settings: profile visibility to verified studios, data export, and account deletion.",
+    `${TENANT_NAME} account settings: profile visibility to verified companies, data export, and account deletion.`,
   robots: { index: false, follow: false },
   alternates: { canonical: "/settings" },
 };
@@ -71,7 +72,7 @@ export default async function SettingsPage() {
               type="checkbox"
               value="1"
             />
-            Show my profile to verified studios and recruiters
+            Show my profile to verified companies and recruiters
           </label>
           <div className="acct-actions">
             <button className="button" type="submit">

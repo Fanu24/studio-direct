@@ -3,14 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { JobBoard } from "./_components/job-board";
 import { BoardSearch } from "./_components/board-chrome";
-import {
-  HomeCareerFaq,
-  HomeMegaLinks,
-  ProfileBanner,
-} from "./_components/home-mega";
+import { HomeMegaLinks } from "./_components/home-mega";
 import { TagChips } from "./_components/job-row";
 import { JsonLd } from "./_components/json-ld";
-import { homepageSummary } from "../lib/copy";
+import { LINKEDIN_EXCLUSIVITY_TOOLTIP, homepageSummary } from "../lib/copy";
 import type { JobsDatabase } from "../lib/jobs/queries";
 
 type TestElement = ReactElement<
@@ -156,15 +152,10 @@ describe("HomePage", () => {
     const meta = await generateMetadata();
     const h1 = elements(page).find((element) => element.type === "h1");
     const search = elements(page).find((element) => element.type === BoardSearch);
-    const faq = elements(page).find((element) => element.type === HomeCareerFaq);
     const mega = elements(page).find((element) => element.type === HomeMegaLinks);
-    const banner = elements(page).find((element) => element.type === ProfileBanner);
     const chips = elements(page).find((element) => element.type === TagChips);
     const searchTree = BoardSearch(
       search?.props as React.ComponentProps<typeof BoardSearch>,
-    );
-    const faqTree = HomeCareerFaq(
-      faq?.props as React.ComponentProps<typeof HomeCareerFaq>,
     );
     const megaTree = HomeMegaLinks();
     const chipTree = TagChips(chips?.props as React.ComponentProps<typeof TagChips>);
@@ -185,22 +176,14 @@ describe("HomePage", () => {
     const jobPostings = jsonLdPayloads.filter(
       (payload) => payload["@type"] === "JobPosting",
     );
-    const faqPage = jsonLdPayloads.find((payload) => payload["@type"] === "FAQPage");
 
     expect(text(h1)).toContain("Web3 Jobs");
     expect(text(h1)).not.toBe("WEB3 IS THE FUTURE");
     expect(text(page)).toContain(homepageSummary(1, 3));
-    expect(text(page)).not.toContain("Browse");
     expect(text(page)).not.toContain("blockchain jobs in web3 at");
-    expect(text(faqTree)).toContain("Is a Web3 career legit?");
-    // Six entries, the count the reference board ends on.
-    expect(elements(faqTree).filter((element) => element.type === "details")).toHaveLength(6);
-    expect(elements(faqTree).filter((element) => element.type === "h2")).toHaveLength(6);
     // The extra "Related pages" rail is gone: the reference homepage has no
     // such section, and its links already live in the mega link stack.
     expect(text(page)).not.toContain("Related pages");
-    expect(text(faqTree)).not.toMatch(/[–—]/);
-    expect(banner).toBeDefined();
     expect(mega).toBeDefined();
     expect(form?.props).toMatchObject({ action: "/jobs", method: "get" });
     expect(searchInput?.props.placeholder).toBe("Search");
@@ -211,13 +194,41 @@ describe("HomePage", () => {
     expect(meta.description).toBe(homepageSummary(1, 3));
     expect(jobPostings).toHaveLength(1);
     expect(jobPostings[0]).toMatchObject({ title: "Latest Solidity Role" });
-    expect(faqPage).toBeDefined();
-    expect(faqPage?.mainEntity as unknown[]).toHaveLength(6);
-    expect(
-      (faqPage?.mainEntity as { name: string }[] | undefined)?.some(
-        (item) => item.name === "Is a Web3 career legit?",
-      ),
-    ).toBe(true);
+    // No FAQPage JSON-LD: the FAQ section it described no longer exists on
+    // the page, and structured data has to describe visible content.
+    expect(jsonLdPayloads.some((payload) => payload["@type"] === "FAQPage")).toBe(
+      false,
+    );
+  });
+
+  it("is a jobs page, not a pitch: hero, board and links, nothing between them", async () => {
+    const { default: HomePage } = await import("./page");
+    const tree = await HomePage({ searchParams: Promise.resolve({}) });
+    const rendered = text(tree);
+
+    // The board is the page.
+    expect(rendered).toContain("Web3 Jobs");
+
+    // None of the narrative sections survive. The three FeatureRow wedges
+    // (career pages / browse / search) named their headings via a `title`
+    // prop, which the `text()` helper above cannot see since it only walks
+    // `props.children` - so asserting on those headings would pass whether
+    // or not the sections existed. Assert instead on strings that were real
+    // JSX children in the pre-cut page (git show 552a062:apps/web/app/page.tsx):
+    // the "See the roles..." link text from the deleted wedge, and the two
+    // teaser <a> button labels, all of which text() actually walks into.
+    expect(rendered).not.toMatch(/See the roles we did not find on LinkedIn/);
+    expect(rendered).not.toMatch(/Explore salary bands/);
+    expect(rendered).not.toMatch(/Explore companies/);
+    expect(rendered).not.toMatch(/The studios in the index/);
+    expect(rendered).not.toMatch(/Salary data from real jobs/);
+  });
+
+  it("states what the 'Not on LinkedIn' badge means as visible text, not just a title attribute", async () => {
+    const { default: HomePage } = await import("./page");
+    const page = await HomePage({ searchParams: Promise.resolve({}) });
+
+    expect(text(page)).toContain(LINKEDIN_EXCLUSIVITY_TOOLTIP);
   });
 });
 

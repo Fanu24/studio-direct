@@ -165,7 +165,7 @@ export default async function DashboardPage() {
         </div>
         {recent.length === 0 ? (
           <div className="empty">
-            <p>No unlocks yet. Open a job and unlock the studio&apos;s apply link.</p>
+            <p>No unlocks yet. Open a job and unlock the company&apos;s apply link.</p>
           </div>
         ) : (
           <ol className="acct-rows">

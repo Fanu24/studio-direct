@@ -174,13 +174,22 @@ describe("the migration set, applied in order", () => {
  */
 describe("tag and location lookups do not scan", () => {
   type Planned = { detail: string };
-  type WithAll = DatabaseSyncLike & {
-    prepare(sql: string): { all(...params: unknown[]): unknown[] };
-  };
 
+  /**
+   * DatabaseSyncLike declares only `run` and `get` on a prepared statement,
+   * because nothing else in this file needed rows back. Widening the database
+   * type with an intersection does not work: `prepare` then has two
+   * signatures and the call resolves to the first, which still has no `all`.
+   * Cast the statement instead of the database.
+   */
   function planFor(db: DatabaseSyncLike, sql: string): string {
-    const rows = (db as WithAll).prepare(`EXPLAIN QUERY PLAN ${sql}`).all() as Planned[];
-    return rows.map((row) => row.detail).join(" | ");
+    const statement = db.prepare(`EXPLAIN QUERY PLAN ${sql}`) as unknown as {
+      all(...params: unknown[]): Planned[];
+    };
+    return statement
+      .all()
+      .map((row) => row.detail)
+      .join(" | ");
   }
 
   let db: DatabaseSyncLike;
@@ -220,5 +229,25 @@ describe("tag and location lookups do not scan", () => {
   it("still answers the other direction, which the primary keys already covered", () => {
     const plan = planFor(db, `SELECT tag_slug FROM job_tags WHERE job_id = 'job:1'`);
     expect(plan).not.toMatch(/SCAN /);
+  });
+});
+
+describe("companies carry a description", () => {
+  it("accepts one, and defaults to null", () => {
+    const db = applyMigrations();
+    seedOneJob(db);
+
+    const before = db
+      .prepare(`SELECT description FROM companies WHERE id = 'company:c'`)
+      .get() as { description: string | null };
+    expect(before.description).toBeNull();
+
+    db.prepare(`UPDATE companies SET description = ? WHERE id = 'company:c'`).run(
+      "Acme builds settlement rails.",
+    );
+    const after = db
+      .prepare(`SELECT description FROM companies WHERE id = 'company:c'`)
+      .get() as { description: string | null };
+    expect(after.description).toBe("Acme builds settlement rails.");
   });
 });

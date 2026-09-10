@@ -9,7 +9,7 @@ import { consumeUnlockResponse } from "../../../lib/unlocks/client";
 export const QUOTA_MESSAGE =
   "You've used your 5 free unlocks this week. Come back next Monday (UTC) for more.";
 
-/* Studios do not receive a profile when you apply, so this cannot promise that they will read it. */
+/* Companies do not receive a profile when you apply, so this cannot promise that they will read it. */
 export const COMPLETENESS_NUDGE_MESSAGE =
   "Your profile is under 80% complete. Add experience and skills so it is ready before you apply.";
 

@@ -129,6 +129,7 @@ describe("listJobs", () => {
         name_norm TEXT NOT NULL,
         domain TEXT,
         logo_url TEXT,
+        description TEXT,
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (
@@ -595,6 +596,7 @@ describe("listJobs", () => {
       name: "Beta Forge",
       slug: "betaforge",
       domain: null,
+      description: null,
     });
     await expect(getCompanyBySlug(db, "gaming", "hidden")).resolves.toBeNull();
     await expect(getCompanyBySlug(db, "gaming", "other")).resolves.toBeNull();
@@ -709,6 +711,7 @@ describe("listCompanies", () => {
         name_norm TEXT NOT NULL,
         domain TEXT,
         logo_url TEXT,
+        description TEXT,
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (
@@ -879,6 +882,7 @@ describe("listTopGrowingCompanies", () => {
         name_norm TEXT NOT NULL,
         domain TEXT,
         logo_url TEXT,
+        description TEXT,
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (
@@ -976,6 +980,7 @@ describe("salary filters and stats", () => {
         name_norm TEXT NOT NULL,
         domain TEXT,
         logo_url TEXT,
+        description TEXT,
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (
@@ -1249,6 +1254,7 @@ describe("hire facets, salary breakdown, and getSalaryRollup dimensions", () => 
         name_norm TEXT NOT NULL,
         domain TEXT,
         logo_url TEXT,
+        description TEXT,
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (

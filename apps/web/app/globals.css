@@ -242,14 +242,31 @@ hr {
    3. Typography
    ========================================================================== */
 
+/* A heading belongs to the section it opens, not to the paragraph above it.
+   With no top margin, the space above a heading was whatever the previous
+   element happened to leave behind - 1em after a paragraph, and zero after a
+   chart, a table or a plain div, none of which carry a bottom margin. The
+   salary pages alternate charts and headings, which is why they measured 0px
+   above against 16px below. */
 h1,
 h2,
 h3,
 h4 {
-  margin: 0 0 0.5em;
+  margin: 1.4em 0 0.5em;
   font-weight: 600;
   color: var(--text);
   text-wrap: balance;
+}
+
+/* A heading that opens its container has nothing above to separate itself
+   from, and a top margin there would push every card, panel and table cell
+   out of shape. This reset is what makes the rule above safe to apply at the
+   base element. */
+h1:first-child,
+h2:first-child,
+h3:first-child,
+h4:first-child {
+  margin-top: 0;
 }
 
 h1 {
@@ -261,7 +278,9 @@ h1 {
 h2 {
   font-size: var(--step-3);
   letter-spacing: -0.025em;
-  line-height: 1.05;
+  /* 1.05 is a display measure. These are section headings in prose, and at
+     32px a 1.05 measure sets the descenders against the line below. */
+  line-height: 1.15;
 }
 
 h3 {
@@ -1666,165 +1685,7 @@ select {
 }
 
 /* ==========================================================================
-   8. Stage components carried over: the product video frame and theater base.
-   Keyframes for the theaters live in motion.css; theaters.css owns the scenes.
-   ========================================================================== */
-
-.pv {
-  --pv-aspect: 16 / 10;
-  position: relative;
-  margin: 0;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--accent-line);
-  background: var(--bg-deep);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.06),
-    0 40px 100px -50px rgb(0 0 0 / 0.9);
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.pv--standard,
-.pv--tall {
-  --pv-aspect: 4 / 3;
-}
-
-.pv--wide {
-  --pv-aspect: 21 / 9;
-}
-
-.pv__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--line);
-  background: rgb(12 14 22 / 0.85);
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-}
-
-.pv__caption {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pv__tag {
-  color: var(--accent);
-  white-space: nowrap;
-}
-
-.pv__stage {
-  position: relative;
-  aspect-ratio: var(--pv-aspect);
-  container-type: inline-size;
-  background:
-    radial-gradient(80% 70% at 50% 0%, rgb(255 45 135 / 0.07), transparent 70%),
-    var(--bg-deep);
-}
-
-.pv__control {
-  position: absolute;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 1px solid rgb(255 255 255 / 0.14);
-  background: rgb(12 14 22 / 0.88);
-  color: var(--text);
-  cursor: pointer;
-  box-shadow: 0 20px 50px -20px rgb(0 0 0 / 0.9);
-  transition:
-    transform var(--dur-short) var(--ease-out),
-    opacity var(--dur-short) var(--ease-out),
-    background var(--dur-short) var(--ease-out);
-}
-
-.pv[data-state="playing"] .pv__control {
-  right: 14px;
-  bottom: 14px;
-  width: 40px;
-  height: 40px;
-  opacity: 0.55;
-}
-
-.pv[data-state="playing"] .pv__control:hover,
-.pv[data-state="playing"] .pv__control:focus-visible {
-  opacity: 1;
-}
-
-.pv[data-state="playing"] .pv__control svg {
-  width: 14px;
-  height: 14px;
-}
-
-.pv[data-state="poster"] .pv__control,
-.pv[data-state="paused"] .pv__control {
-  left: 50%;
-  top: 50%;
-  width: 76px;
-  height: 76px;
-  transform: translate(-50%, -50%);
-  background: rgb(255 45 135 / 0.92);
-  color: var(--accent-ink);
-  border-color: transparent;
-}
-
-.pv[data-state="poster"] .pv__control:hover,
-.pv[data-state="paused"] .pv__control:hover {
-  transform: translate(-50%, -50%) scale(1.06);
-  background: var(--accent-strong);
-}
-
-.pv[data-state="poster"] .pv__control svg,
-.pv[data-state="paused"] .pv__control svg {
-  width: 26px;
-  height: 26px;
-  margin-left: 3px;
-}
-
-.pv[data-state="paused"] .pv__control svg {
-  margin-left: 2px;
-}
-
-.pv[data-state="paused"] .pv__stage::after,
-.pv[data-state="poster"] .pv__stage::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgb(6 7 12 / 0.28);
-  pointer-events: none;
-}
-
-.theater {
-  position: absolute;
-  inset: 0;
-  font-size: clamp(7px, 2.35cqw, 13px);
-  line-height: 1.35;
-  color: var(--text);
-  overflow: hidden;
-  padding: 2.4em 2.4em 3.6em;
-}
-
-.pv[data-state="poster"] .theater,
-.pv[data-state="poster"] .theater * {
-  animation: none !important;
-}
-
-.pv[data-state="paused"] .theater,
-.pv[data-state="paused"] .theater *,
-.pv[data-offscreen="true"] .theater,
-.pv[data-offscreen="true"] .theater * {
-  animation-play-state: paused !important;
-}
-
-/* ==========================================================================
-   9. Responsive
+   8. Responsive
    ========================================================================== */
 
 @media (min-width: 960px) {
@@ -1862,10 +1723,6 @@ select {
 
   main {
     padding: 28px var(--gutter) 72px;
-  }
-
-  .pv--wide {
-    --pv-aspect: 4 / 5;
   }
 
   .job-grid,

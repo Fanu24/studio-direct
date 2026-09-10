@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildDigestEmail, filterDigestRecipients } from "./digest.ts";
+import { TENANT_NAME } from "./tenant.ts";
 
 const now = new Date("2026-09-02T12:00:00.000Z");
 
@@ -94,6 +95,13 @@ describe("buildDigestEmail", () => {
     );
     expect(email.text).toContain("last successful index");
     expect(email.html).toContain("last successful index");
+  });
+
+  it("names the product Nodework, never the old Studio Direct name", () => {
+    const email = buildDigestEmail({ jobs: [] });
+
+    expect(email.subject).toContain(TENANT_NAME);
+    expect(email.subject).not.toMatch(/Studio Direct/i);
   });
 
   it("lists confirmed hidden jobs without claiming 100% or real-time LinkedIn", () => {

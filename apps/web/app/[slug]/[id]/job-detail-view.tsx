@@ -151,7 +151,7 @@ export function JobDetailBody({
   const posted = formatPostedLong(job.postedAt);
   const age = postedAge(job.postedAt);
   // Exclusive listings (not sighted on LinkedIn) route through the unlock quota instead of
-  // the plain on-site form: the studio's own apply link is only ever revealed by /api/unlock,
+  // the plain on-site form: the company's own apply link is only ever revealed by /api/unlock,
   // server-side, after login + onboarding + the weekly quota check - it never reaches this
   // markup. Every other listing keeps the always-available on-site apply form unchanged.
   const gated = showBadge(job.exclusivity);
@@ -269,8 +269,8 @@ export function JobDetailBody({
             {gated ? (
               <div className="jd-unlock-gate">
                 <p className="jd-unlock-gate__lead">
-                  This studio does not post to LinkedIn - the apply link only exists here.
-                  Unlocking reveals it and sends you straight to the studio&apos;s own page.
+                  This company does not post to LinkedIn - unlocking reveals the apply
+                  link and sends you straight to the company&apos;s own page.
                 </p>
                 <ul className="jd-unlock-gate__list">
                   <li>The real apply link, not a redirect through a public board</li>
@@ -285,7 +285,7 @@ export function JobDetailBody({
                   Apply now
                 </Link>
                 <p className="small muted">
-                  Your application stays on Nodework. We never hand a profile to a studio, and
+                  Your application stays on Nodework. We never hand a profile to a company, and
                   the recruiter talent pool is a separate opt-in that is off by default.
                 </p>
               </>
@@ -415,7 +415,7 @@ export function JobDetailBody({
             Hiring {label}?
           </h2>
           <p className="jd-panel__lead">
-            We do not run a candidate database. See which studios are already advertising
+            We do not run a candidate database. See which companies are already advertising
             {" "}
             {label} work, then list your own role next to theirs.
           </p>

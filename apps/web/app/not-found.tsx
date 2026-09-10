@@ -15,7 +15,7 @@ export default function NotFound() {
           <span className="kicker">404</span>
           <h1>This page does not exist.</h1>
           <p className="lead">
-            The link may be out of date, or the studio may have taken the listing down.
+            The link may be out of date, or the company may have taken the listing down.
           </p>
           <div className="cluster">
             <Link className="button" href="/jobs">

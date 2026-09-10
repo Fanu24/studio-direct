@@ -1,3 +1,5 @@
+import { TENANT_NAME } from "@gaming/shared";
+
 export async function sendMagicLinkEmail({
   email,
   to,
@@ -21,9 +23,9 @@ export async function sendMagicLinkEmail({
     await email.send({
       to,
       from,
-      subject: "Your Studio Direct sign-in link",
-      text: `Sign in to Studio Direct: ${url}`,
-      html: `<p><a href="${url}">Sign in to Studio Direct</a></p>`,
+      subject: `Your ${TENANT_NAME} sign-in link`,
+      text: `Sign in to ${TENANT_NAME}: ${url}`,
+      html: `<p><a href="${url}">Sign in to ${TENANT_NAME}</a></p>`,
     });
   } catch (error) {
     log.error("Magic link email send failed", { email: to, error });

@@ -106,7 +106,7 @@ describe("SettingsPage", () => {
     );
 
     expect(copy).toMatch(/settings/i);
-    expect(copy).toContain("Show my profile to verified studios and recruiters");
+    expect(copy).toContain("Show my profile to verified companies and recruiters");
     expect(copy).toMatch(/does not require/i);
     expect(copy).not.toContain("Clerk");
     expect(copy).not.toContain("Resend");

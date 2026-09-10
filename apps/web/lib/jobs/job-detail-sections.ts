@@ -8,7 +8,7 @@ import {
 } from "./queries";
 
 /**
- * Tail sections of a job detail page: the "more {role} jobs" table, the studio's other
+ * Tail sections of a job detail page: the "more {role} jobs" table, the company's other
  * roles, and the salary line for the role. Lives outside queries.ts (shared, owned by
  * nobody) so the job page can grow its own reads without touching the shared module.
  */

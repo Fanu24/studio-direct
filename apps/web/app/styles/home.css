@@ -48,8 +48,10 @@
    all three engines - the only page-level overflow anywhere in the app across
    21 templates, 6 viewports and 3 engines.
    Two earlier attempts fixed the symptom on individual children, .home-stats
-   and then .home-reviews__carousel, and the overflow survived both because the
-   track itself was never constrained. It belongs here, once. */
+   and then the reviews carousel's own selector (that section, and its
+   selector, are gone now - cut along with the rest of the homepage wedge
+   sections), and the overflow survived both because the track itself was
+   never constrained. It belongs here, once. */
 .home-section {
   padding: var(--section) 0;
   min-width: 0;
@@ -60,18 +62,8 @@
   gap: var(--flow);
 }
 
-/* Stats band */
-
-.home-stats {
-  padding: var(--section) 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  /* A grid item's default min-width is auto, so a 200px column minimum below
-     propagates up and pushes this band wider than its track instead of
-     wrapping. That produced 25px of real horizontal page scroll on the
-     homepage at 360px, identically on all three engines. */
-  min-width: 0;
-}
+/* Stats band. Folded into the hero (no .home-stats wrapper section any more);
+   .stats-grid and .stat* below are still live there. */
 
 .stats-grid {
   display: grid;
@@ -98,34 +90,5 @@
 .stat__label {
   font-size: var(--step--1);
   color: var(--dim);
-}
-
-/* Teasers */
-
-.teaser {
-  display: grid;
-  gap: var(--flow);
-  max-width: 62ch;
-}
-
-.teaser h2 {
-  font-size: var(--step-3);
-  margin: 0;
-}
-
-.teaser p {
-  color: var(--dim);
-  margin: 0;
-}
-
-.teaser--notice {
-  padding: var(--gutter);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--bg-elev);
-}
-
-.teaser--notice h2 {
-  margin-bottom: 8px;
 }
 

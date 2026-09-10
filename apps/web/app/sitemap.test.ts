@@ -236,6 +236,7 @@ describe("sitemap", () => {
     ]);
     expect(entries.every(({ url }) => url.startsWith("https://jobs.example.com"))).toBe(true);
     expect(entries.some(({ url }) => url.includes("studio-direct.example"))).toBe(false);
+    expect(entries.some(({ url }) => url.includes("placeholder.example"))).toBe(false);
   });
 
   it("degrades to relative child sitemap paths, without throwing, when SITE_URL is missing", async () => {
@@ -256,13 +257,25 @@ describe("sitemap", () => {
     expect(entries.every(({ url }) => url.startsWith("/sitemaps/"))).toBe(true);
   });
 
-  it("degrades to relative child sitemap paths, without throwing, for the reserved example origin", async () => {
-    vi.stubEnv("SITE_URL", "https://studio-direct.example");
+  it("degrades to relative child sitemap paths, without throwing, for the reserved example origins", async () => {
+    // studio-direct.example is the real scaffolding placeholder (crawler UA, digest.ts,
+    // wrangler.jsonc, seed data); placeholder.example is the generic one. Both must be
+    // refused so a live sitemap never advertises either.
     const { default: sitemap } = await import("./sitemap");
 
-    const entries = await sitemap();
-    expect(entries.every(({ url }) => !url.includes("studio-direct.example"))).toBe(true);
-    expect(entries.every(({ url }) => url.startsWith("/sitemaps/"))).toBe(true);
+    vi.stubEnv("SITE_URL", "https://studio-direct.example");
+    const studioDirectEntries = await sitemap();
+    expect(studioDirectEntries.every(({ url }) => !url.includes("studio-direct.example"))).toBe(
+      true,
+    );
+    expect(studioDirectEntries.every(({ url }) => url.startsWith("/sitemaps/"))).toBe(true);
+
+    vi.stubEnv("SITE_URL", "https://placeholder.example");
+    const placeholderEntries = await sitemap();
+    expect(placeholderEntries.every(({ url }) => !url.includes("placeholder.example"))).toBe(
+      true,
+    );
+    expect(placeholderEntries.every(({ url }) => url.startsWith("/sitemaps/"))).toBe(true);
   });
 
   it("splits a child sitemap into multiple files once it exceeds the 50,000 URL limit", async () => {

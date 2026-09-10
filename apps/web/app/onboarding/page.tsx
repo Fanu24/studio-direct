@@ -1,3 +1,4 @@
+import { TENANT_NAME } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Finish your profile",
   description:
-    "Add a display name, target role and remote preference to your Studio Direct account before you unlock an application link.",
+    `Add a display name, target role and remote preference to your ${TENANT_NAME} account before you unlock an application link.`,
   robots: { index: false, follow: false },
   alternates: { canonical: "/onboarding" },
 };
