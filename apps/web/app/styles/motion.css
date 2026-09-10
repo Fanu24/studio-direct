@@ -437,9 +437,9 @@
 }
 
 /* ==========================================================================
-   Relocated keyframes. These were declared in home.css, job-detail.css and
-   theaters.css; the scenes that use them stay in those files. Lanes 1 and 2
-   may retire hero-in / jd-in in favour of .m-reveal.
+   Relocated keyframes. These were declared in home.css and job-detail.css;
+   the scenes that use them stay in those files. Lanes 1 and 2 may retire
+   hero-in / jd-in in favour of .m-reveal.
    ========================================================================== */
 
 @keyframes hero-in {

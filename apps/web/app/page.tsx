@@ -160,7 +160,6 @@ export default async function HomePage({
           </div>
         </section>
 
-        {/* Mega links: the SEO links block. */}
         <section className="home-section m-reveal" data-reveal data-reveal-delay="2">
           <HomeMegaLinks />
         </section>
