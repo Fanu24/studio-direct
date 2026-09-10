@@ -57,10 +57,6 @@ vi.mock("./nav-account", () => ({
   NavAccount: () => null,
 }));
 
-vi.mock("./reveal-observer", () => ({
-  RevealObserver: () => null,
-}));
-
 vi.stubGlobal("React", React);
 
 /**

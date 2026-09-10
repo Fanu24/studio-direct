@@ -6,7 +6,6 @@ import { MobileMenu } from "./mobile-menu";
 import { NavAccount } from "./nav-account";
 import { NAV_MENUS } from "./nav-data";
 import { NavMega } from "./nav-mega";
-import { RevealObserver } from "./reveal-observer";
 
 const LAUNCH_YEAR = 2026;
 
@@ -76,7 +75,6 @@ export function SiteChrome({ children }: { children: ReactNode }) {
       <div id="content" tabIndex={-1}>
         {children}
       </div>
-      <RevealObserver />
       <footer className="site-footer">
         <div className="container site-footer__inner">
           <div className="site-footer__brand">

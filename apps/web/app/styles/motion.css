@@ -5,21 +5,17 @@
    declared in globals.css, the single token block; this file consumes them.
 
    Primitives (each a class, usable in either register):
-     .m-reveal    opacity + translateY on scroll entry
      .m-parallax  slow drift on scroll
      .m-marquee   continuous horizontal loop, pauses on hover / focus-within
-     .m-count     number roll-up on entry (real text, masked rise; never counter())
+     .m-count     tabular figures (the roll-up on entry was removed)
      .m-lift      hover elevation on cards
      .m-sheen     one accent sweep across a surface on mount, stage only
 
-   Scroll-driven primitives use `animation-timeline: view()` where supported
-   (Chromium). Elsewhere, RevealObserver adds `.is-in` and a transition runs.
-   The default state is ALWAYS the finished, visible page: the start state is
-   reachable only when the scroll timeline is absent AND scripting is enabled
-   AND the element opted in with `data-reveal`.
+   Scroll-driven primitives use `animation-timeline: view()` where supported.
+   The default state is ALWAYS the finished, visible page.
 
-   Contract for a revealed element:  class="m-reveal" data-reveal
-   Optional stagger:                 data-reveal-delay="1" | "2" | "3"
+   `.m-reveal` used to be here and is now inert - see its section below. Its
+   markup survives; nothing acts on it.
    ========================================================================== */
 
 /* --- Page transitions. Cross-document only; browsers without it navigate. --- */
@@ -39,17 +35,6 @@
 /* ==========================================================================
    Keyframes: system
    ========================================================================== */
-
-@keyframes reveal {
-  from {
-    opacity: 0;
-    transform: translateY(var(--reveal-d));
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
 
 @keyframes rise {
   from {
@@ -82,17 +67,6 @@
   }
 }
 
-@keyframes count-up {
-  from {
-    transform: translateY(110%);
-    opacity: 0;
-  }
-  to {
-    transform: none;
-    opacity: 1;
-  }
-}
-
 @keyframes sheen {
   from {
     transform: translateX(-130%) skewX(-12deg);
@@ -112,106 +86,31 @@
 }
 
 /* ==========================================================================
-   .m-reveal
+   .m-reveal - removed, deliberately inert.
+
+   This used to fade and lift each section as it entered the viewport, over a
+   `view()` timeline with an IntersectionObserver fallback for Firefox. It was
+   removed at the user's request: the effect read as buggy in normal use, and
+   the record backs that up - the fallback path is where sections were found
+   stranded at opacity 0 permanently (a fast scroll could carry a section past
+   the observed band between callbacks), and above-the-fold elements parked at
+   partial opacity because an element already in the first viewport has no
+   scroll distance to animate over.
+
+   The class and its `data-reveal` attributes are left in the markup on
+   purpose: 44 call sites, and neutralising the rule is a smaller, safer and
+   more reversible change than editing every one of them. Nothing reads them
+   now - the observer component is deleted.
    ========================================================================== */
 
-@supports (animation-timeline: view()) {
-  .m-reveal {
-    animation: reveal linear both;
-    animation-timeline: view();
-    animation-range: entry 0% cover 32%;
-  }
-
-  .m-reveal[data-reveal-delay="1"] {
-    animation-range: entry 6% cover 38%;
-  }
-
-  .m-reveal[data-reveal-delay="2"] {
-    animation-range: entry 12% cover 44%;
-  }
-
-  .m-reveal[data-reveal-delay="3"] {
-    animation-range: entry 18% cover 50%;
-  }
-
-  /* Levels beyond 6 all resolve here: a stagger deep enough to notice is a
-     stagger long enough to annoy, and pages were using up to 12. */
-  .m-reveal[data-reveal-delay="4"] {
-    animation-range: entry 24% cover 56%;
-  }
-
-  .m-reveal[data-reveal-delay="5"] {
-    animation-range: entry 30% cover 62%;
-  }
-
-  .m-reveal[data-reveal-delay="6"],
-  .m-reveal[data-reveal-delay="7"],
-  .m-reveal[data-reveal-delay="8"],
-  .m-reveal[data-reveal-delay="9"],
-  .m-reveal[data-reveal-delay="10"],
-  .m-reveal[data-reveal-delay="11"],
-  .m-reveal[data-reveal-delay="12"] {
-    animation-range: entry 36% cover 68%;
-  }
-}
-
-/* --- .m-reveal--now: reveal on load, never on scroll. ---------------------
-   An element sitting in the first viewport has no scroll distance to be
-   revealed over, and a view() timeline leaves it parked at whatever partial
-   progress its range resolves to - measured at opacity 0.91 and 0.55 on two
-   home hero elements, on every load, on Chromium and WebKit, never updating.
-   Above-the-fold content uses this instead. */
+.m-reveal,
 .m-reveal--now,
-.m-reveal--now[data-reveal]:not(.is-in) {
-  animation: reveal var(--dur-long) var(--ease-out) both !important;
-  animation-timeline: auto !important;
+.m-reveal[data-reveal],
+.m-reveal[data-reveal]:not(.is-in) {
   opacity: 1;
   transform: none;
-}
-
-.m-reveal--now[data-reveal-delay="1"] { animation-delay: 80ms !important; }
-.m-reveal--now[data-reveal-delay="2"] { animation-delay: 160ms !important; }
-.m-reveal--now[data-reveal-delay="3"] { animation-delay: 240ms !important; }
-
-@supports not (animation-timeline: view()) {
-  /* Default is the finished state: no JS, no support, still readable. */
-  .m-reveal {
-    opacity: 1;
-    transform: none;
-    transition:
-      opacity var(--dur-reveal, var(--dur-long)) var(--ease-out),
-      transform var(--dur-reveal, var(--dur-long)) var(--ease-out);
-  }
-
-  .m-reveal[data-reveal-delay="1"] {
-    transition-delay: 90ms;
-  }
-
-  .m-reveal[data-reveal-delay="2"] {
-    transition-delay: 180ms;
-  }
-
-  .m-reveal[data-reveal-delay="3"] {
-    transition-delay: 270ms;
-  }
-
-  .m-reveal[data-reveal-delay="4"] { transition-delay: 360ms; }
-  .m-reveal[data-reveal-delay="5"] { transition-delay: 450ms; }
-  .m-reveal[data-reveal-delay="6"],
-  .m-reveal[data-reveal-delay="7"],
-  .m-reveal[data-reveal-delay="8"],
-  .m-reveal[data-reveal-delay="9"],
-  .m-reveal[data-reveal-delay="10"],
-  .m-reveal[data-reveal-delay="11"],
-  .m-reveal[data-reveal-delay="12"] { transition-delay: 540ms; }
-
-  /* Only a browser that will actually run the observer gets the start state. */
-  @media (scripting: enabled) {
-    .m-reveal[data-reveal]:not(.is-in) {
-      opacity: 0;
-      transform: translateY(var(--reveal-d));
-    }
-  }
+  animation: none;
+  transition: none;
 }
 
 /* ==========================================================================
@@ -286,29 +185,17 @@
   display: inline-block;
 }
 
-@supports (animation-timeline: view()) {
-  .m-count > * {
-    animation: count-up var(--ease-spring) both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 80%;
-  }
-}
+/* The roll-up went with .m-reveal: same effect, opacity driven by scroll
+   position, and the same failure. Its no-support branch started the figure at
+   opacity 0 and waited for `.is-in` from the observer - so once the observer
+   was deleted, every counted number on Firefox stayed invisible for good.
+   Measured before this rule was removed: 14 figures at opacity 0 across the
+   home, company and salary templates.
 
-@supports not (animation-timeline: view()) {
-  .m-count > * {
-    opacity: 1;
-    transform: none;
-    transition:
-      opacity var(--dur-long) var(--ease-out),
-      transform var(--dur-long) var(--ease-spring);
-  }
-
-  @media (scripting: enabled) {
-    .m-count[data-reveal]:not(.is-in) > * {
-      opacity: 0;
-      transform: translateY(110%);
-    }
-  }
+   What remains below is layout, not motion. */
+.m-count > * {
+  opacity: 1;
+  transform: none;
 }
 
 /* ==========================================================================
@@ -411,11 +298,9 @@
     animation: none;
   }
 
-  /* !important is required, not decorative. The no-support branch starts
-     hidden elements with `.m-reveal[data-reveal]:not(.is-in)`, specificity
-     (0,3,0); a bare `.m-reveal` here is (0,1,0) and loses. Without this a
-     reduced-motion reader on Firefox gets a page whose below-the-fold
-     sections never become visible. */
+  /* `.m-reveal` is inert now, so this no longer has a hidden start state to
+     beat - but it stays for .m-count, and because the cost of keeping a
+     visible-state guarantee is one selector. */
   .m-reveal,
   .m-count > * {
     animation: none !important;
@@ -438,8 +323,8 @@
 
 /* ==========================================================================
    Relocated keyframes. These were declared in home.css and job-detail.css;
-   the scenes that use them stay in those files. Lanes 1 and 2 may retire
-   hero-in / jd-in in favour of .m-reveal.
+   the scenes that use them stay in those files. These run on mount, not on
+   scroll, which is why they survived .m-reveal's removal.
    ========================================================================== */
 
 @keyframes hero-in {
