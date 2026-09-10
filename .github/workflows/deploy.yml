@@ -88,15 +88,44 @@ jobs:
           base="https://gaming-web.xavier-ff2.workers.dev"
           sleep 10
           failed=0
-          # /web3-companies is the directory, which does not select the `description`
-          # column - it would still return 200 even if migration 0009 were missing
-          # remotely. /web3-companies/riot is a detail page, which does select it, so
-          # this is the only path here that would have caught that migration gap.
-          for path in / /jobs /web3-companies /web3-companies/riot; do
+          for path in / /jobs /web3-companies; do
             code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$base$path" || echo 000)
             echo "$path -> $code"
             if [ "$code" != "200" ]; then failed=1; fi
           done
+
+          # A company detail page is the only route that reads the new column, and it is
+          # the one CI used to miss: the directory above it does not select description,
+          # so a missing migration shows up here and nowhere else. The slug is taken from
+          # the live directory rather than hardcoded - a delisted company must not be able
+          # to fail a deploy. Matching on href="..." (not a bare path regex) matters: the
+          # directory's HTML also contains /web3-companies/<hash>.js chunk references that
+          # a bare [a-z0-9-]+ path match picks up as a false "slug" and 404s on - this bit
+          # a first draft of this check. /tag and /top-growing are real routes under this
+          # prefix, not companies, so they're excluded too.
+          # `|| true` on the substitution matters under `set -e` + `pipefail`: when the
+          # directory has no company links, the first grep finds nothing and exits 1,
+          # and pipefail propagates that as the pipeline's status even though head/sed
+          # (last in the pipe) exit 0 - without `|| true` that would kill the script
+          # right here with a bare non-zero exit, before the empty-slug check below
+          # ever runs, i.e. exactly the silent-pass-turned-opaque-failure this is
+          # guarding against. `|| true` lets an empty result reach the check with our
+          # own error message instead.
+          slug=$(curl -s --max-time 60 "$base/web3-companies" \
+            | grep -oE 'href="/web3-companies/[a-z0-9-]+"' \
+            | grep -v '/web3-companies/tag"' \
+            | grep -v '/web3-companies/top-growing"' \
+            | head -1 \
+            | sed -E 's/href="(.*)"/\1/') || true
+          if [ -z "$slug" ]; then
+            echo "::error::No company slug found on $base/web3-companies - the directory rendered no companies (or its markup changed under this check)."
+            failed=1
+          else
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$base$slug" || echo 000)
+            echo "$slug -> $code"
+            if [ "$code" != "200" ]; then failed=1; fi
+          fi
+
           if [ "$failed" -ne 0 ]; then
             echo "::error::The worker deployed but is not serving 200. Roll back with: wrangler rollback"
             exit 1
