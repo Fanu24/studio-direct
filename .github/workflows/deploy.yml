@@ -49,15 +49,27 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Create the schema the prerender reads
+        working-directory: apps/web
+        run: pnpm exec wrangler d1 migrations apply gaming-jobs --local
+        # `.wrangler/` is gitignored, so the local D1 the prerender is handed here
+        # is not an empty database - it is no database at all, with no tables in
+        # it. Every prerendered page that reads the catalog dies on
+        # "D1_ERROR: no such table: tenants", and Next exits the build on the
+        # first one (`/hire`). Applying the migrations gives those pages a real,
+        # empty schema; 0004 also seeds the nodework tenant row, without which
+        # `requireTenantId` throws instead.
+
       - name: Build the Cloudflare worker
         working-directory: apps/web
         run: pnpm cf:build
-        # Note on prerendering: `.wrangler/` is gitignored, so the local D1 that
-        # OpenNext hands to the 122 prerendered pages is EMPTY here. Those pages are
-        # therefore built without data. They carry `revalidate = 300`, so each one
-        # refills from the real D1 on first request and then revalidates on its own.
-        # If empty-on-first-hit ever becomes unacceptable, the fix is to give the
-        # build remote bindings, not to commit database state.
+        # Note on prerendering: the 122 prerendered pages are therefore built
+        # against a migrated but empty database, and each renders the honest
+        # empty state it was designed and tested for. They carry
+        # `revalidate = 300`, so each one refills from the real D1 on first
+        # request and then revalidates on its own. If empty-on-first-hit ever
+        # becomes unacceptable, the fix is to give the build remote bindings,
+        # not to commit database state.
 
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
