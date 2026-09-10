@@ -105,8 +105,16 @@ Homepage reduced to four blocks:
 4. A compact links/SEO block
 
 Removed: the three animated theaters, `comparison.tsx`, the reviews carousel,
-and the narrative career FAQ. Header and footer trimmed to what serves finding
-a job.
+and the narrative career FAQ.
+
+**Header and footer are left alone**, which corrects this spec's first draft.
+"Trim them to what serves finding a job" was an assumption, and checking it
+against the reference showed the opposite. The nav carries five mega-menus -
+Jobs, Salaries, Internships, Learn Web3, TOP Web3 Jobs - which is web3.career's
+own nav, built during the parity work. The footer is 13 columns and 52 links,
+which is the same wall of SEO links web3.career runs. Trimming either would
+move *away* from the reference the user asked for. The divergence was the
+homepage body alone.
 
 This also removes most of the gaming language on its own - 20 of the 77
 occurrences are inside the theaters and 12 in `comparison.tsx`. The rest, in job
