@@ -496,3 +496,303 @@ isolated-fixture constraint-validation test (client).
   `app/api/account/delete/route.ts`, not a live request. The code order
   (auth check → confirmation check → delete) is unambiguous, but this is
   source review, not a live HTTP proof, for the 400 case specifically.
+
+---
+
+# Round 2 — Verification of three fixes claimed against the above
+
+Date: 2026-09-10, same day, same server (`next start -p 3100`, clean build
+made after the three fixes below, clean process — never rebuilt, never
+restarted, no git commands run, no application source edited during this
+pass). Working directory: `apps/web`.
+
+**Instrument re-proven before use:** `node qa/self-test.mjs` — all 9 checks
+passed on chromium, firefox, and webkit, same as Round 1.
+
+**A note on process robustness, reported for transparency:** the first
+attempt at the full 21-template × 6-viewport × 3-engine overflow/tap-target
+sweep (`qa/verify-matrix-sweep.mjs`, run as one Node process covering all
+three engines in sequence) crashed mid-run — a Firefox renderer crash
+(`RenderCompositorSWGL failed mapping default framebuffer`) took the whole
+process down with an uncaught exception inside `runMatrix`, and because that
+script only writes/prints results after the entire matrix finishes, **zero
+rows were produced or read from that run.** Per instruction, that run is not
+cited as evidence anywhere below. It was replaced with
+`qa/verify-overflow-sweep-round2.mjs`, a narrower script that runs one engine
+per process and logs each row as it completes (so a crash in one engine
+cannot erase another's results, and a partial run is still legible). All
+three per-engine runs completed cleanly this time (126/126 rows each,
+chromium/firefox/webkit) and that is what item 1's sweep evidence below is
+built on. New scripts added this round (none edit application source):
+`qa/verify-round2-bisect.mjs` … `qa/verify-round2-bisect6.mjs` (six bisection
+steps), `qa/verify-round2-confirm-fix.mjs`, `qa/verify-overflow-sweep-round2.mjs`,
+`qa/verify-salary-tap-targets-round2.mjs`, `qa/verify-salary-tap-targets-detail.mjs`,
+`qa/verify-intern-full-trace.mjs`, `qa/verify-intern-crossengine.mjs`,
+`qa/verify-mobile-menu-trap-round2.mjs`.
+
+## Round 2 summary
+
+| # | Claimed fix | Verdict | Engines / viewports |
+|---|---|---|---|
+| 1 | `.home-reviews__carousel` gets `min-width:0`/`max-width:100%` in `board.css`, closing the 25px homepage overflow at 360×740 | **FAILED** | chromium, firefox, webkit; 360×740 direct + full 21×6×3 sweep |
+| 2 | `.salary-chart__label a` gets `display:inline-block`/`min-height:24px`/padding in `salary.css`, closing sub-24px targets on `/web3-salaries` | **PARTIAL** | 3 engines × 6 viewports × 3 pages |
+| 3 | `mobile-menu.tsx` takes over every Tab explicitly (stops-array + wraparound) instead of relying on native WebKit Tab order | **HELD** | 3 engines, 390×844, 35× Tab, 35× Shift+Tab, Escape, keyboard activation |
+
+---
+
+## Round 2, item 1: Homepage overflow at 360×740 — **FAILED**
+
+**Claim:** `.home-reviews__carousel` (`app/styles/board.css`) now carries
+`min-width: 0; max-width: 100%;`, closing the 25px overflow that Round 1
+found on this exact element.
+
+**What I measured:** `qa/verify-home-overflow.mjs` — home, 360×740 and
+390×844, all 3 engines:
+
+| Engine | 360×740 | 390×844 |
+|---|---|---|
+| chromium | **25px** | 0px |
+| firefox | **25px** | 0px |
+| webkit | **25px** | 0px |
+
+**The fix is present in source** (`app/styles/board.css`, confirmed by
+reading the file: `.home-reviews__carousel { position: relative; overflow:
+hidden; min-width: 0; max-width: 100%; margin-top: 16px; }`) but **the
+overflow it was meant to close is completely unchanged from Round 1: still
+exactly 25px, on all three engines.**
+
+**Root cause, traced by bisection** (`qa/verify-round2-bisect.mjs` through
+`-bisect6.mjs`): the fix targets the wrong node in the ancestor chain. The
+actual DOM nesting is `.home-sections` (grid, one implicit column) →
+`.home-section` (generic class, every section, no `min-width` set) →
+`.container` (itself `display: grid`) → `.home-reviews` (also no
+`min-width` set) → `.home-reviews__carousel` (has the new fix). A grid
+item's automatic minimum size is only overridden by an explicit
+`min-width: 0` on **that specific grid item** — it does not bubble down
+through descendants that are three DOM levels further in. Direct
+measurement confirmed the propagation:
+
+- `.home-sections`' own box: exactly 328px (correctly constrained by its
+  container) — but every `.home-section` child inside it still renders at
+  **369px**, because the grid track itself was sized to 369px by one
+  child's automatic minimum, and children stretch to fill an oversized
+  track regardless of their own needs. `document.scrollWidth` = 385 (=
+  360 clientWidth + 25 overflow), matching this 369px track (16px padding
+  each side).
+- Hiding each of the 12 `.home-section` children one at a time and
+  re-measuring `document.scrollWidth`: only hiding the "How people use
+  Nodework" reviews section drops it from 385 to 362.
+- The min-content contribution comes from `.home-reviews__track`
+  (`display: flex`, 3 `.home-reviews__slide` children, each
+  `flex: 0 0 100%` with `flex-shrink: 0`). Because the flex-basis is a
+  percentage and the container is being measured under a min-content
+  constraint, each slide's contribution resolves to its own content-based
+  size instead of shrinking, and — since `flex-shrink: 0` forbids
+  shrinking below that — the flex row's own min-content width is the
+  **sum of all 3 slides**, not the width of one. That sums to ~369px, and
+  neither `overflow: hidden` nor `min-width: 0` on `.home-reviews__carousel`
+  (a plain block box, not itself a grid/flex item) stops that number from
+  being read by the grid track sizing algorithm two levels up, because the
+  override only works on the item actually touching the grid.
+- **Confirmed by direct intervention, not just theory**
+  (`qa/verify-round2-confirm-fix.mjs`, chromium, 360×740): injecting
+  `.home-section { min-width: 0; }` via a live `<style>` tag drops the
+  measured overflow from 25px to **0px**. Injecting `.home-reviews {
+  min-width: 0; }` alone (the next level down) leaves it at **25px,
+  unchanged** — proving the fix has to land on the grid item itself
+  (`.home-section`), not on any of its descendants, including the one the
+  landed fix targeted.
+
+**Blast radius / is this a wider class of defect:** re-ran the full sweep
+robustly after the combined-process version crashed (see process note
+above) as three independent single-engine passes, one per engine, 126 rows
+each (21 templates × 6 viewports), all completing cleanly:
+
+| Engine | Rows completed | Rows overflowing |
+|---|---|---|
+| chromium | 126/126 | 1 (`home`, 360×740, 25px) |
+| firefox | 126/126 | 1 (`home`, 360×740, 25px) |
+| webkit | 126/126 | 1 (`home`, 360×740, 25px) |
+
+So this is **not** a third widespread instance sprayed across the app —
+it is exactly the one instance Round 1 already found, still open, because
+the landed fix touched a descendant of the actual grid item rather than the
+grid item itself. No other template/viewport/engine combination overflows
+anywhere in the app (378 rows total across the three runs).
+
+**Single point of intervention:** `apps/web/app/styles/home.css`, the
+generic `.home-section` rule — add `min-width: 0`, the same pattern
+`.home-stats` already carries (which works today only because `.home-stats`
+*is* the outer grid item for that section, unlike `home-reviews`, whose
+outer grid item is the unstyled generic `.home-section`). This is the
+general, "one rule for every section" fix; patching `.home-reviews` alone
+would not be enough either (confirmed above), because `.home-reviews` is
+not the node the grid track sizing algorithm is reading.
+
+**Verdict: FAILED.** Unchanged severity from Round 1: **Critical** — the
+homepage still scrolls sideways at a common phone width (360px) on all
+three engines, in a clean post-fix build.
+
+---
+
+## Round 2, item 2: Sub-24px tap targets on salary pages — **PARTIAL**
+
+**Claim:** `.salary-chart__label a` (`app/styles/salary.css`) now carries
+`display: inline-block; min-height: 24px; padding-block: 4px;`, closing the
+16px links Round 1 found in the salary bar-chart component.
+
+**What I measured** (`qa/verify-salary-tap-targets-round2.mjs`): all 6
+viewports (360×740, 390×844, 768×1024, 1024×768, 1440×900, 1920×1080) × all
+3 engines × 3 pages (`/web3-salaries`, `/web3-non-tech-salaries`,
+`/web3-salaries/scala-developer`) = 54 full page loads, `smallTargets(page,
+24)` plus a direct probe of `.salary-chart__label a` and every seniority-word
+element on the page.
+
+**`.salary-chart__label a` fix: HELD.** Every sampled instance across all 54
+combinations measured ≥24px tall (typically ~29.8px, e.g. "Scala Developer"
+97.8×29.8, "Solana Developer" 105.9×29.8) — up from the 16px Round 1 found.
+Identical on chromium, firefox, webkit.
+
+**Seniority filter chips (`.chip` class, e.g. the "Intern"/"Lead" pills that
+link to `/intern-jobs` etc.): also HELD.** Measured 44.6×32 ("Intern") and
+41.7×24 ("Lead") — at or above the 24px floor, on all pages/viewports/engines
+sampled.
+
+**But a second, different seniority-labelled element is still under the
+floor, and it is not one of the elements above.** Tracing every element with
+text exactly "Intern" on `/web3-salaries` at 1440×900
+(`qa/verify-intern-full-trace.mjs`) found **four** separate "Intern" links on
+the same page:
+
+| # | Location | Size | Status |
+|---|---|---|---|
+| 1 | `.chip` (filter pill) | 44.6×32 | fixed |
+| 2 | `.salary-line__label a` (line-chart per-point label) | **31.8×14** | **still broken** |
+| 3 | `.chart__table td a` (mobile fallback table row) | 0×0 (hidden at this width — `display:none`, not a real defect here) | n/a |
+| 4 | `table.table td h2 a` (main comparison table row heading) | 39×35.5 | fixed (`.table td a` from Round 1's item 5) |
+
+**Root cause:** `.salary-line__label a` (`app/styles/salary.css`, lines
+238–245) has never had a tap-target fix applied — it only sets `color` and
+`text-decoration: none`, no `display`, no `min-height`. Its computed
+`display` is the default inline, so `min-height` would not even apply if it
+were added without also setting a block-capable display, the same way
+`.salary-chart__label a` was fixed. This is the per-point label under the
+salary **line chart** (`.chart__viz`, shown above 480px width — the exact
+same component slot as `.salary-chart__label`, just a different chart
+variant), and it renders every seniority level's name ("Intern", "Junior",
+"Senior", "Lead", "CTO") and, on other pages, role/company names, as ~14px
+links. Confirmed identical (31.8×14, `display: inline`, `min-height: 0px`)
+on chromium, firefox, and webkit (`qa/verify-intern-crossengine.mjs`). It is
+visible — not a hidden duplicate — whenever the viewport is wider than 480px
+(768×1024, 1024×768, 1440×900, 1920×1080; at 360×740/390×844 the line chart
+is swapped for the already-fixed table fallback, so those two viewports show
+no `.salary-line__label` instances). Present on `/web3-salaries`,
+`/web3-non-tech-salaries`, and the salary detail page (confirmed on
+`/web3-salaries/scala-developer`).
+
+**Answering Round 1's open question directly:** the "seniority chips at
+14px" Round 1 flagged are **not** the `.chip`-classed filter pills (those
+are fixed) — they are this separate `.salary-line__label a` component, which
+is still exactly 14px tall today, unrelated to and unaffected by the
+`.salary-chart__label` fix that shipped this round.
+
+**Also observed, not fully traced (secondary, out of this round's asked
+scope):** the small-target counts (9–18 per page/viewport, flat across
+engines) include a few other pre-existing small elements noted in Round 1
+(top-nav "Jobs" trigger 28.4×16, a 1×1 visually-hidden search submit button)
+plus several footer links ("Regions" 54.9×14, "Nodework" 59.5×15, "Terms"
+36.9×15, "Privacy" 51.6×15, "Legal" 36.9×15) that render smaller than the
+24px floor and smaller than the `.footer-column__links a` rule Round 1
+verified fixed — these were not individually traced to a selector this
+round and are flagged for a follow-up pass rather than claimed as diagnosed.
+
+**Verdict: PARTIAL**, same as Round 1's own verdict, but the composition of
+what remains broken has changed: `.salary-chart__label a` itself is now
+fully fixed, and what's left is a sibling component (`.salary-line__label
+a`) with the identical missing-fix pattern. Severity: **Low**, consistent
+with Round 1's assessment (this is a narrow, distinct, non-regressing gap,
+not the original page-wide High), but it is a real, currently-visible,
+sub-24px interactive element on the exact pages named in the original
+report, on all three engines, at desktop and tablet widths.
+
+**Single point of intervention:** `apps/web/app/styles/salary.css`, the
+`.salary-line__label a` rule (~line 238) — apply the same pattern as
+`.salary-chart__label a`: `display: inline-block; min-height: 24px;`
+plus enough block padding to reach it visually.
+
+---
+
+## Round 2, item 3: Mobile menu focus trap on WebKit — **HELD**
+
+**Claim:** `mobile-menu.tsx` now calls `event.preventDefault()` on every Tab
+while the sheet is open (not only at a boundary) and moves focus explicitly
+through a computed `stops` array, cycling at both ends and pulling focus
+back in when `document.activeElement` isn't in the list — removing the
+dependency on WebKit's native Tab order (which skips plain links) ever
+reaching the array's first/last element.
+
+**What I measured**, 390×844, all 3 engines:
+
+- **Forward Tab × 35** (`qa/verify-mobile-menu-trap.mjs`, reused verbatim
+  from Round 1): menu opens (52 focusable stops found inside), toggle
+  explicitly focused, then 35 real `Tab` presses. **0 escapes on chromium,
+  firefox, or webkit** — every one of the 35 presses landed on the toggle or
+  a real element inside `#mobile-menu`. This is the exact scenario that
+  failed on WebKit in Round 1 (escaped after 1 press); it now holds on all
+  three engines.
+- **Reverse Tab × 35** (`qa/verify-mobile-menu-trap-round2.mjs`, new this
+  round — Round 1 never checked Shift+Tab): same result, **0 escapes on
+  chromium, firefox, or webkit.**
+- **Escape closes the sheet and returns focus to the toggle**: on all three
+  engines, after Escape, `#mobile-menu` is `hidden` and
+  `document.activeElement` is the `.menu-button` toggle.
+- **Keyboard activation** (the task's explicit warning: "a trap that
+  captures focus but prevents using it is a worse defect than the one it
+  replaced"): reopened the menu, pressed Tab once to reach the first stop
+  inside the sheet (`<a href="/jobs">Jobs</a>` on all three engines), pressed
+  `Enter`, and waited on a real URL change (`page.waitForURL`, not a fixed
+  sleep). **All three engines actually navigated to `/jobs`** — the trap
+  holds focus without preventing its use.
+
+| Engine | Tab×35 escape | Shift+Tab×35 escape | Escape→toggle | Enter activates link |
+|---|---|---|---|---|
+| chromium | no | no | yes | yes (→ `/jobs`) |
+| firefox | no | no | yes | yes (→ `/jobs`) |
+| webkit | no | no | yes | yes (→ `/jobs`) |
+
+**Verdict: HELD**, fully, on all three engines, for all four behaviours
+checked (forward cycling, reverse cycling, Escape, and keyboard activation
+of a captured link). This closes the WebKit-specific Critical/High finding
+from Round 1 item 10b outright — no residual defect found on this item.
+
+---
+
+## Bottom line: does the redesign meet zero Critical / zero High?
+
+**No, not on the evidence gathered in this pass.** One item fully closed
+(the mobile menu trap, previously the highest-risk open item), one item
+newly resolved for the component it targeted but not for the page-level
+symptom, and one item still exactly where Round 1 left it:
+
+- **1 open Critical**: the homepage still has 25px of real horizontal
+  overflow at 360×740, on all three engines, in this build. The landed fix
+  addressed a real instance of the underlying bug but on the wrong node in
+  the ancestor chain (`.home-reviews__carousel` instead of `.home-section`),
+  so the user-visible symptom — the page scrolls sideways — is unchanged
+  from Round 1. Single point of intervention: add `min-width: 0` to the
+  generic `.home-section` rule in `app/styles/home.css`.
+- **0 open High** from this pass's three items: item 3 (mobile menu trap)
+  is fully closed. Item 2's remaining gap (`.salary-line__label a`, ~14px)
+  is a real defect but scoped the same way Round 1's leftover was scoped —
+  narrow, non-regressing, and assessed at Low, not High, consistent with
+  Round 1's own severity call on the same class of issue. Single point of
+  intervention if a 24px floor is meant to be an invariant: add the
+  `.salary-chart__label a` pattern to `.salary-line__label a` in
+  `app/styles/salary.css`.
+
+So the one thing standing between this build and the zero-Critical/zero-High
+bar is the still-open homepage overflow (item 1) — a single CSS rule
+(`.home-section { min-width: 0; }`) at a specific, now-identified location,
+not a redesign or a new investigation. Everything else checked this round
+either fully held (item 3) or narrowed further without introducing a new
+High (item 2).

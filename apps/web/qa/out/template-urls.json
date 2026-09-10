@@ -1,0 +1,86 @@
+[
+  {
+    "id": "home",
+    "url": "/"
+  },
+  {
+    "id": "jobs-catalog",
+    "url": "/jobs"
+  },
+  {
+    "id": "job-detail",
+    "url": "/jobs/senior-gameplay-engineer-riot-games"
+  },
+  {
+    "id": "hidden-jobs",
+    "url": "/hidden-jobs"
+  },
+  {
+    "id": "companies-index",
+    "url": "/web3-companies"
+  },
+  {
+    "id": "company-detail",
+    "url": "/web3-companies/riot"
+  },
+  {
+    "id": "company-tag",
+    "url": "/web3-companies/tag/blockchain"
+  },
+  {
+    "id": "rankings",
+    "url": "/top-web3-jobs"
+  },
+  {
+    "id": "hub-landing",
+    "url": "/remote+solidity-jobs"
+  },
+  {
+    "id": "roles-cities-directory",
+    "url": "/roles"
+  },
+  {
+    "id": "salaries-index",
+    "url": "/web3-salaries"
+  },
+  {
+    "id": "salary-detail",
+    "url": "/web3-salaries/backend-developer"
+  },
+  {
+    "id": "salary-comparison",
+    "url": "/web3-salaries/solana-vs-ethereum"
+  },
+  {
+    "id": "learn-hub",
+    "url": "/learn-web3"
+  },
+  {
+    "id": "editorial-article",
+    "url": "/what-is-web3"
+  },
+  {
+    "id": "pricing",
+    "url": "/pricing"
+  },
+  {
+    "id": "funnel-seller-page",
+    "url": "/post-web3-job"
+  },
+  {
+    "id": "auth",
+    "url": "/login"
+  },
+  {
+    "id": "legal-long-form",
+    "url": "/terms"
+  },
+  {
+    "id": "account",
+    "url": "/dashboard"
+  },
+  {
+    "id": "404",
+    "url": "/this-page-does-not-exist-qa-fixture"
+  }
+]

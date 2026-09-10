@@ -202,6 +202,15 @@
   margin-top: 10px;
 }
 
+/* The links inside these per-point labels render at 14px. They are a real way
+   into a role's page, so they need the 24px floor - the sibling
+   .salary-chart__label a had the same problem and was fixed separately. */
+.salary-line__label a {
+  display: inline-block;
+  min-height: 24px;
+  padding-block: 5px;
+}
+
 .salary-line__label {
   display: flex;
   flex-direction: column;

@@ -41,8 +41,18 @@
   gap: var(--section);
 }
 
+/* Every section on this page is an item in the .home-sections grid, and a grid
+   item's default minimum is its content width, not zero. Any one section whose
+   content refuses to shrink therefore widens the whole track and scrolls the
+   page. That produced the homepage's 25px of horizontal overflow at 360px on
+   all three engines - the only page-level overflow anywhere in the app across
+   21 templates, 6 viewports and 3 engines.
+   Two earlier attempts fixed the symptom on individual children, .home-stats
+   and then .home-reviews__carousel, and the overflow survived both because the
+   track itself was never constrained. It belongs here, once. */
 .home-section {
   padding: var(--section) 0;
+  min-width: 0;
 }
 
 .home-section .container {
