@@ -150,7 +150,7 @@ describe("POST /api/account/delete", () => {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
-      INSERT INTO tenants (id, slug) VALUES ('tenant-1', 'gaming');
+      INSERT INTO tenants (id, slug) VALUES ('tenant-1', 'nodework');
       INSERT INTO users (id, tenant_id, name, email, created_at)
       VALUES ('user-1', 'tenant-1', 'Ada', 'ada@example.com', '2026-01-01T00:00:00.000Z');
       INSERT INTO profiles (user_id, cv_r2_key) VALUES ('user-1', 'cv/user-1/current.pdf');
@@ -174,12 +174,19 @@ describe("POST /api/account/delete", () => {
     mocks.getCloudflareContext.mockResolvedValue(env(createD1(sqlite, log)));
   });
 
+  function confirmedRequest(phrase: string | null = "DELETE") {
+    const body = new FormData();
+    if (phrase !== null) body.set("confirm", phrase);
+    return new Request("http://localhost/api/account/delete", {
+      method: "POST",
+      body,
+    });
+  }
+
   it("returns 401 without deleting when there is no session", async () => {
     mocks.getSession.mockResolvedValue(null);
     const { POST } = await import("./route");
-    const response = await POST(
-      new Request("http://localhost/api/account/delete", { method: "POST" }),
-    );
+    const response = await POST(confirmedRequest());
     const users = sqlite.prepare("SELECT COUNT(*) AS count FROM users").get() as {
       count: number;
     };
@@ -191,9 +198,7 @@ describe("POST /api/account/delete", () => {
 
   it("deletes R2 then SQL and redirects home", async () => {
     const { POST } = await import("./route");
-    const response = await POST(
-      new Request("http://localhost/api/account/delete", { method: "POST" }),
-    );
+    const response = await POST(confirmedRequest());
     const users = sqlite.prepare("SELECT COUNT(*) AS count FROM users").get() as {
       count: number;
     };
@@ -213,5 +218,20 @@ describe("POST /api/account/delete", () => {
       "sql:users",
     ]);
     expect(users.count).toBe(0);
+  });
+  it("refuses to delete when the confirmation phrase is absent or wrong", async () => {
+    const { POST } = await import("./route");
+
+    for (const phrase of [null, "", "delete", "Delete my account"]) {
+      const response = await POST(confirmedRequest(phrase));
+      const users = sqlite.prepare("SELECT COUNT(*) AS count FROM users").get() as {
+        count: number;
+      };
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({ code: "confirmation_required" });
+      expect(mocks.deleteObject).not.toHaveBeenCalled();
+      expect(users.count).toBe(1);
+    }
   });
 });

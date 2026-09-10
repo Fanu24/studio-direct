@@ -162,6 +162,53 @@ describe("ingestDrafts", () => {
     expect(new Set(repo.jobs.map((job) => job.canonicalKey)).size).toBe(2);
   });
 
+  it("keeps the API apply URL unchanged and lists onsite Web3 jobs", async () => {
+    const repo = new MemoryJobsRepository();
+    const applyUrl = "https://jobs.example/apply?ref=web3career";
+
+    await ingestDrafts(
+      [
+        draft("web3_career_api", {
+          keepApplyUrl: true,
+          externalId: "99",
+          applyUrl,
+          sourceUrl: "https://web3.career/99",
+          location: "London, UK (5 days in office)",
+          salaryMin: 100000,
+          salaryMax: 160000,
+        }),
+      ],
+      context(repo),
+    );
+
+    expect(repo.jobs[0]).toMatchObject({
+      canonicalKey: "web3_career:99",
+      applyUrl,
+      listed: 1,
+      remote: "onsite",
+      slug: "senior-gameplay-engineer-moonshot-99",
+      salaryMin: 100000,
+      salaryMax: 160000,
+    });
+  });
+
+  it("normalises an unclassifiable remote status to null instead of the string unknown", async () => {
+    const repo = new MemoryJobsRepository();
+
+    await ingestDrafts(
+      [
+        draft("career_page", {
+          title: "Finance Analyst",
+          location: "Tokyo, Japan",
+          descriptionHtml: "<p>Support the finance team.</p>",
+        }),
+      ],
+      context(repo),
+    );
+
+    expect(repo.jobs[0]?.remote).toBeNull();
+  });
+
   it("uses the recent company-title fallback when apply_url is absent", async () => {
     const repo = new MemoryJobsRepository();
 

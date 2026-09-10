@@ -1,7 +1,17 @@
 import React, { type ReactElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { HOMEPAGE_CLAIM } from "../lib/copy";
+import { JobBoard } from "./_components/job-board";
+import { BoardSearch } from "./_components/board-chrome";
+import {
+  HomeCareerFaq,
+  HomeMegaLinks,
+  ProfileBanner,
+} from "./_components/home-mega";
+import { TagChips } from "./_components/job-row";
+import { JsonLd } from "./_components/json-ld";
+import { homepageSummary } from "../lib/copy";
+import type { JobsDatabase } from "../lib/jobs/queries";
 
 type TestElement = ReactElement<
   Record<string, unknown> & { children?: ReactNode }
@@ -10,16 +20,36 @@ type TestElement = ReactElement<
 const mocks = vi.hoisted(() => ({
   getCloudflareContext: vi.fn(),
   listJobs: vi.fn(),
-  listCompanies: vi.fn(),
+  getJobsForListItems: vi.fn(),
+  countHiringCompanies: vi.fn(),
+  headers: vi.fn(async () => new Headers({ host: "nodework.example.com" })),
 }));
 
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: mocks.getCloudflareContext,
 }));
 
+vi.mock("next/headers", () => ({
+  headers: () => mocks.headers(),
+}));
+
+vi.mock("next/link", () => ({
+  default: (props: Record<string, unknown>) =>
+    React.createElement("a", props),
+}));
+
 vi.mock("../lib/jobs/queries", () => ({
   listJobs: mocks.listJobs,
-  listCompanies: mocks.listCompanies,
+  getJobsForListItems: mocks.getJobsForListItems,
+  countHiringCompanies: mocks.countHiringCompanies,
+  jobPublicHref: (job: { slug: string; externalId?: string | null }) =>
+    job.externalId ? `/${job.slug}/${job.externalId}` : `/jobs/${job.slug}`,
+  jobApplyHref: (job: { slug: string; externalId?: string | null }) =>
+    job.externalId ? `/${job.slug}/${job.externalId}/apply` : `/jobs/${job.slug}/apply`,
+}));
+
+vi.mock("../lib/tenant", () => ({
+  requireTenantId: async () => "tenant-gaming",
 }));
 
 vi.stubGlobal("React", React);
@@ -40,67 +70,189 @@ function text(node: ReactNode): string {
 }
 
 describe("HomePage", () => {
-  const db = {
-    prepare: vi.fn(() => ({
-      bind: vi.fn(() => ({
-        first: vi.fn().mockResolvedValue("tenant-gaming"),
-      })),
-    })),
-  };
+  const db = {};
 
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCloudflareContext.mockResolvedValue({ env: { DB: db } });
-    mocks.listCompanies.mockResolvedValue([
-      { id: "studio-a", name: "Alpha Studio", slug: "alpha", jobCount: 1 },
-    ]);
+    mocks.countHiringCompanies.mockResolvedValue(3);
     mocks.listJobs.mockResolvedValue({
       jobs: [
         {
-          id: "latest-hidden",
-          slug: "latest-hidden",
-          title: "Latest Hidden Role",
+          id: "latest-role",
+          slug: "latest-role",
+          externalId: null,
+          title: "Latest Solidity Role",
           companyId: "studio-a",
           companyName: "Alpha Studio",
+          companySlug: "alpha",
           location: "London",
           remote: "remote",
           salaryText: null,
-          exclusivity: "hidden_from_linkedin",
+          salaryMin: null,
+          salaryMax: null,
+          highlight: 0,
+          featuredUntil: null,
+          exclusivity: "unknown",
           postedAt: "2026-09-02T00:00:00Z",
+          tags: ["solidity"],
         },
       ],
       page: 1,
-      pageSize: 8,
+      pageSize: 20,
       total: 1,
       totalPages: 1,
     });
+    mocks.getJobsForListItems.mockResolvedValue([
+      {
+        id: "latest-role",
+        slug: "latest-role",
+        externalId: null,
+        title: "Latest Solidity Role",
+        companyName: "Alpha Studio",
+        companySlug: "alpha",
+        location: "London",
+        remote: "remote",
+        descriptionHtml: "<p>Ship contracts.</p>",
+        salaryText: null,
+        salaryMin: null,
+        salaryMax: null,
+        highlight: 0,
+        exclusivity: "unknown",
+        postedAt: "2026-09-02T00:00:00Z",
+        tags: ["solidity"],
+      },
+    ]);
   });
 
-  it("loads the latest eight confirmed hidden jobs for the gaming tenant", async () => {
+  it("loads the latest listed jobs for the Nodework tenant", async () => {
     const { default: HomePage } = await import("./page");
-    const page = await HomePage();
+    const page = await HomePage({ searchParams: Promise.resolve({}) });
 
-    expect(db.prepare).toHaveBeenCalledWith("SELECT id FROM tenants WHERE slug = ?");
     expect(mocks.listJobs).toHaveBeenCalledWith(db, "tenant-gaming", {
-      hidden: true,
-      pageSize: 8,
+      pageSize: 20,
+      page: 1,
     });
-    expect(text(page)).toContain("Latest Hidden Role");
+    const board = elements(page).find((element) => element.type === JobBoard);
+    expect(board).toBeDefined();
+    const rendered = JobBoard(
+      board?.props as React.ComponentProps<typeof JobBoard>,
+    );
+    expect(text(rendered)).toContain("Latest Solidity Role");
+    expect(text(rendered)).toContain("Apply");
+    const apply = elements(rendered).find(
+      (element) =>
+        typeof element.props.href === "string"
+        && String(element.props.href).endsWith("/apply")
+        && String(element.props.className ?? "").includes("button--primary"),
+    );
+    expect(apply?.props.href).toBe("/jobs/latest-role/apply");
+    expect(String(apply?.props.href)).not.toContain("web3.career");
   });
 
-  it("keeps the honest homepage claim and submits search to the jobs page", async () => {
-    const { default: HomePage } = await import("./page");
-    const page = await HomePage();
-    const form = elements(page).find((element) => element.type === "form");
-    const searchInput = elements(page).find(
+  it("renders catalog chrome with search, chips, count, and a keyword-led H1", async () => {
+    const { default: HomePage, generateMetadata } = await import("./page");
+    const page = await HomePage({ searchParams: Promise.resolve({}) });
+    const meta = await generateMetadata();
+    const h1 = elements(page).find((element) => element.type === "h1");
+    const search = elements(page).find((element) => element.type === BoardSearch);
+    const faq = elements(page).find((element) => element.type === HomeCareerFaq);
+    const mega = elements(page).find((element) => element.type === HomeMegaLinks);
+    const banner = elements(page).find((element) => element.type === ProfileBanner);
+    const chips = elements(page).find((element) => element.type === TagChips);
+    const searchTree = BoardSearch(
+      search?.props as React.ComponentProps<typeof BoardSearch>,
+    );
+    const faqTree = HomeCareerFaq(
+      faq?.props as React.ComponentProps<typeof HomeCareerFaq>,
+    );
+    const megaTree = HomeMegaLinks();
+    const chipTree = TagChips(chips?.props as React.ComponentProps<typeof TagChips>);
+    const form = elements(searchTree).find((element) => element.type === "form");
+    const searchInput = elements(searchTree).find(
       (element) => element.type === "input" && element.props.name === "q",
     );
-
-    expect(text(page)).toContain(HOMEPAGE_CLAIM);
-    expect(HOMEPAGE_CLAIM).toBe(
-      "Jobs from studio career pages, including roles not posted on LinkedIn.",
+    const hrefs = [
+      ...elements(searchTree),
+      ...elements(chipTree),
+      ...elements(megaTree),
+    ]
+      .filter((element) => typeof element.props.href === "string")
+      .map((element) => element.props.href as string);
+    const jsonLdPayloads = elements(page)
+      .filter((element) => element.type === JsonLd)
+      .map((element) => (element.props as { data: Record<string, unknown> }).data);
+    const jobPostings = jsonLdPayloads.filter(
+      (payload) => payload["@type"] === "JobPosting",
     );
+    const faqPage = jsonLdPayloads.find((payload) => payload["@type"] === "FAQPage");
+
+    expect(text(h1)).toContain("Web3 Jobs");
+    expect(text(h1)).not.toBe("WEB3 IS THE FUTURE");
+    expect(text(page)).toContain(homepageSummary(1, 3));
+    expect(text(page)).not.toContain("Browse");
+    expect(text(page)).not.toContain("blockchain jobs in web3 at");
+    expect(text(faqTree)).toContain("Is a Web3 career legit?");
+    // Six entries, the count the reference board ends on.
+    expect(elements(faqTree).filter((element) => element.type === "details")).toHaveLength(6);
+    expect(elements(faqTree).filter((element) => element.type === "h2")).toHaveLength(6);
+    // The extra "Related pages" rail is gone: the reference homepage has no
+    // such section, and its links already live in the mega link stack.
+    expect(text(page)).not.toContain("Related pages");
+    expect(text(faqTree)).not.toMatch(/[–—]/);
+    expect(banner).toBeDefined();
+    expect(mega).toBeDefined();
     expect(form?.props).toMatchObject({ action: "/jobs", method: "get" });
-    expect(searchInput).toBeDefined();
+    expect(searchInput?.props.placeholder).toBe("Search");
+    expect(hrefs).toContain("/remote-jobs");
+    expect(hrefs).toContain("/solidity-jobs");
+    expect(hrefs).toContain("/web3-jobs-europe");
+    expect(text(page)).not.toMatch(/Bondex|wagmi|WxRK/i);
+    expect(meta.description).toBe(homepageSummary(1, 3));
+    expect(jobPostings).toHaveLength(1);
+    expect(jobPostings[0]).toMatchObject({ title: "Latest Solidity Role" });
+    expect(faqPage).toBeDefined();
+    expect(faqPage?.mainEntity as unknown[]).toHaveLength(6);
+    expect(
+      (faqPage?.mainEntity as { name: string }[] | undefined)?.some(
+        (item) => item.name === "Is a Web3 career legit?",
+      ),
+    ).toBe(true);
+  });
+});
+
+// The real implementation, not the mock ../lib/jobs/queries above stands in
+// for HomePage - the bulk loader's own order/null-fill contract has to be
+// exercised against actual code, not a test double.
+describe("getJobsForListItems", () => {
+  it("returns details in the same order as the input, with null for misses", async () => {
+    const { getJobsForListItems } =
+      await vi.importActual<typeof import("../lib/jobs/queries")>(
+        "../lib/jobs/queries",
+      );
+
+    // Shaped like a mapped D1 row (camelCase aliases, companyNameNorm
+    // present) since getJobsForListItems shares loadJob's row mapper, which
+    // derives companySlug from companyNameNorm via slugTitle.
+    const rows = [
+      { externalId: "b", slug: "beta", title: "Beta", companyNameNorm: "beta inc", tagCsv: null },
+      { externalId: "a", slug: "alpha", title: "Alpha", companyNameNorm: "alpha inc", tagCsv: null },
+    ];
+    const db = {
+      prepare: (sql: string) => ({
+        bind: (..._args: unknown[]) => ({
+          all: async () => ({ results: rows }),
+          first: async () => rows[0],
+        }),
+      }),
+    } as unknown as JobsDatabase;
+
+    const out = await getJobsForListItems(db, "t", [
+      { slug: "alpha", externalId: "a" },
+      { slug: "missing", externalId: "zzz" },
+      { slug: "beta", externalId: "b" },
+    ]);
+
+    expect(out.map((j) => j?.externalId ?? null)).toEqual(["a", null, "b"]);
   });
 });

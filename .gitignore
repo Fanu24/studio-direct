@@ -8,8 +8,14 @@ dist/
 .env
 .env.*
 !.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
 .superpowers/sdd/
 .DS_Store
 Thumbs.db
 coverage/
 *.tsbuildinfo
+
+# scratch inventories and scraped fixtures
+tmp/

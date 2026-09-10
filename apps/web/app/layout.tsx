@@ -1,38 +1,57 @@
-import { Outfit, IBM_Plex_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Figtree, JetBrains_Mono } from "next/font/google";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { SiteChrome } from "./_components/site-chrome";
 import { HOMEPAGE_CLAIM } from "../lib/copy";
+// Every stylesheet is imported here and nowhere else. globals.css is the only
+// :root; motion.css is the only @keyframes. Chunk order is the bundler's, so a
+// component-level import anywhere would reorder the emitted CSS and revert tokens.
 import "./globals.css";
+import "./styles/motion.css";
+import "./styles/chrome.css";
+import "./styles/footer.css";
 import "./styles/theaters.css";
 import "./styles/home.css";
 import "./styles/jobs.css";
 import "./styles/job-detail.css";
 import "./styles/pricing.css";
 import "./styles/account.css";
+import "./styles/nodework.css";
+import "./styles/board.css";
+import "./styles/learn.css";
+import "./styles/marketing.css";
+import "./styles/salary.css";
+import "./faq/faq.css";
+import "./hire/hire.css";
 
-const sans = Outfit({
+const display = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const sans = Figtree({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
 });
 
-const mono = IBM_Plex_Mono({
+const mono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
   variable: "--font-mono",
   display: "swap",
 });
 
-const SITE_NAME = "Studio Direct";
-const DEFAULT_TITLE = "Studio Direct: gaming jobs from studio career pages";
+const SITE_NAME = "Nodework";
+const DEFAULT_TITLE = "Nodework: Web3, blockchain and crypto jobs";
 
 const SOCIAL_IMAGE = {
   url: "/og.png",
   width: 1200,
   height: 630,
-  alt: "Studio Direct. Gaming jobs, straight from the studio.",
+  alt: "Nodework. Web3 jobs, salaries and companies.",
 };
 
 function metadataBase(): URL | undefined {
@@ -53,8 +72,6 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: HOMEPAGE_CLAIM,
-  /* No title or description here: Next fills og:title and og:description from each page's own
-     title and description, so a shared link previews the page it points at. */
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
@@ -73,7 +90,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html className={`${sans.variable} ${mono.variable}`} lang="en">
+    <html className={`${display.variable} ${sans.variable} ${mono.variable}`} lang="en">
       <body>
         <SiteChrome>{children}</SiteChrome>
       </body>

@@ -1,0 +1,311 @@
+/* Salary stats-article components: inline-SVG charts, breakdown tables, and
+ * the callout/CTA blocks used across web3-salaries, web3-non-tech-salaries
+ * and the solana-vs-ethereum comparison page. Imported from layout.tsx only;
+ * consumes tokens from globals.css and declares none.
+ *
+ * The headline figure, "highest/lowest paid" callouts and every data table on
+ * these pages are built from the shared primitives (.stat, .panel, .kicker,
+ * .table) declared in globals.css - this file only styles what is genuinely
+ * bespoke to a salary chart: the range-bar rows and the seniority line. */
+
+/* --- Range-bar chart (SalaryBarChart) -------------------------------------- */
+
+.salary-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0 26px;
+}
+
+.salary-chart__row {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(120px, 3fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+/* A shared scale header names both ends of the domain every row below is
+ * plotted against, so the bars read as measurements rather than shapes. */
+.salary-chart__scale {
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.salary-chart__scale-track {
+  display: flex;
+  justify-content: space-between;
+}
+
+.salary-chart__scale-track .mono {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.salary-chart__label {
+  font-size: 0.85rem;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* These row labels are the primary way into a role's own salary page, and they
+   rendered as 16px inline text: a tap target well under the 24px floor, on the
+   page with the most of them. The chart's own three tap-target rules were fixed
+   elsewhere; this component was never in their scope. */
+.salary-chart__label a {
+  display: inline-block;
+  min-height: 24px;
+  /* A two-letter role ("HR") passes the height floor and fails on width. */
+  min-width: 24px;
+  padding-block: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.salary-chart__label a:hover {
+  color: var(--accent);
+}
+
+.salary-chart__bar {
+  width: 100%;
+  height: 12px;
+  display: block;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.salary-chart__track {
+  fill: var(--line-soft);
+}
+
+.salary-chart__range {
+  fill: var(--accent-soft);
+}
+
+.salary-chart__avg {
+  fill: var(--accent);
+}
+
+.salary-chart__value {
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--text);
+}
+
+.salary-chart__empty {
+  margin: 10px 0 22px;
+}
+
+/* --- Seniority line chart (SalarySeniorityChart) --------------------------- */
+
+.chart {
+  margin: 14px 0 26px;
+}
+
+.chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--dim);
+}
+
+.chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart__swatch {
+  display: inline-block;
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  font-style: normal;
+}
+
+.chart__swatch--primary {
+  background: var(--accent);
+}
+
+.chart__swatch--compare {
+  background-image: repeating-linear-gradient(90deg, var(--cool) 0 5px, transparent 5px 8px);
+}
+
+.chart__viz {
+  display: block;
+}
+
+.chart__plot {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.chart__axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2px 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.chart__axis .mono {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.chart__svg {
+  width: 100%;
+  height: 90px;
+  display: block;
+  overflow: visible;
+}
+
+.chart__gridline {
+  stroke: var(--line);
+  stroke-width: 0.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart__path {
+  fill: none;
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart__path--primary {
+  stroke: var(--accent);
+}
+
+.chart__path--compare {
+  stroke: var(--cool);
+  stroke-dasharray: 3 2;
+}
+
+.chart__dot--primary {
+  fill: var(--accent);
+}
+
+.chart__dot--compare {
+  fill: var(--cool);
+}
+
+.salary-line__labels {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* The links inside these per-point labels render at 14px. They are a real way
+   into a role's page, so they need the 24px floor - the sibling
+   .salary-chart__label a had the same problem and was fixed separately. */
+.salary-line__label a {
+  display: inline-block;
+  min-height: 24px;
+  min-width: 24px;
+  padding-block: 5px;
+}
+
+.salary-line__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* The value is the answer the visitor came for; the level name above it is
+ * context, so only the figure gets full-contrast text and weight. */
+.salary-line__label .mono {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* A level nobody published pay for is dimmed as a whole, so the eye reads it as an absent
+   measurement rather than as a value that failed to render. */
+.salary-line__label.is-empty {
+  opacity: 0.55;
+}
+
+.salary-line__label.is-empty .mono {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.salary-line__note {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.salary-line__label a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.salary-line__label a:hover {
+  color: var(--accent);
+}
+
+/* Table fallback: hidden by default, swapped in for .chart__viz below 480px
+ * (see the media query at the bottom of this file) rather than shrinking the
+ * line chart until its points collide. */
+.chart__table {
+  display: none;
+  margin-top: 10px;
+}
+
+/* --- Callouts kept as a thin wrapper: the boxes themselves are .panel. ----- */
+
+.salary-callouts {
+  margin: 16px 0 28px;
+}
+
+/* The box itself is .panel; this only carries the vertical rhythm around it. */
+.salary-cta {
+  margin: 32px 0;
+}
+
+.salary-cta h2 {
+  margin-top: 0;
+}
+
+.salary-cta__actions {
+  margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .salary-chart__row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .salary-chart__scale-track {
+    display: none;
+  }
+
+  .salary-chart__value {
+    text-align: left;
+  }
+}
+
+/* A cramped line chart is worse than a clean table at phone width: the chart
+ * (axis, plot and per-point label grid) hands off to the table entirely. */
+@media (max-width: 480px) {
+  .chart__viz {
+    display: none;
+  }
+
+  .chart__table {
+    display: block;
+  }
+}

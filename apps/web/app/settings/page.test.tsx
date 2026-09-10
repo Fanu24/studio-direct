@@ -79,7 +79,7 @@ describe("SettingsPage", () => {
     mocks.getSession.mockResolvedValue(null);
     const { default: SettingsPage } = await import("./page");
 
-    await expect(SettingsPage()).rejects.toThrow("REDIRECT:/login");
+    await expect(SettingsPage()).rejects.toThrow("REDIRECT:/login?next=/settings");
   });
 
   it("is the only opt-in surface and defaults the talent-pool checkbox off", async () => {

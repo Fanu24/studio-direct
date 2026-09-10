@@ -114,9 +114,12 @@ export function UnlockApplyForm({
         </button>
       </form>
       {quota ? (
-        <p className="notice notice--accent jd-unlock__notice" role="alert">
-          {QUOTA_MESSAGE}
-        </p>
+        <div className="notice notice--accent jd-unlock__notice" role="alert">
+          <p className="jd-unlock__notice-lead">{QUOTA_MESSAGE}</p>
+          <a className="text-link" href="/pricing">
+            Go unlimited on a paid plan
+          </a>
+        </div>
       ) : null}
       {error ? (
         <p className="notice notice--danger jd-unlock__notice" role="alert">
@@ -134,7 +137,7 @@ export function UnlockApplyForm({
             <a className="button button--sm" href={nudge.applyUrl}>
               Continue to application
             </a>
-            <a className="button button--secondary button--sm" href="/profile">
+            <a className="button button--ghost button--sm" href="/profile">
               Finish your profile
             </a>
           </div>

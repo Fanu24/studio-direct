@@ -92,7 +92,7 @@ describe("ProfilePage", () => {
     mocks.getSession.mockResolvedValue(null);
     const { default: ProfilePage } = await import("./page");
 
-    await expect(ProfilePage()).rejects.toThrow("REDIRECT:/login");
+    await expect(ProfilePage()).rejects.toThrow("REDIRECT:/login?next=/profile");
   });
 
   it("collects experience, hub skills, location, and a PDF CV without talent-pool", async () => {

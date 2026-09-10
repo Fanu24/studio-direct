@@ -13,6 +13,7 @@ export const companies = sqliteTable("companies", {
   name: text("name").notNull(),
   nameNorm: text("name_norm").notNull(),
   domain: text("domain"),
+  logoUrl: text("logo_url"),
   careerUrl: text("career_url"),
   atsType: text("ats_type"),
   atsSlug: text("ats_slug"),
@@ -35,6 +36,12 @@ export const jobs = sqliteTable(
     descriptionHtml: text("description_html").notNull(),
     applyUrl: text("apply_url").notNull(),
     salaryText: text("salary_text"),
+    salaryMin: integer("salary_min"),
+    salaryMax: integer("salary_max"),
+    source: text("source").notNull().default("career_page"),
+    externalId: text("external_id"),
+    featuredUntil: text("featured_until"),
+    highlight: integer("highlight").notNull().default(0),
     exclusivity: text("exclusivity").notNull().default("unknown"),
     seenOnIndeed: integer("seen_on_indeed").notNull().default(0),
     postedAt: text("posted_at"),
@@ -174,4 +181,56 @@ export const crawlRuns = sqliteTable("crawl_runs", {
   finishedAt: text("finished_at"),
   ok: integer("ok").notNull().default(0),
   statsJson: text("stats_json").notNull().default("{}"),
+});
+
+export const tags = sqliteTable("tags", {
+  slug: text("slug").primaryKey(),
+  label: text("label").notNull(),
+});
+
+export const jobTags = sqliteTable("job_tags", {
+  jobId: text("job_id").notNull(),
+  tagSlug: text("tag_slug").notNull(),
+});
+
+export const locations = sqliteTable("locations", {
+  slug: text("slug").primaryKey(),
+  kind: text("kind").notNull(),
+  label: text("label").notNull(),
+});
+
+export const jobLocations = sqliteTable("job_locations", {
+  jobId: text("job_id").notNull(),
+  locationSlug: text("location_slug").notNull(),
+});
+
+export const benefits = sqliteTable("benefits", {
+  slug: text("slug").primaryKey(),
+  label: text("label").notNull(),
+});
+
+export const jobBenefits = sqliteTable("job_benefits", {
+  jobId: text("job_id").notNull(),
+  benefitSlug: text("benefit_slug").notNull(),
+});
+
+export const salaryRollups = sqliteTable("salary_rollups", {
+  dimension: text("dimension").notNull(),
+  slug: text("slug").notNull(),
+  avg: integer("avg").notNull(),
+  min: integer("min").notNull(),
+  max: integer("max").notNull(),
+  jobCount30d: integer("job_count_30d").notNull(),
+  computedAt: text("computed_at").notNull(),
+});
+
+export const jobApplications = sqliteTable("job_applications", {
+  id: text("id").primaryKey(),
+  tenantId: text("tenant_id").notNull(),
+  jobId: text("job_id").notNull(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  profileUrl: text("profile_url"),
+  note: text("note"),
+  createdAt: text("created_at").notNull(),
 });

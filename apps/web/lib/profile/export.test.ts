@@ -124,7 +124,7 @@ describe("exportAccountData", () => {
         stripe_status TEXT,
         period_end TEXT
       );
-      INSERT INTO tenants (id, slug) VALUES ('tenant-1', 'gaming');
+      INSERT INTO tenants (id, slug) VALUES ('tenant-1', 'nodework');
       INSERT INTO users (id, tenant_id, name, email, email_verified, created_at, updated_at)
       VALUES (
         'user-1', 'tenant-1', 'Ada', 'ada@example.com', 1,

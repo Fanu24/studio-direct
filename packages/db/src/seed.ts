@@ -1,9 +1,8 @@
 import { readFileSync } from "node:fs";
 
-import { normalizeCompanyName } from "@gaming/shared";
+import { normalizeCompanyName, TENANT_NAME, TENANT_SLUG } from "@gaming/shared";
 
-export const TENANT_SLUG = "gaming";
-export const TENANT_NAME = "Studio Direct";
+export { TENANT_NAME, TENANT_SLUG };
 
 const TENANT_ID = "tenant:gaming";
 const CREATED_AT = "2026-09-02T00:00:00.000Z";
@@ -11,6 +10,7 @@ const CREATED_AT = "2026-09-02T00:00:00.000Z";
 export interface SeedCompany {
   name: string;
   domain: string;
+  logo_url?: string;
   career_url: string;
   ats_type: string;
   ats_slug: string;
@@ -54,17 +54,28 @@ const INSERT_COMPANY = `
     name,
     name_norm,
     domain,
+    logo_url,
     career_url,
     ats_type,
     ats_slug,
     listed,
     created_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `;
 
 function changes(result: SeedRunResult): number {
   return result.meta?.changes ?? result.changes ?? 0;
+}
+
+/**
+ * Derive a logo URL for a seeded company. Seeded companies are real,
+ * publicly known studios with a public domain, so pointing at that domain's
+ * favicon/logo endpoint is not invented data - it is only used so the local
+ * dev fixture exercises the logo column instead of leaving it null.
+ */
+function seedLogoUrl(company: SeedCompany): string {
+  return company.logo_url ?? `https://logo.clearbit.com/${company.domain}`;
 }
 
 export async function seedLocal(db: SeedDatabase): Promise<SeedResult> {
@@ -84,6 +95,7 @@ export async function seedLocal(db: SeedDatabase): Promise<SeedResult> {
         company.name,
         nameNorm,
         company.domain,
+        seedLogoUrl(company),
         company.career_url,
         company.ats_type,
         company.ats_slug,

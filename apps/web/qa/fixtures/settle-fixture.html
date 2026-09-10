@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>settle fixture</title>
+</head>
+<body>
+  <!-- Mimics React's asynchronous DOM update: the attribute does not flip
+       in the same turn as the click, it flips ~300ms later on a timeout.
+       A harness that reads aria-expanded synchronously after .click() must
+       see "false" here; a harness that awaits settle() (~350ms) must see
+       "true". Both outcomes are asserted by qa/self-test.mjs. -->
+  <button id="toggle" aria-expanded="false">Toggle</button>
+  <script>
+    document.getElementById("toggle").addEventListener("click", (event) => {
+      const btn = event.currentTarget;
+      setTimeout(() => {
+        btn.setAttribute("aria-expanded", "true");
+      }, 300);
+    });
+  </script>
+</body>
+</html>

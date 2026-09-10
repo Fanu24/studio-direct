@@ -1,7 +1,7 @@
 import React, { type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import { HOMEPAGE_CLAIM, LINKEDIN_EXCLUSIVITY_TOOLTIP } from "../../lib/copy";
+import { HOMEPAGE_CLAIM } from "../../lib/copy";
 import { TERMS_COPY } from "../../lib/legal/copy";
 
 type TestElement = ReactElement<
@@ -26,24 +26,22 @@ function text(node: ReactNode): string {
 }
 
 describe("AboutPage", () => {
-  it("explains sources, the badge, unlocks, and what the product does not do", async () => {
+  it("explains sources, public apply, and what the product does not do", async () => {
     const { default: AboutPage } = await import("./page");
     const page = AboutPage();
     const copy = text(page);
     const h1 = elements(page).find((element) => element.type === "h1");
 
-    expect(text(h1)).toBe("How Studio Direct works");
+    expect(text(h1)).toBe("How Nodework works");
     expect(copy).toContain(HOMEPAGE_CLAIM);
     expect(copy).toContain(TERMS_COPY.thirdParties);
     expect(copy).toContain(TERMS_COPY.incomplete);
-    expect(copy).toContain(TERMS_COPY.noRealtimeLinkedIn);
-    expect(copy).toContain(LINKEDIN_EXCLUSIVITY_TOOLTIP);
-    expect(copy).toContain("5");
-    expect(copy.toLowerCase()).toContain("utc week");
-    expect(copy.toLowerCase()).toContain("studio site");
+    expect(copy).toContain("Apply");
+    expect(copy).not.toContain("Not on LinkedIn");
+    expect(copy.toLowerCase()).not.toContain("utc week");
   });
 
-  it("carries FAQPage JSON-LD and links to the board, hidden jobs, and pricing", async () => {
+  it("carries FAQPage JSON-LD and links to the board, remote jobs, and pricing", async () => {
     const { default: AboutPage } = await import("./page");
     const page = AboutPage();
     const hrefs = elements(page)
@@ -55,8 +53,9 @@ describe("AboutPage", () => {
 
     expect(jsonLd?.mainEntity?.length).toBeGreaterThanOrEqual(4);
     expect(hrefs).toContain("/jobs");
-    expect(hrefs).toContain("/hidden-jobs");
+    expect(hrefs).toContain("/remote-jobs");
     expect(hrefs).toContain("/pricing");
+    expect(hrefs).not.toContain("/hidden-jobs");
   });
 
   it("never uses banned claims or dashes and never links to /talent", async () => {

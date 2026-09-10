@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>delete-confirm fixture</title></head>
+  <body>
+    <!-- Exact form markup from app/settings/page.tsx's delete-account form,
+         isolated so its native HTML5 constraint validation (required +
+         pattern="DELETE") can be exercised without a live authenticated
+         session, which this QA task explicitly says not to attempt to seed. -->
+    <form action="/api/account/delete" method="post" id="f">
+      <label for="delete-confirm">Type DELETE to confirm</label>
+      <input
+        autoComplete="off"
+        id="delete-confirm"
+        name="confirm"
+        pattern="DELETE"
+        required
+        title="Type DELETE in capital letters to confirm."
+        type="text"
+      />
+      <button type="submit">Delete my account</button>
+    </form>
+    <script>
+      window.checkState = function () {
+        const input = document.getElementById("delete-confirm");
+        const form = document.getElementById("f");
+        return { value: input.value, valueValid: input.checkValidity(), formValid: form.checkValidity() };
+      };
+    </script>
+  </body>
+</html>

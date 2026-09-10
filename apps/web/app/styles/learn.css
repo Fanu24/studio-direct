@@ -1,0 +1,207 @@
+/* --- Article typography: the shell learn-web3, what-is-web3, crypto-events
+   and the funnel's legal/FAQ pages all render long-form copy into. Headings
+   and paragraph measure are set in globals.css; this fills in the elements a
+   real article eventually needs - lists, quotes, code, inline links. --- */
+
+.article ul,
+.article ol {
+  max-width: 68ch;
+  margin: 0 0 1em;
+  padding-left: 1.3em;
+  color: var(--dim);
+}
+
+.article ul {
+  list-style: disc;
+}
+
+.article ol {
+  list-style: decimal;
+}
+
+.article li + li {
+  margin-top: 0.45em;
+}
+
+.article li::marker {
+  color: var(--accent);
+}
+
+.article blockquote {
+  margin: 1.6em 0;
+  padding: 2px 0 2px 20px;
+  max-width: 62ch;
+  border-left: 2px solid var(--accent-line);
+  color: var(--dim);
+  font-style: italic;
+}
+
+.article blockquote p {
+  margin: 0;
+}
+
+.article code {
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  color: var(--cool);
+}
+
+.article pre {
+  margin: 1.4em 0;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--bg-deep);
+  overflow-x: auto;
+}
+
+.article pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dim);
+}
+
+.article h3 {
+  margin: 1.4em 0 0.5em;
+}
+
+.article a:not(.button):not(.chip):not(.text-link) {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
+.article a:not(.button):not(.chip):not(.text-link):hover {
+  color: var(--accent-strong);
+  text-decoration-color: var(--accent-strong);
+}
+
+.learn-facets {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 8px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.learn-facet-group h2 {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.learn-facet-group .chips {
+  margin-top: 0;
+}
+
+/* Resource grid */
+
+.learn-resources__head {
+  margin-bottom: 16px;
+}
+
+.learn-resources__head h2 {
+  margin-bottom: 4px;
+}
+
+.learn-resources__head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.resource-grid {
+  list-style: none;
+  margin: 0 0 32px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.resource-card {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+  height: 100%;
+  padding: 20px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--edge-light);
+  /* Hover elevation itself is .m-lift (motion.css); this only carries the
+     background swap m-lift does not know about. */
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.resource-card:hover,
+.resource-card:focus-within {
+  background: var(--bg-hover);
+}
+
+.resource-card__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.resource-card__body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.resource-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.resource-card__source {
+  font-size: 0.76rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resource-card__title {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.resource-card__summary {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.resource-card__topics {
+  margin-top: 2px;
+}
+
+.resource-card__cta {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .resource-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -53,6 +53,7 @@ vi.mock("../../lib/unlocks/history", () => ({
 
 vi.mock("../../lib/jobs/queries", () => ({
   listJobs: mocks.listJobs,
+  jobPublicHref: (job: { slug: string }) => `/jobs/${job.slug}`,
 }));
 
 vi.stubGlobal("React", React);
@@ -148,7 +149,7 @@ describe("DashboardPage", () => {
     mocks.getSession.mockResolvedValue(null);
     const { default: DashboardPage } = await import("./page");
 
-    await expect(DashboardPage()).rejects.toThrow("REDIRECT:/login");
+    await expect(DashboardPage()).rejects.toThrow("REDIRECT:/login?next=/dashboard");
     expect(mocks.listJobs).not.toHaveBeenCalled();
   });
 
@@ -184,7 +185,6 @@ describe("DashboardPage", () => {
 
     expect(db.prepare).toHaveBeenCalledWith("SELECT id FROM tenants WHERE slug = ?");
     expect(mocks.listJobs).toHaveBeenCalledWith(db, "tenant-gaming", {
-      hidden: true,
       pageSize: 4,
     });
     expect(copy).toContain("Recent unlocks");
@@ -192,10 +192,11 @@ describe("DashboardPage", () => {
     expect(copy).toContain("Riot Games");
     expect(copy).toContain("1 Sept 2026");
     expect(links).toContain("/jobs/riot-games-senior-gameplay-engineer");
-    expect(copy).toContain("Latest jobs not on LinkedIn");
+    expect(copy).toContain("Latest jobs");
     expect(copy).toContain("Latest Hidden Role");
     expect(links).toContain("/jobs/latest-hidden");
-    expect(links).toContain("/hidden-jobs");
+    expect(links).toContain("/jobs");
+    expect(links).not.toContain("/hidden-jobs");
   });
 
   it("marks saved jobs and the hidden digest as not available yet", async () => {
@@ -207,8 +208,8 @@ describe("DashboardPage", () => {
       .map((element) => text(element));
 
     expect(copy).toContain("Saved jobs");
-    expect(copy).toContain("Hidden digest");
-    expect(tags).toEqual(expect.arrayContaining(["Not available yet", "Paid plan, not live yet"]));
+    expect(copy).toContain("Job alerts");
+    expect(tags).toEqual(expect.arrayContaining(["Not available yet"]));
     expect(copy).not.toMatch(/auto-apply/i);
     expect(copy).not.toMatch(/cover letter/i);
   });

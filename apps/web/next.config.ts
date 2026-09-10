@@ -41,6 +41,15 @@ const nextConfig: NextConfig = {
      * static generation - worth it for a build that finishes.
      */
     cpus: 1,
+    /*
+     * `experimental.viewTransition` was enabled here so that same-document
+     * <Link> navigation could run the CSS page transitions, and then removed:
+     * QA measured it inert in all three engines. The flag turns on React's
+     * ViewTransition component, which needs React's experimental channel, and
+     * this project pins stable React 19. Navigation itself is unaffected.
+     *
+     * Re-enabling it means moving React to the experimental channel first.
+     */
   },
 };
 

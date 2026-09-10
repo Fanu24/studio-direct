@@ -5,8 +5,9 @@ import { isQueueMessage, type QueueMessage } from "@gaming/shared";
 import { handleCareerMessage } from "./consumers/career";
 import { handleIndeedMessage } from "./consumers/indeed";
 import { handleLinkedinMessage } from "./consumers/linkedin";
+import { handleWeb3ApiMessage, unlistStaleApiJobs } from "./consumers/web3-api";
 import { enqueueCronWork } from "./cron";
-import { sendHiddenDigest } from "./digest";
+import { rebuildSalaryRollups } from "./pipeline/rollups";
 
 type QueueHandlerResult =
   | { action: "ack" }
@@ -25,12 +26,17 @@ export type QueueHandlers = {
     message: Extract<QueueMessage, { kind: "indeed" }>,
     env: Env,
   ) => Promise<QueueHandlerResult>;
+  web3Api: (
+    message: Extract<QueueMessage, { kind: "web3_api" }>,
+    env: Env,
+  ) => Promise<QueueHandlerResult>;
 };
 
 const defaultQueueHandlers: QueueHandlers = {
   career: handleCareerMessage,
   linkedin: handleLinkedinMessage,
   indeed: handleIndeedMessage,
+  web3Api: handleWeb3ApiMessage,
 };
 
 export async function routeQueueBatch(
@@ -49,14 +55,17 @@ export async function routeQueueBatch(
 
   const expectedKind =
     batch.queue === "crawl-career"
-      ? "career"
+      ? null
       : batch.queue === "crawl-linkedin"
         ? "linkedin"
         : "indeed";
-  const hasMatchingMessage = batch.messages.some(
-    (message) =>
-      isQueueMessage(message.body) && message.body.kind === expectedKind,
-  );
+  const hasMatchingMessage = batch.messages.some((message) => {
+    if (!isQueueMessage(message.body)) return false;
+    if (batch.queue === "crawl-career") {
+      return message.body.kind === "career" || message.body.kind === "web3_api";
+    }
+    return message.body.kind === expectedKind;
+  });
   if (!hasMatchingMessage) {
     batch.ackAll();
     return;
@@ -71,6 +80,8 @@ export async function routeQueueBatch(
     let result: QueueHandlerResult;
     if (batch.queue === "crawl-career" && message.body.kind === "career") {
       result = await handlers.career(message.body, env);
+    } else if (batch.queue === "crawl-career" && message.body.kind === "web3_api") {
+      result = await handlers.web3Api(message.body, env);
     } else if (
       batch.queue === "crawl-linkedin" &&
       message.body.kind === "linkedin"
@@ -125,7 +136,7 @@ export default {
     )
       .bind(
         crypto.randomUUID(),
-        "career_page",
+        "web3_career_api",
         nowIso,
         nowIso,
         1,
@@ -134,18 +145,10 @@ export default {
       .run();
 
     try {
-      const extra = env as Env & { EMAIL_FROM?: string; SITE_URL?: string };
-      await sendHiddenDigest(
-        {
-          DB: env.DB,
-          EMAIL: env.EMAIL,
-          EMAIL_FROM: extra.EMAIL_FROM,
-          SITE_URL: extra.SITE_URL,
-        },
-        now,
-      );
+      await unlistStaleApiJobs(env.DB, now);
+      await rebuildSalaryRollups(env.DB, nowIso);
     } catch (error) {
-      console.error("Hidden digest send failed", error);
+      console.error("Salary rollup or stale unlist failed", error);
     }
   },
 } satisfies ExportedHandler<Env>;

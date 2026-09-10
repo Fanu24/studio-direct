@@ -5,7 +5,7 @@ import { PRIVACY_COPY } from "../../lib/legal/copy";
 export const metadata: Metadata = {
   title: PRIVACY_COPY.title,
   description:
-    "Privacy Policy for Studio Direct: we use data for the job-board product. Recruiter talent-pool sharing is a separate opt-in purpose and is off by default.",
+    "Privacy Policy for Nodework: we use data for the job-board product. Recruiter talent-pool sharing is a separate opt-in purpose and is off by default.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -17,7 +17,7 @@ const SECTIONS = [
 
 export default function PrivacyPage() {
   return (
-    <main className="legal-page">
+    <main className="surface surface--stage legal-page">
       <header className="legal-page__head">
         <span className="kicker">Legal</span>
         <h1>{PRIVACY_COPY.title}</h1>
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
             ))}
           </ol>
         </nav>
-        <article className="legal-body">
+        <article className="legal-body measure">
           <section aria-labelledby="operator-title" id="operator">
             <h2 id="operator-title">Who operates this site</h2>
             <p>{PRIVACY_COPY.legalEntity}</p>

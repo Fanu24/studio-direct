@@ -19,7 +19,7 @@
   z-index: -1;
   inset: -120px 0 0 0;
   pointer-events: none;
-  background: radial-gradient(640px 320px at 0% 0%, rgb(196 163 90 / 0.13), transparent 70%);
+  background: radial-gradient(640px 320px at 0% 0%, var(--accent-soft), transparent 70%);
 }
 
 .jd-hero__badge {
@@ -127,9 +127,19 @@
   border: 1px solid var(--accent-line);
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(180deg, rgb(196 163 90 / 0.12), transparent 62%),
+    linear-gradient(180deg, var(--accent-soft), transparent 62%),
     var(--bg-elev);
   box-shadow: var(--shadow-panel);
+}
+
+/* The gated (unlock-required) variant reads a shade cooler than the plain apply panel,
+   so a returning visitor can tell at a glance which kind of listing this is before
+   reading a word of copy. */
+.jd-apply--gated {
+  border-color: var(--cool-line);
+  background:
+    linear-gradient(180deg, var(--cool-soft), transparent 62%),
+    var(--bg-elev);
 }
 
 .jd-apply .kicker {
@@ -165,6 +175,50 @@
   color: var(--accent);
 }
 
+/* The unlock gate: "what you get", "how many are left", "what happens next" -
+   a designed moment, not a bare button. Sits inside .jd-apply--gated. */
+
+.jd-unlock-gate {
+  display: grid;
+  gap: 14px;
+}
+
+.jd-unlock-gate__lead {
+  margin: 0;
+  max-width: none;
+  color: var(--dim);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.jd-unlock-gate__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
+.jd-unlock-gate__list li {
+  position: relative;
+  padding-left: 20px;
+  line-height: 1.4;
+}
+
+.jd-unlock-gate__list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cool);
+  box-shadow: 0 0 8px rgb(53 224 245 / 0.7);
+}
+
 /* Unlock form and its messages */
 
 .jd-unlock {
@@ -180,12 +234,19 @@
   font-size: 1.05rem;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.22),
-    0 22px 44px -20px rgb(196 163 90 / 0.75);
+    0 22px 44px -20px var(--cool-line);
 }
 
 .jd-unlock__notice {
   margin: 0;
   line-height: 1.5;
+  max-width: none;
+  display: grid;
+  gap: 8px;
+}
+
+.jd-unlock__notice-lead {
+  margin: 0;
   max-width: none;
 }
 
@@ -427,40 +488,9 @@
   max-width: none;
 }
 
-/* Motion: transform and opacity only */
-
-@media (prefers-reduced-motion: no-preference) {
-  .jd-hero > * {
-    animation: jd-in 0.8s var(--ease-out) both;
-  }
-
-  .jd-hero > :nth-child(2) {
-    animation-delay: 0.06s;
-  }
-
-  .jd-hero > :nth-child(3) {
-    animation-delay: 0.12s;
-  }
-
-  .jd-hero > :nth-child(4) {
-    animation-delay: 0.18s;
-  }
-
-  .jd-main {
-    animation: jd-in 0.9s var(--ease-out) 0.2s both;
-  }
-
-  .jd-aside {
-    animation: jd-in 0.9s var(--ease-out) 0.3s both;
-  }
-}
-
-@keyframes jd-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-}
+/* Motion: .jd-hero, .jd-main, .jd-aside and the tail panels carry .m-reveal directly
+   (job-detail-view.tsx) and pick up the short duration and 8px travel that
+   .surface--data already sets - no bespoke keyframe wiring needed here. */
 
 /* Responsive: the apply panel sits under the header, above the description */
 
@@ -498,5 +528,216 @@
 
   .jd-apply__title {
     font-size: 1.35rem;
+  }
+}
+
+/* --- Job detail parity blocks: hiring line, inline apply, sidebar facts, tail panels --- */
+
+main.jd {
+  max-width: 1180px;
+}
+
+/* Small-viewport fixed apply bar: hidden by default, shown under the mobile breakpoint
+   below so the apply action stays reachable without scrolling to the bottom, the same
+   pattern the split-view board already uses (.board-apply-fixed). */
+.jd-apply-fixed {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  main.jd {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .jd-apply-fixed {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--bg-elev);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -12px 24px -12px rgb(0 0 0 / 0.4);
+  }
+
+  .jd-apply-fixed__title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.86rem;
+    color: var(--dim);
+  }
+
+  .jd-apply-fixed__btn {
+    flex-shrink: 0;
+    min-height: 44px;
+  }
+}
+
+.jd-hero__hiring {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  color: var(--accent);
+  text-transform: none;
+}
+
+/* Repeat of the primary call to action at the foot of the description, where the
+   sticky sidebar has usually scrolled past on narrow desktops. */
+.jd-apply-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.jd-apply-inline__label {
+  margin: 0;
+  max-width: none;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+
+.jd-apply__studio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  max-width: none;
+}
+
+.jd-apply__studio-link {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.jd-apply__studio-link:hover {
+  text-decoration: underline;
+}
+
+.jd-apply__facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.jd-apply__facts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.jd-apply__facts dt {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+
+.jd-apply__facts dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.jd-apply__rule {
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--line);
+}
+
+.jd-apply__more-label {
+  margin: 0;
+  max-width: none;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+
+.jd-apply__more {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+/* Tail sections: role salary, more jobs on the tag, other roles at the studio, hire. */
+.jd-panel {
+  margin-top: clamp(32px, 5vw, 56px);
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+
+.jd-panel__title {
+  margin: 0 0 14px;
+  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+  letter-spacing: -0.02em;
+}
+
+.jd-panel__lead {
+  margin: 0 0 16px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.jd-panel__link {
+  margin: 16px 0 0;
+  max-width: none;
+}
+
+.jd-table-wrap {
+  overflow-x: auto;
+}
+
+.jd-table {
+  width: 100%;
+}
+
+.jd-table .board-row__pay,
+.jd-table .board-col-posted time,
+.jd-table .board-col-pay {
+  font-variant-numeric: tabular-nums;
+}
+
+.board-col-apply {
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .jd-apply-inline {
+    margin-top: 24px;
+    padding-top: 18px;
+  }
+
+  .jd-hero__title {
+    max-width: none;
   }
 }

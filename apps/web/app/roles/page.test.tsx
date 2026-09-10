@@ -1,4 +1,4 @@
-import { HUB_ROLE_SLUGS, hubSlugLabel } from "@gaming/shared";
+import { FEATURED_TAG_CHIPS, tagLabel } from "@gaming/shared";
 import React, { type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -24,7 +24,7 @@ function text(node: ReactNode): string {
 }
 
 describe("RolesPage", () => {
-  it("links every role hub and its skill page", async () => {
+  it("links featured tag landings and remote variants", async () => {
     const { default: RolesPage } = await import("./page");
     const page = RolesPage();
     const copy = text(page);
@@ -32,14 +32,15 @@ describe("RolesPage", () => {
       .filter((element) => typeof element.props.href === "string")
       .map((element) => element.props.href as string);
 
-    for (const slug of HUB_ROLE_SLUGS) {
-      expect(copy).toContain(hubSlugLabel(slug));
+    for (const slug of FEATURED_TAG_CHIPS) {
+      expect(copy).toContain(tagLabel(slug));
+      expect(hrefs).toContain(`/${slug}-jobs`);
       expect(hrefs).toContain(`/remote-${slug}-jobs`);
-      expect(hrefs).toContain(`/skills/${slug}`);
     }
 
-    expect(copy).toContain("Gaming jobs by role");
+    expect(copy).toContain("Web3 jobs by tag");
     expect(copy).not.toContain("—");
+    expect(copy).not.toContain("Gaming jobs by role");
     expect(hrefs.some((href) => href === "/talent" || href.startsWith("/talent/"))).toBe(
       false,
     );

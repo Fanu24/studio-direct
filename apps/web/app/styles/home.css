@@ -1,538 +1,131 @@
-/* Homepage marketing sections. Prefix: hero-, ticker-, feature-, compare-, voice-, price-teaser-, latest-, closing-. */
+/* Aurora homepage. */
 
-/* Hero */
-
-.hero {
-  position: relative;
-  padding: clamp(40px, 6vw, 72px) 0 clamp(56px, 7vw, 96px);
-  overflow: hidden;
+.home-main {
+  display: flex;
+  flex-direction: column;
 }
 
-.hero::before {
-  content: "";
-  position: absolute;
-  top: -30%;
-  right: -12%;
-  width: 62%;
-  height: 130%;
-  background: radial-gradient(closest-side, rgb(196 163 90 / 0.14), transparent 72%);
-  pointer-events: none;
+/* Hero section */
+
+.home-hero {
+  padding: clamp(88px, 10vw, 152px) 0;
+  position: relative;
 }
 
-.hero__grid {
-  position: relative;
+.home-hero .container {
   display: grid;
-  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-  gap: clamp(32px, 5vw, 72px);
-  align-items: center;
+  gap: var(--flow);
 }
 
-.hero__copy {
-  min-width: 0;
+.home-hero h1 {
+  font-size: var(--step-5);
+  margin: 0;
+  max-width: 18ch;
 }
 
-.hero__title {
-  font-size: clamp(2.5rem, 5.4vw, 4.4rem);
-  line-height: 1.02;
-  letter-spacing: -0.045em;
-  margin-bottom: 22px;
-  max-width: 13ch;
-}
-
-.hero__claim {
-  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
-  line-height: 1.55;
-  max-width: 48ch;
-  margin-bottom: 30px;
-  color: var(--muted);
-}
-
-.hero__search {
-  display: flex;
-  gap: 10px;
-  max-width: 580px;
-  margin-bottom: 20px;
-}
-
-.hero__field {
-  flex: 1;
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.hero__field svg {
-  position: absolute;
-  left: 18px;
+.home-hero .lead {
+  font-size: var(--step-1);
+  max-width: 52ch;
   color: var(--dim);
-  pointer-events: none;
 }
 
-.hero__field input {
-  padding-left: 46px;
-  min-height: 56px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-elev);
-  font-size: 1.02rem;
+.home-hero__search {
+  max-width: 580px;
+  margin-top: var(--flow);
 }
 
-.hero__field input:focus {
-  background: var(--bg);
+/* Sections */
+
+.home-sections {
+  display: grid;
+  gap: var(--section);
 }
 
-.hero__field input::-webkit-search-cancel-button {
-  filter: invert(0.7);
-}
-
-.hero__secondary {
-  color: var(--muted);
-}
-
-.hero__secondary:hover {
-  color: var(--text);
-}
-
-.hero__media {
-  position: relative;
+/* Every section on this page is an item in the .home-sections grid, and a grid
+   item's default minimum is its content width, not zero. Any one section whose
+   content refuses to shrink therefore widens the whole track and scrolls the
+   page. That produced the homepage's 25px of horizontal overflow at 360px on
+   all three engines - the only page-level overflow anywhere in the app across
+   21 templates, 6 viewports and 3 engines.
+   Two earlier attempts fixed the symptom on individual children, .home-stats
+   and then .home-reviews__carousel, and the overflow survived both because the
+   track itself was never constrained. It belongs here, once. */
+.home-section {
+  padding: var(--section) 0;
   min-width: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .hero__copy > * {
-    animation: hero-in 0.9s var(--ease-out) both;
-  }
-
-  .hero__copy > :nth-child(2) {
-    animation-delay: 0.07s;
-  }
-
-  .hero__copy > :nth-child(3) {
-    animation-delay: 0.14s;
-  }
-
-  .hero__copy > :nth-child(4) {
-    animation-delay: 0.21s;
-  }
-
-  .hero__copy > :nth-child(5) {
-    animation-delay: 0.28s;
-  }
-
-  .hero__media {
-    animation: hero-in 1.1s var(--ease-out) 0.25s both;
-  }
+.home-section .container {
+  display: grid;
+  gap: var(--flow);
 }
 
-@keyframes hero-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-}
+/* Stats band */
 
-/* Studio ticker */
-
-.ticker {
+.home-stats {
+  padding: var(--section) 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  background: rgb(15 17 22 / 0.55);
-}
-
-.ticker__caption {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  color: var(--dim);
-  margin: 16px 0 6px;
-}
-
-.ticker .marquee {
-  padding: 8px 0 22px;
-}
-
-.ticker__item {
-  font-weight: 600;
-  font-size: clamp(1.15rem, 1.8vw, 1.45rem);
-  letter-spacing: -0.03em;
-  color: var(--muted);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.ticker__item:hover {
-  color: var(--text);
-}
-
-/* Feature rows */
-
-.features {
-  display: grid;
-  gap: clamp(64px, 8vw, 120px);
-}
-
-.feature {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: clamp(32px, 5vw, 72px);
-  align-items: center;
-}
-
-/* Mirror the tracks too, so the theater keeps the same width in both directions. */
-.feature--reverse {
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-}
-
-.feature--reverse .feature__copy {
-  order: 2;
-}
-
-.feature--reverse .feature__media {
-  order: 1;
-}
-
-.feature__copy {
+  /* A grid item's default min-width is auto, so a 200px column minimum below
+     propagates up and pushes this band wider than its track instead of
+     wrapping. That produced 25px of real horizontal page scroll on the
+     homepage at 360px, identically on all three engines. */
   min-width: 0;
 }
 
-.feature__copy h2 {
-  margin-bottom: 16px;
-}
-
-.feature__copy p {
-  font-size: 1.06rem;
-}
-
-.feature__note {
-  margin-top: 20px;
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  line-height: 1.55;
-  color: var(--dim);
-  padding-left: 14px;
-  border-left: 2px solid var(--accent-line);
-  max-width: 44ch;
-}
-
-.feature__media {
+.stats-grid {
+  display: grid;
+  /* min() keeps the track from demanding 200px on a 360px screen, where the
+     container is narrower than the minimum once gutters are taken out. */
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: var(--gutter);
   min-width: 0;
 }
 
-.feature-band__copy {
-  max-width: 62ch;
-  margin-bottom: clamp(28px, 4vw, 44px);
-}
-
-.feature-band__copy p {
-  font-size: 1.06rem;
-}
-
-.feature-band .pv {
-  max-width: 1040px;
-  margin: 0 auto;
-}
-
-.feature-pair {
+.stat {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(28px, 4vw, 56px);
+  gap: 8px;
 }
 
-.feature-pair__item {
-  display: grid;
-  gap: 26px;
-  align-content: start;
-  min-width: 0;
-}
-
-.feature-pair__item h2 {
-  font-size: clamp(1.5rem, 2.5vw, 2.05rem);
-  margin-bottom: 12px;
-}
-
-/* Comparison */
-
-.compare__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
-}
-
-.compare__col {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: clamp(24px, 3vw, 40px);
-  background: var(--bg-elev);
-  display: grid;
-  gap: 24px;
-  align-content: start;
-  min-width: 0;
-}
-
-.compare__col--with {
-  border-color: var(--accent-line);
-  background:
-    linear-gradient(180deg, rgb(196 163 90 / 0.1), transparent 55%),
-    var(--bg-elev);
-}
-
-.compare__label {
-  font-family: var(--mono);
-  font-size: 0.76rem;
-  letter-spacing: 0.06em;
-  color: var(--dim);
-  margin: 0;
-}
-
-.compare__col--with .compare__label {
-  color: var(--accent);
-}
-
-.compare__figure {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  max-width: none;
-}
-
-.compare__number {
-  font-size: clamp(3.4rem, 6vw, 5.2rem);
+.stat__value {
+  font-size: var(--step-4);
   font-weight: 700;
-  letter-spacing: -0.05em;
-  line-height: 1;
-  color: var(--text);
+  color: var(--accent);
+  font-family: var(--mono);
   font-variant-numeric: tabular-nums;
 }
 
-.compare__col--with .compare__number {
-  color: var(--accent);
-}
-
-.compare__caption {
-  color: var(--muted);
-  font-size: 1rem;
-}
-
-.compare__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
-}
-
-.compare__list li {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  color: var(--text);
-  line-height: 1.45;
-}
-
-.compare__list svg {
-  margin-top: 4px;
+.stat__label {
+  font-size: var(--step--1);
   color: var(--dim);
 }
 
-.compare__col--with .compare__list svg {
-  color: var(--accent);
+/* Teasers */
+
+.teaser {
+  display: grid;
+  gap: var(--flow);
+  max-width: 62ch;
 }
 
-/* Testimonials */
-
-.voices .section-head {
-  margin-bottom: 28px;
-}
-
-.voice {
+.teaser h2 {
+  font-size: var(--step-3);
   margin: 0;
-  width: 340px;
-  flex: none;
+}
+
+.teaser p {
+  color: var(--dim);
+  margin: 0;
+}
+
+.teaser--notice {
+  padding: var(--gutter);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   background: var(--bg-elev);
-  padding: 22px 22px 20px;
-  display: grid;
-  gap: 18px;
-  position: relative;
-  align-content: space-between;
 }
 
-.voice__tag {
-  position: absolute;
-  top: 18px;
-  right: 20px;
-}
-
-.voice blockquote {
-  margin: 0;
-  padding-right: 84px;
-}
-
-.voice blockquote p {
-  color: var(--text);
-  font-size: 1.02rem;
-  line-height: 1.5;
-  max-width: none;
-}
-
-.voice figcaption {
-  display: grid;
-  gap: 2px;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
-.voice figcaption strong {
-  color: var(--text);
-}
-
-/* Pricing teaser */
-
-.price-teaser__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.price-teaser__plan {
-  display: grid;
-  gap: 6px;
-  align-content: start;
-}
-
-.price-teaser__plan h3 {
-  font-size: clamp(1.8rem, 3vw, 2.3rem);
-  letter-spacing: -0.04em;
-  margin: 6px 0 4px;
-}
-
-.price-teaser__free {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px 32px;
-  flex-wrap: wrap;
-  border-top: 1px solid var(--line);
-  padding-top: 22px;
-  margin-top: 22px;
-}
-
-.price-teaser__free p {
-  max-width: 60ch;
-}
-
-/* Latest jobs */
-
-.latest__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 24px;
-  margin-bottom: 28px;
-}
-
-.latest__head h2 {
+.teaser--notice h2 {
   margin-bottom: 8px;
 }
 
-.latest__head .count {
-  white-space: nowrap;
-  padding-bottom: 6px;
-}
-
-.latest .job-grid {
-  margin-bottom: 28px;
-}
-
-.latest__more {
-  margin: 0;
-}
-
-/* Closing */
-
-.closing {
-  padding: clamp(72px, 10vw, 140px) 0;
-  border-top: 1px solid var(--line);
-  background: radial-gradient(60% 90% at 50% 110%, rgb(196 163 90 / 0.14), transparent 70%);
-}
-
-.closing__inner {
-  display: grid;
-  gap: 32px;
-  justify-items: center;
-  text-align: center;
-}
-
-.closing__stat {
-  font-size: clamp(1.7rem, 3.4vw, 2.8rem);
-  max-width: 24ch;
-  margin: 0;
-}
-
-.closing__num {
-  font-family: var(--mono);
-  color: var(--accent);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}
-
-.closing .cluster {
-  justify-content: center;
-}
-
-/* Responsive */
-
-@media (max-width: 1024px) {
-  .hero__title {
-    max-width: none;
-  }
-}
-
-@media (max-width: 900px) {
-  .hero {
-    padding-top: 32px;
-  }
-
-  .hero__grid,
-  .feature,
-  .feature-pair,
-  .compare__grid,
-  .price-teaser__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .feature--reverse .feature__copy {
-    order: 1;
-  }
-
-  .feature--reverse .feature__media {
-    order: 2;
-  }
-
-  .hero__search {
-    flex-direction: column;
-  }
-
-  .hero__search .button {
-    width: 100%;
-  }
-
-  .latest__head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-}
-
-@media (max-width: 640px) {
-  .voice {
-    width: 280px;
-  }
-
-  .voice blockquote {
-    padding-right: 0;
-    padding-top: 18px;
-  }
-}

@@ -1,0 +1,1432 @@
+{
+  "overflow": [],
+  "targets": [
+    {
+      "engine": "chromium",
+      "url": "/web3-salaries",
+      "viewport": "360x740",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 113.2
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 125.5
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-salaries",
+      "viewport": "390x844",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 113.5
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 125.9
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-salaries",
+      "viewport": "768x1024",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 117.6
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 130.4
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-salaries",
+      "viewport": "1024x768",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 120.3
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 133.5
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-salaries",
+      "viewport": "1440x900",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 121.9
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 135.2
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-salaries",
+      "viewport": "1920x1080",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 121.9
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 135.2
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "360x740",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 37.5
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 147.9
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "390x844",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 37.6
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 148.3
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "768x1024",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 39
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 153.7
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "1024x768",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 39.9
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 157.2
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "1440x900",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 40.4
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 159.3
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "1920x1080",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 40.4
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 159.3
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-salaries",
+      "viewport": "360x740",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 113.1
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 125.5
+        },
+        {
+          "cls": "",
+          "h": 35.6,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-salaries",
+      "viewport": "390x844",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 113.5
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 125.9
+        },
+        {
+          "cls": "",
+          "h": 35.6,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-salaries",
+      "viewport": "768x1024",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 117.6
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 130.4
+        },
+        {
+          "cls": "",
+          "h": 35.6,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-salaries",
+      "viewport": "1024x768",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 120.3
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 133.4
+        },
+        {
+          "cls": "",
+          "h": 35.6,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-salaries",
+      "viewport": "1440x900",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 122
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 135.3
+        },
+        {
+          "cls": "",
+          "h": 35.6,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-salaries",
+      "viewport": "1920x1080",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 122
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 135.3
+        },
+        {
+          "cls": "",
+          "h": 35.6,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "360x740",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 37.5
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 147.9
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "390x844",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 37.6
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 148.3
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "768x1024",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 39
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 153.6
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "1024x768",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 39.9
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 157.2
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "1440x900",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 40.4
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 159.4
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "1920x1080",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.5
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.5
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 40.4
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 159.4
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-salaries",
+      "viewport": "360x740",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 113.2
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 125.5
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-salaries",
+      "viewport": "390x844",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 113.5
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 125.9
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-salaries",
+      "viewport": "768x1024",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 117.6
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 130.4
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-salaries",
+      "viewport": "1024x768",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 120.4
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 133.5
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-salaries",
+      "viewport": "1440x900",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 122
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 135.3
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-salaries",
+      "viewport": "1920x1080",
+      "count": 11,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 122
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 135.3
+        },
+        {
+          "cls": "",
+          "h": 35.5,
+          "w": 20.3
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 127.9
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "360x740",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 37.5
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 147.9
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "390x844",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 37.6
+        },
+        {
+          "cls": "",
+          "h": 19,
+          "w": 148.3
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "768x1024",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 39
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 153.7
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "1024x768",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 39.9
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 157.3
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "1440x900",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 40.4
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 159.4
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "url": "/web3-non-tech-salaries",
+      "viewport": "1920x1080",
+      "count": 13,
+      "sample": [
+        {
+          "cls": "",
+          "h": 16,
+          "w": 28.4
+        },
+        {
+          "cls": "",
+          "h": 16,
+          "w": 92.4
+        },
+        {
+          "cls": "visually-hidden",
+          "h": 1,
+          "w": 1
+        },
+        {
+          "cls": "",
+          "h": 29.8,
+          "w": 18.7
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 40.4
+        },
+        {
+          "cls": "",
+          "h": 20,
+          "w": 159.4
+        }
+      ]
+    }
+  ],
+  "trap": [
+    {
+      "engine": "chromium",
+      "escapedForward": 0,
+      "escapedBackward": 0,
+      "forwardSample": [
+        "IN:a.mobile-menu__hub",
+        "IN:a.chip",
+        "IN:a.chip",
+        "IN:a.chip",
+        "IN:a.chip",
+        "IN:a.chip"
+      ],
+      "afterEscape": {
+        "open": false,
+        "onToggle": true
+      },
+      "keyboardTarget": "/",
+      "activated": "NO NAVIGATION"
+    },
+    {
+      "engine": "firefox",
+      "escapedForward": 0,
+      "escapedBackward": 0,
+      "forwardSample": [
+        "IN:a.mobile-menu__hub",
+        "IN:a.chip",
+        "IN:a.chip",
+        "IN:a.chip",
+        "IN:a.chip",
+        "IN:a.chip"
+      ],
+      "afterEscape": {
+        "open": false,
+        "onToggle": true
+      },
+      "keyboardTarget": "/",
+      "activated": "NO NAVIGATION"
+    },
+    {
+      "engine": "webkit",
+      "escapedForward": 0,
+      "escapedBackward": 0,
+      "forwardSample": [
+        "IN:button.menu-button",
+        "IN:a.mobile-menu__hub",
+        "IN:a.chip",
+        "IN:a.chip",
+        "IN:a.chip",
+        "IN:a.chip"
+      ],
+      "afterEscape": {
+        "open": false,
+        "onToggle": true
+      },
+      "keyboardTarget": "/jobs",
+      "activated": "http://localhost:3100/jobs"
+    }
+  ]
+}

@@ -12,21 +12,35 @@ export function resetTurnstileWidget(
     turnstile?: TurnstileApi;
   }).turnstile,
 ): void {
-  turnstile?.reset?.();
+  // Resetting the widget is best-effort housekeeping, never a reason to fail a
+  // sign-in. Turnstile throws from reset() when no widget was ever rendered,
+  // and because this runs in submitLoginMagicLink's finally block, that throw
+  // replaced the real result of the sign-in: the form showed neither an error
+  // nor a confirmation, and the rejection went unhandled. Reachable in
+  // production any time the script is blocked or slow to initialise.
+  try {
+    turnstile?.reset?.();
+  } catch {
+    // The widget was never mounted, or Turnstile is unavailable. Nothing to reset.
+  }
 }
 
 export async function submitLoginMagicLink({
+  callbackURL = "/",
   email,
+  newUserCallbackURL = "/onboarding",
   token,
 }: {
+  callbackURL?: string;
   email: string;
+  newUserCallbackURL?: string;
   token: string;
 }) {
   try {
     return await authClient.signIn.magicLink({
       email,
-      callbackURL: "/",
-      newUserCallbackURL: "/onboarding",
+      callbackURL,
+      newUserCallbackURL,
       fetchOptions: {
         headers: {
           "x-captcha-response": token,
@@ -44,10 +58,14 @@ export async function submitLoginMagicLink({
  * above the button in both DOM and visual order.
  */
 export function LoginForm({
+  callbackURL = "/",
   children,
+  newUserCallbackURL = "/onboarding",
   siteKey,
 }: {
+  callbackURL?: string;
   children: ReactNode;
+  newUserCallbackURL?: string;
   siteKey: string;
 }) {
   const [message, setMessage] = useState<string | null>(null);
@@ -64,7 +82,12 @@ export function LoginForm({
         ?.value ?? "";
 
     setError(null);
-    const { error: sendError } = await submitLoginMagicLink({ email, token });
+    const { error: sendError } = await submitLoginMagicLink({
+      callbackURL,
+      email,
+      newUserCallbackURL,
+      token,
+    });
 
     if (sendError) {
       setError(
@@ -89,33 +112,43 @@ export function LoginForm({
       />
       {error ? (
         <p className="notice notice--danger" role="alert">
+          <strong>Error. </strong>
           {error}
         </p>
       ) : null}
       {message ? (
         <p className="notice notice--accent" role="status">
+          <strong>Sent. </strong>
           {message}
         </p>
       ) : null}
-      <form className="login__form" onSubmit={onSubmit}>
+      <form className="auth-form" onSubmit={onSubmit}>
         {items}
-        <div className="cf-turnstile" data-sitekey={siteKey} />
+        <div className="auth-form__turnstile cf-turnstile" data-sitekey={siteKey} />
         {submit}
       </form>
     </>
   );
 }
 
-export function GoogleSignInButton({ children }: { children: ReactNode }) {
+export function GoogleSignInButton({
+  callbackURL = "/",
+  children,
+  newUserCallbackURL = "/onboarding",
+}: {
+  callbackURL?: string;
+  children: ReactNode;
+  newUserCallbackURL?: string;
+}) {
   return (
     <button
-      className="button button--secondary button--block"
+      className="button button--ghost button--block"
       type="button"
       onClick={() => {
         void authClient.signIn.social({
           provider: "google",
-          callbackURL: "/",
-          newUserCallbackURL: "/onboarding",
+          callbackURL,
+          newUserCallbackURL,
         });
       }}
     >

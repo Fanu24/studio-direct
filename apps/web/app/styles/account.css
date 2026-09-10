@@ -9,23 +9,27 @@ main.acct-main {
 
 .acct-head {
   border-bottom: 1px solid var(--line);
-  background:
-    radial-gradient(900px 320px at 12% -40%, rgb(196 163 90 / 0.12), transparent 70%),
-    var(--bg-deep);
+  background: var(--bg);
   padding-top: 40px;
+}
+
+.acct-head__content {
+  display: flex;
+  flex-direction: column;
 }
 
 .acct-head .kicker {
   margin-bottom: 10px;
+  display: block;
 }
 
 .acct-head__title {
-  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  font-size: var(--step-3);
   margin-bottom: 8px;
 }
 
 .acct-head__lead {
-  font-size: 1.05rem;
+  font-size: var(--step-0);
   margin-bottom: 4px;
 }
 
@@ -65,8 +69,6 @@ main.acct-main {
 }
 
 .acct-body {
-  display: grid;
-  gap: 20px;
   padding-top: 32px;
 }
 
@@ -80,9 +82,7 @@ main.acct-main {
 }
 
 .acct-panel h2 {
-  font-size: 1.3rem;
-  letter-spacing: -0.025em;
-  line-height: 1.25;
+  font-size: var(--step-2);
   margin: 0;
 }
 
@@ -231,39 +231,41 @@ main.acct-main {
 
 .dash-tile__label {
   font-family: var(--mono);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   letter-spacing: 0.06em;
-  color: var(--dim);
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
 }
 
 .dash-tile__value {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  font-size: clamp(2rem, 4vw, 2.8rem);
-  font-weight: 700;
-  letter-spacing: -0.045em;
+  font-size: var(--step-3);
+  font-weight: 600;
   line-height: 1;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
 }
 
 .dash-tile--unlocks .dash-tile__value {
-  font-size: clamp(3rem, 6vw, 4.6rem);
+  font-size: var(--step-4);
 }
 
 .dash-tile__value small {
   font-family: var(--mono);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 400;
   letter-spacing: 0.02em;
   color: var(--muted);
 }
 
 .dash-tile .dash-tile__value--text {
-  font-size: clamp(1.5rem, 2.6vw, 1.9rem);
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  font-size: var(--step-2);
+  font-family: var(--font);
+  line-height: 1.1;
 }
 
 .dash-tile > p:not([class]) {
@@ -307,8 +309,7 @@ main.acct-main {
 }
 
 .dash-section__head h2 {
-  font-size: 1.3rem;
-  letter-spacing: -0.025em;
+  font-size: var(--step-2);
   margin: 0;
 }
 
@@ -518,9 +519,9 @@ main.acct-main.login {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.9rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-family: var(--mono);
+  font-size: var(--step-2);
+  font-weight: 600;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -533,12 +534,12 @@ main.acct-main.login {
 
 .acct-completeness__copy h2 {
   margin: 0;
-  font-size: 1.3rem;
-  letter-spacing: -0.025em;
+  font-size: var(--step-2);
 }
 
 .acct-completeness__copy p {
   margin: 0;
+  font-size: var(--step-0);
 }
 
 .acct-checklist {
@@ -546,7 +547,7 @@ main.acct-main.login {
   margin: 6px 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 8px 20px;
 }
 

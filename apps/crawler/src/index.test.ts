@@ -10,6 +10,7 @@ function createHandlers() {
     career: vi.fn(async () => ({ action: "ack" as const })),
     linkedin: vi.fn(async () => ({ action: "ack" as const })),
     indeed: vi.fn(async () => ({ action: "ack" as const })),
+    web3Api: vi.fn(async () => ({ action: "ack" as const })),
   } satisfies QueueHandlers;
 }
 
@@ -33,6 +34,7 @@ function createBatch(queue: string, body: QueueMessage) {
 
 describe.each([
   ["crawl-career", "career", { kind: "career", companyId: "company-1" }],
+  ["crawl-career", "web3Api", { kind: "web3_api", tag: "solidity" }],
   ["crawl-linkedin", "linkedin", { kind: "linkedin", query: "unity remote" }],
   ["crawl-indeed", "indeed", { kind: "indeed", query: "unreal remote" }],
 ] as const)(

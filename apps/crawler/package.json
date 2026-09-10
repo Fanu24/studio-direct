@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "vitest run --config vitest.wrangler.config.ts && vitest run --config vitest.config.ts && vitest run --config vitest.node.config.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "bootstrap:web3": "node scripts/bootstrap-local.mjs"
   },
   "dependencies": {
     "@gaming/shared": "workspace:*"

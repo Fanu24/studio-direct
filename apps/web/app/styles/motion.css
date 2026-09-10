@@ -1,0 +1,793 @@
+/* ==========================================================================
+   Nodework — motion layer.
+
+   The only file allowed to declare @keyframes. Duration and easing tokens are
+   declared in globals.css, the single token block; this file consumes them.
+
+   Primitives (each a class, usable in either register):
+     .m-reveal    opacity + translateY on scroll entry
+     .m-parallax  slow drift on scroll
+     .m-marquee   continuous horizontal loop, pauses on hover / focus-within
+     .m-count     number roll-up on entry (real text, masked rise; never counter())
+     .m-lift      hover elevation on cards
+     .m-sheen     one accent sweep across a surface on mount, stage only
+
+   Scroll-driven primitives use `animation-timeline: view()` where supported
+   (Chromium). Elsewhere, RevealObserver adds `.is-in` and a transition runs.
+   The default state is ALWAYS the finished, visible page: the start state is
+   reachable only when the scroll timeline is absent AND scripting is enabled
+   AND the element opted in with `data-reveal`.
+
+   Contract for a revealed element:  class="m-reveal" data-reveal
+   Optional stagger:                 data-reveal-delay="1" | "2" | "3"
+   ========================================================================== */
+
+/* --- Page transitions. Cross-document only; browsers without it navigate. --- */
+
+@view-transition {
+  navigation: auto;
+}
+
+.site-nav {
+  view-transition-name: site-header;
+}
+
+.site-footer {
+  view-transition-name: site-footer;
+}
+
+/* ==========================================================================
+   Keyframes: system
+   ========================================================================== */
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(var(--reveal-d));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--reveal-d));
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes parallax {
+  from {
+    transform: translateY(calc(var(--parallax-d, 48px) * -1));
+  }
+  to {
+    transform: translateY(var(--parallax-d, 48px));
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes count-up {
+  from {
+    transform: translateY(110%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes sheen {
+  from {
+    transform: translateX(-130%) skewX(-12deg);
+  }
+  to {
+    transform: translateX(130%) skewX(-12deg);
+  }
+}
+
+@keyframes aurora-drift {
+  from {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.06) translate3d(-1.2%, 1%, 0);
+  }
+}
+
+/* ==========================================================================
+   .m-reveal
+   ========================================================================== */
+
+@supports (animation-timeline: view()) {
+  .m-reveal {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 32%;
+  }
+
+  .m-reveal[data-reveal-delay="1"] {
+    animation-range: entry 6% cover 38%;
+  }
+
+  .m-reveal[data-reveal-delay="2"] {
+    animation-range: entry 12% cover 44%;
+  }
+
+  .m-reveal[data-reveal-delay="3"] {
+    animation-range: entry 18% cover 50%;
+  }
+
+  /* Levels beyond 6 all resolve here: a stagger deep enough to notice is a
+     stagger long enough to annoy, and pages were using up to 12. */
+  .m-reveal[data-reveal-delay="4"] {
+    animation-range: entry 24% cover 56%;
+  }
+
+  .m-reveal[data-reveal-delay="5"] {
+    animation-range: entry 30% cover 62%;
+  }
+
+  .m-reveal[data-reveal-delay="6"],
+  .m-reveal[data-reveal-delay="7"],
+  .m-reveal[data-reveal-delay="8"],
+  .m-reveal[data-reveal-delay="9"],
+  .m-reveal[data-reveal-delay="10"],
+  .m-reveal[data-reveal-delay="11"],
+  .m-reveal[data-reveal-delay="12"] {
+    animation-range: entry 36% cover 68%;
+  }
+}
+
+/* --- .m-reveal--now: reveal on load, never on scroll. ---------------------
+   An element sitting in the first viewport has no scroll distance to be
+   revealed over, and a view() timeline leaves it parked at whatever partial
+   progress its range resolves to - measured at opacity 0.91 and 0.55 on two
+   home hero elements, on every load, on Chromium and WebKit, never updating.
+   Above-the-fold content uses this instead. */
+.m-reveal--now,
+.m-reveal--now[data-reveal]:not(.is-in) {
+  animation: reveal var(--dur-long) var(--ease-out) both !important;
+  animation-timeline: auto !important;
+  opacity: 1;
+  transform: none;
+}
+
+.m-reveal--now[data-reveal-delay="1"] { animation-delay: 80ms !important; }
+.m-reveal--now[data-reveal-delay="2"] { animation-delay: 160ms !important; }
+.m-reveal--now[data-reveal-delay="3"] { animation-delay: 240ms !important; }
+
+@supports not (animation-timeline: view()) {
+  /* Default is the finished state: no JS, no support, still readable. */
+  .m-reveal {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--dur-reveal, var(--dur-long)) var(--ease-out),
+      transform var(--dur-reveal, var(--dur-long)) var(--ease-out);
+  }
+
+  .m-reveal[data-reveal-delay="1"] {
+    transition-delay: 90ms;
+  }
+
+  .m-reveal[data-reveal-delay="2"] {
+    transition-delay: 180ms;
+  }
+
+  .m-reveal[data-reveal-delay="3"] {
+    transition-delay: 270ms;
+  }
+
+  .m-reveal[data-reveal-delay="4"] { transition-delay: 360ms; }
+  .m-reveal[data-reveal-delay="5"] { transition-delay: 450ms; }
+  .m-reveal[data-reveal-delay="6"],
+  .m-reveal[data-reveal-delay="7"],
+  .m-reveal[data-reveal-delay="8"],
+  .m-reveal[data-reveal-delay="9"],
+  .m-reveal[data-reveal-delay="10"],
+  .m-reveal[data-reveal-delay="11"],
+  .m-reveal[data-reveal-delay="12"] { transition-delay: 540ms; }
+
+  /* Only a browser that will actually run the observer gets the start state. */
+  @media (scripting: enabled) {
+    .m-reveal[data-reveal]:not(.is-in) {
+      opacity: 0;
+      transform: translateY(var(--reveal-d));
+    }
+  }
+}
+
+/* ==========================================================================
+   .m-parallax — apply to a decorative layer, never to text.
+   Set --parallax-d on the element to tune the travel (default 48px).
+   ========================================================================== */
+
+@supports (animation-timeline: view()) {
+  .m-parallax {
+    animation: parallax linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+}
+
+/* ==========================================================================
+   .m-marquee — the element's first child is the track; the track holds two
+   identical groups so translateX(-50%) loops seamlessly.
+
+   The `.marquee__track` selectors that used to ride alongside every rule here
+   belonged to the <Marquee> component, which was deleted with its two unused
+   consumers. This primitive stays: it is part of the motion vocabulary a page
+   can reach for, not component code.
+   ========================================================================== */
+
+.m-marquee {
+  overflow: hidden;
+}
+
+.m-marquee > * {
+  display: flex;
+  width: max-content;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .m-marquee > * {
+    animation: marquee var(--marquee-duration, 40s) linear infinite;
+  }
+
+  .m-marquee--reverse > * {
+    animation-direction: reverse;
+  }
+
+  .m-marquee:hover > *,
+  .m-marquee:focus-within > * {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-marquee {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* ==========================================================================
+   .m-count — wrap the figure:  <span class="m-count" data-reveal><span>1,204</span></span>
+   The digits are real DOM text and are in the page from first paint.
+   ========================================================================== */
+
+.m-count {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.m-count > * {
+  display: inline-block;
+}
+
+@supports (animation-timeline: view()) {
+  .m-count > * {
+    animation: count-up var(--ease-spring) both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 80%;
+  }
+}
+
+@supports not (animation-timeline: view()) {
+  .m-count > * {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--dur-long) var(--ease-out),
+      transform var(--dur-long) var(--ease-spring);
+  }
+
+  @media (scripting: enabled) {
+    .m-count[data-reveal]:not(.is-in) > * {
+      opacity: 0;
+      transform: translateY(110%);
+    }
+  }
+}
+
+/* ==========================================================================
+   .m-lift — hover elevation. Stage cards glow, data cards sharpen. The
+   component never needs to know which register it is in.
+   ========================================================================== */
+
+.m-lift {
+  transition:
+    transform var(--dur-mid) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out),
+    background var(--dur-short) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out);
+  will-change: transform;
+}
+
+.m-lift:hover,
+.m-lift:focus-within {
+  transform: translateY(-3px);
+  border-color: var(--line-strong);
+}
+
+.surface--stage .m-lift:hover,
+.surface--stage .m-lift:focus-within {
+  border-color: var(--accent-line);
+  box-shadow: var(--shadow-glow), var(--edge-light);
+}
+
+.surface--data .m-lift:hover,
+.surface--data .m-lift:focus-within {
+  transform: translateY(-1px);
+  background: var(--bg-hover);
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   .m-sheen — one accent sweep on mount. Stage only, at most one per page.
+   The element must be able to host an absolute child (we set it here).
+   ========================================================================== */
+
+.m-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.surface--stage .m-sheen::after {
+  content: "";
+  position: absolute;
+  inset: -20% -10%;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 38%,
+    rgb(255 255 255 / 0.05) 46%,
+    rgb(255 45 135 / 0.12) 50%,
+    rgb(255 255 255 / 0.05) 54%,
+    transparent 62%
+  );
+  transform: translateX(-130%) skewX(-12deg);
+  animation: sheen 1.5s var(--ease-inout) 0.35s 1 both;
+}
+
+/* ==========================================================================
+   Ambient: the aurora breathes. Transform only, so it stays on the compositor.
+   ========================================================================== */
+
+.surface--stage::before {
+  animation: aurora-drift 26s var(--ease-inout) infinite alternate;
+}
+
+/* ==========================================================================
+   Chrome: the header settles as the page scrolls (Chromium). Elsewhere the
+   header is simply solid. Both layers are opacity-only.
+   ========================================================================== */
+
+@supports (animation-timeline: scroll()) {
+  .site-nav::before,
+  .site-nav::after {
+    animation: fade-in linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 96px;
+  }
+}
+
+/* ==========================================================================
+   Reduced motion. Not optional. Every opacity end-state resolves to visible.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .m-marquee > * {
+    animation: none;
+  }
+
+  /* !important is required, not decorative. The no-support branch starts
+     hidden elements with `.m-reveal[data-reveal]:not(.is-in)`, specificity
+     (0,3,0); a bare `.m-reveal` here is (0,1,0) and loses. Without this a
+     reduced-motion reader on Firefox gets a page whose below-the-fold
+     sections never become visible. */
+  .m-reveal,
+  .m-count > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .m-parallax,
+  .surface--stage::before,
+  .surface--stage .m-sheen::after {
+    animation: none;
+  }
+
+  .site-nav::before,
+  .site-nav::after {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Relocated keyframes. These were declared in home.css, job-detail.css and
+   theaters.css; the scenes that use them stay in those files. Lanes 1 and 2
+   may retire hero-in / jd-in in favour of .m-reveal.
+   ========================================================================== */
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes jd-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes t-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes th1-site {
+  0%,
+  100% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+  4%,
+  9% {
+    border-color: var(--line);
+    color: var(--muted);
+  }
+  12% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+}
+
+@keyframes th1-site-2 {
+  0%,
+  100% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+  4%,
+  33% {
+    border-color: var(--line);
+    color: var(--muted);
+  }
+  36% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+}
+
+@keyframes th1-site-3 {
+  0%,
+  100% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+  4%,
+  57% {
+    border-color: var(--line);
+    color: var(--muted);
+  }
+  60% {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+}
+
+@keyframes th1-card {
+  0%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+  4%,
+  13% {
+    opacity: 0;
+    transform: translateX(1.6em);
+  }
+  19% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes th1-card-2 {
+  0%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+  4%,
+  37% {
+    opacity: 0;
+    transform: translateX(1.6em);
+  }
+  43% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes th1-card-3 {
+  0%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+  4%,
+  61% {
+    opacity: 0;
+    transform: translateX(1.6em);
+  }
+  67% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes th1-flow {
+  0%,
+  9% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  12% {
+    opacity: 1;
+  }
+  18% {
+    opacity: 0;
+    transform: translateY(12em);
+  }
+  33% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  36% {
+    opacity: 1;
+  }
+  42% {
+    opacity: 0;
+    transform: translateY(12em);
+  }
+  57% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  60% {
+    opacity: 1;
+  }
+  66%,
+  100% {
+    opacity: 0;
+    transform: translateY(12em);
+  }
+}
+
+@keyframes th3-caret {
+  0%,
+  15% {
+    visibility: visible;
+  }
+  16%,
+  29% {
+    visibility: hidden;
+  }
+  30%,
+  100% {
+    visibility: visible;
+  }
+}
+
+@keyframes th3-type {
+  0%,
+  4% {
+    clip-path: inset(0 0 0 0);
+  }
+  5%,
+  15% {
+    clip-path: inset(0 100% 0 0);
+  }
+  16% {
+    clip-path: inset(0 100% 0 0);
+    animation-timing-function: steps(8);
+  }
+  30%,
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes th3-count-all {
+  0%,
+  4% {
+    opacity: 0;
+  }
+  5%,
+  33% {
+    opacity: 1;
+  }
+  36%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes th3-count-one {
+  0%,
+  4% {
+    opacity: 1;
+  }
+  5%,
+  33% {
+    opacity: 0;
+  }
+  36%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes th3-row {
+  0%,
+  4% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+  6%,
+  32% {
+    opacity: 1;
+    transform: none;
+  }
+  38%,
+  100% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes th3-row-3 {
+  0%,
+  4% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+  6%,
+  33% {
+    opacity: 1;
+    transform: none;
+  }
+  40%,
+  100% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes th3-row-4 {
+  0%,
+  4% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+  6%,
+  34% {
+    opacity: 1;
+    transform: none;
+  }
+  42%,
+  100% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes th3-row-5 {
+  0%,
+  4% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+  6%,
+  35% {
+    opacity: 1;
+    transform: none;
+  }
+  44%,
+  100% {
+    opacity: 0.16;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes th3-row-match {
+  0%,
+  4% {
+    border-color: var(--accent-line);
+  }
+  6%,
+  32% {
+    border-color: var(--line);
+  }
+  40%,
+  100% {
+    border-color: var(--accent-line);
+  }
+}
+
+@keyframes th6-chip {
+  0%,
+  5% {
+    border-color: var(--accent-line);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  9%,
+  42% {
+    border-color: var(--line);
+    color: var(--muted);
+    background: var(--bg-elev);
+  }
+  48%,
+  100% {
+    border-color: var(--accent-line);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+}
+
+@keyframes th6-plain {
+  0%,
+  5% {
+    opacity: 0.15;
+    transform: scale(0.985);
+  }
+  12%,
+  45% {
+    opacity: 1;
+    transform: none;
+  }
+  54%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.985);
+  }
+}
