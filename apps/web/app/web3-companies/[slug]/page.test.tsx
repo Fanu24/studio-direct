@@ -311,6 +311,61 @@ describe("CompanyPage route precedence", () => {
   );
 });
 
+describe("CompanyPage company description", () => {
+  const db = {};
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getCloudflareContext.mockResolvedValue({ env: { DB: db } });
+    mocks.listJobs.mockResolvedValue({
+      jobs: [JOB_A],
+      page: 1,
+      pageSize: 20,
+      total: 45,
+      totalPages: 3,
+    });
+    mocks.getJobForListItem.mockImplementation(
+      async (_db: unknown, _tenantId: unknown, job: unknown) =>
+        detailFor(job as { slug: string; title?: string } | undefined),
+    );
+    mocks.listCompanyTopTags.mockResolvedValue([]);
+    mocks.listCompanyLocations.mockResolvedValue([]);
+    mocks.countNewJobs.mockResolvedValue(0);
+  });
+
+  it("renders a description when the company has one", async () => {
+    mocks.getCompanyBySlug.mockResolvedValue({
+      ...COMPANY,
+      slug: "acme",
+      description: "Acme builds settlement rails.",
+    });
+    const { default: CompanyPage } = await import("./page");
+    const page = await CompanyPage({
+      params: Promise.resolve({ slug: "acme" }),
+      searchParams: Promise.resolve({}),
+    });
+
+    expect(text(page)).toContain("Acme builds settlement rails.");
+  });
+
+  it("shows no description block at all when the column is empty", async () => {
+    mocks.getCompanyBySlug.mockResolvedValue({
+      ...COMPANY,
+      slug: "empty-co",
+      description: null,
+    });
+    const { default: CompanyPage } = await import("./page");
+    const page = await CompanyPage({
+      params: Promise.resolve({ slug: "empty-co" }),
+      searchParams: Promise.resolve({}),
+    });
+
+    const copy = text(page);
+    expect(copy).not.toMatch(/About this company/i);
+    expect(copy).not.toMatch(/No description/i);
+  });
+});
+
 describe("CompanyPage generateMetadata", () => {
   const db = {};
 

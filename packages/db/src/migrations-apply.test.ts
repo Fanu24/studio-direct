@@ -231,3 +231,23 @@ describe("tag and location lookups do not scan", () => {
     expect(plan).not.toMatch(/SCAN /);
   });
 });
+
+describe("companies carry a description", () => {
+  it("accepts one, and defaults to null", () => {
+    const db = applyMigrations();
+    seedOneJob(db);
+
+    const before = db
+      .prepare(`SELECT description FROM companies WHERE id = 'company:c'`)
+      .get() as { description: string | null };
+    expect(before.description).toBeNull();
+
+    db.prepare(`UPDATE companies SET description = ? WHERE id = 'company:c'`).run(
+      "Acme builds settlement rails.",
+    );
+    const after = db
+      .prepare(`SELECT description FROM companies WHERE id = 'company:c'`)
+      .get() as { description: string | null };
+    expect(after.description).toBe("Acme builds settlement rails.");
+  });
+});

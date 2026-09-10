@@ -925,6 +925,30 @@ main.board-main {
   max-width: 220px;
 }
 
+/*
+  Third child of the .company-profile flex row (alongside __id and __aside).
+  Nothing populates the description most companies don't have, so this only
+  ever renders for the minority that do - force it onto its own row rather
+  than fighting the id/aside pair for width.
+*/
+.company-profile__about {
+  flex-basis: 100%;
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.company-profile__about h2 {
+  font-size: 1.1rem;
+  margin: 0 0 6px;
+}
+
+.company-profile__about p {
+  margin: 0;
+  max-width: 640px;
+  font-size: 0.95rem;
+}
+
 @media (max-width: 720px) {
   .company-profile {
     flex-direction: column;

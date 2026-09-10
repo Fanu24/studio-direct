@@ -311,6 +311,12 @@ export default async function CompanyPage({
               </div>
             ) : null}
           </div>
+          {company.description ? (
+            <div className="company-profile__about">
+              <h2>About this company</h2>
+              <p>{company.description}</p>
+            </div>
+          ) : null}
         </div>
       </header>
 

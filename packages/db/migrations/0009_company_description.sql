@@ -1,0 +1,20 @@
+-- Company pages had no body to render: companies carried a name, a domain, ATS
+-- coordinates and a logo, and no text at all.
+--
+-- Nothing fills this in. The web3.career API does not supply company
+-- descriptions, and generating them would be exactly the fabricated content
+-- this project has refused throughout. The column exists so a description can
+-- be written by hand; the page renders it only when it holds text, and shows
+-- the company's jobs either way.
+--
+-- Idempotent on purpose: production's d1_migrations table is empty, so
+-- `wrangler d1 migrations apply --remote` restarts from 0001 and dies on
+-- "table tenants already exists". A single migration is applied there with
+-- `wrangler d1 execute --remote --file`, which has no once-only bookkeeping,
+-- so every new migration must be safe to run twice.
+--
+-- `ALTER TABLE ... ADD COLUMN` has no `IF NOT EXISTS` in SQLite, so a second
+-- run of this file fails with "duplicate column name: description". That
+-- failure is loud and harmless - it means the column is already there - not a
+-- sign this migration broke anything.
+ALTER TABLE companies ADD COLUMN description TEXT;
