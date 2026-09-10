@@ -1,4 +1,4 @@
-import { HUB_ROLE_SLUGS, hubSlugLabel } from "@gaming/shared";
+import { HUB_ROLE_SLUGS, hubSlugLabel, TENANT_NAME } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Your profile",
   description:
-    "Your Studio Direct profile: location and remote preference, experience, skills from the job hubs, and a PDF CV.",
+    `Your ${TENANT_NAME} profile: location and remote preference, experience, skills from the job hubs, and a PDF CV.`,
   robots: { index: false, follow: false },
   alternates: { canonical: "/profile" },
 };

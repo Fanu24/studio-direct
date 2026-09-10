@@ -1,8 +1,33 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { TENANT_NAME } from "@gaming/shared";
+
 import { sendMagicLinkEmail } from "./email";
 
 describe("sendMagicLinkEmail", () => {
+  it("names the product Nodework, never the old Studio Direct name", async () => {
+    const sent: { subject: string; text: string; html: string }[] = [];
+    const email = {
+      send: vi.fn(async (message: { subject: string; text: string; html: string }) => {
+        sent.push(message);
+      }),
+    };
+
+    await sendMagicLinkEmail({
+      email,
+      to: "reader@example.com",
+      url: "https://example.com/x",
+      from: "noreply@example.com",
+    });
+
+    expect(sent).toHaveLength(1);
+    const [message] = sent;
+    for (const field of [message.subject, message.text, message.html]) {
+      expect(field).toContain(TENANT_NAME);
+      expect(field).not.toMatch(/Studio Direct/i);
+    }
+  });
+
   it("logs and rethrows when EMAIL.send fails so /login can resend", async () => {
     const log = { error: vi.fn() };
     const email = {
