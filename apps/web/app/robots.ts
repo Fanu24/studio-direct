@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 /** The sitemap refuses this placeholder origin, so robots must not advertise it either. */
-const RESERVED_ORIGIN = "https://studio-direct.example";
+const RESERVED_ORIGIN = "https://placeholder.example";
 
 export const PRIVATE_PATHS = [
   "/api/",

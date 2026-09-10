@@ -8,7 +8,7 @@ export const TERMS_COPY = {
   title: "Terms of Service",
   legalEntity: LEGAL_ENTITY_PLACEHOLDER,
   thirdParties:
-    "Job listings come from third parties, including studio career pages and other public sources. We republish those listings so you can find them in one place.",
+    "Job listings come from third parties, including company career pages and other public sources. We republish those listings so you can find them in one place.",
   incomplete:
     "Our inventory may be incomplete. We do not list every Web3 role that exists, and a missing listing is not a promise that the role is unavailable.",
   noRealtimeLinkedIn:
@@ -22,7 +22,7 @@ export const PRIVACY_COPY = {
   jobProductPurpose:
     "Purpose 1 — job-board product: we use your account, profile, unlocks, CV, and billing data to operate Nodework as a job board (sign-in, search, apply links, quota, and paid plans).",
   recruiterOptInPurpose:
-    "Purpose 2 — recruiter talent pool: sharing your profile with verified studios and recruiters is a separate purpose. It is opt-in and off by default. Applying for a job does not opt you in.",
+    "Purpose 2 — recruiter talent pool: sharing your profile with verified companies and recruiters is a separate purpose. It is opt-in and off by default. Applying for a job does not opt you in.",
 } as const;
 
 export const PRICING_COPY = {

@@ -191,7 +191,7 @@ export function CompanyLeaderGrid({
                     </Link>
                   </p>
                   <p className="company-card__note">
-                    {company.category ? `${tagLabel(company.category)} studio` : "Web3 employer"}
+                    {company.category ? `${tagLabel(company.category)} company` : "Web3 employer"}
                   </p>
                 </div>
               </div>

@@ -235,7 +235,7 @@ describe("sitemap", () => {
       "https://jobs.example.com/sitemaps/learn.xml",
     ]);
     expect(entries.every(({ url }) => url.startsWith("https://jobs.example.com"))).toBe(true);
-    expect(entries.some(({ url }) => url.includes("studio-direct.example"))).toBe(false);
+    expect(entries.some(({ url }) => url.includes("placeholder.example"))).toBe(false);
   });
 
   it("degrades to relative child sitemap paths, without throwing, when SITE_URL is missing", async () => {
@@ -257,11 +257,11 @@ describe("sitemap", () => {
   });
 
   it("degrades to relative child sitemap paths, without throwing, for the reserved example origin", async () => {
-    vi.stubEnv("SITE_URL", "https://studio-direct.example");
+    vi.stubEnv("SITE_URL", "https://placeholder.example");
     const { default: sitemap } = await import("./sitemap");
 
     const entries = await sitemap();
-    expect(entries.every(({ url }) => !url.includes("studio-direct.example"))).toBe(true);
+    expect(entries.every(({ url }) => !url.includes("placeholder.example"))).toBe(true);
     expect(entries.every(({ url }) => url.startsWith("/sitemaps/"))).toBe(true);
   });
 

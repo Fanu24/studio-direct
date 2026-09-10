@@ -31,7 +31,7 @@ describe("resolveRobotsSitemap", () => {
   it("falls back to a relative /sitemap.xml for non-http schemes and the reserved example origin", () => {
     expect(resolveRobotsSitemap("ftp://jobs.example.com")).toBe("/sitemap.xml");
     expect(resolveRobotsSitemap("mailto:hello@example.com")).toBe("/sitemap.xml");
-    expect(resolveRobotsSitemap("https://studio-direct.example")).toBe("/sitemap.xml");
+    expect(resolveRobotsSitemap("https://placeholder.example")).toBe("/sitemap.xml");
   });
 });
 
@@ -57,7 +57,7 @@ describe("buildRobots", () => {
   it("still emits a Sitemap line pointing at the relative fallback when SITE_URL is unusable", () => {
     expect(buildRobots(undefined).sitemap).toBe("/sitemap.xml");
     expect(buildRobots("not a url").sitemap).toBe("/sitemap.xml");
-    expect(buildRobots("https://studio-direct.example").sitemap).toBe("/sitemap.xml");
+    expect(buildRobots("https://placeholder.example").sitemap).toBe("/sitemap.xml");
   });
 });
 

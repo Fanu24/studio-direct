@@ -69,7 +69,7 @@ export default async function ApplyPage({
         </p>
         <p className="small muted">
           We store the application against this listing. We do not forward profiles to
-          studios, and the recruiter talent pool is a separate opt-in in Settings that is
+          companies, and the recruiter talent pool is a separate opt-in in Settings that is
           off by default.
         </p>
       </header>

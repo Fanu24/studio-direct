@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/login" },
 };
 
-/* Only things the account actually does. Studios never see a profile unless the
+/* Only things the account actually does. Companies never see a profile unless the
    talent pool is switched on from Settings, and that is off by default. */
 const ACCOUNT_PERKS = [
   "A profile and PDF CV you fill in once",

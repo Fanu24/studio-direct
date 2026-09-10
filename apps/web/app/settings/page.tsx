@@ -72,7 +72,7 @@ export default async function SettingsPage() {
               type="checkbox"
               value="1"
             />
-            Show my profile to verified studios and recruiters
+            Show my profile to verified companies and recruiters
           </label>
           <div className="acct-actions">
             <button className="button" type="submit">

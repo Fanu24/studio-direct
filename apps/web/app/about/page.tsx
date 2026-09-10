@@ -55,7 +55,7 @@ const NOTS = [
   },
   {
     title: "Sell access to your profile",
-    detail: "Studios and recruiters only see your profile if you opt in from Settings. It is off by default.",
+    detail: "Companies and recruiters only see your profile if you opt in from Settings. It is off by default.",
   },
   {
     title: "Invent salary numbers",

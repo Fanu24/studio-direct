@@ -7,7 +7,7 @@ const FREE_FEATURES = [
   "Browse and search every listing",
   "Full job descriptions, not snippets",
   "5 unlocks per UTC week",
-  "Apply on the studio site",
+  "Apply on the company site",
 ];
 
 const PAID_FEATURES: { label: string; tag?: string }[] = [

@@ -99,7 +99,7 @@ describe("On-site apply page", () => {
     const { default: ApplyPage } = await import("./page");
     const content = text(await ApplyPage({ params, searchParams }));
 
-    expect(content).toContain("We do not forward profiles to studios");
+    expect(content).toContain("We do not forward profiles to companies");
     expect(content).toContain("off by default");
     expect(content).not.toMatch(/sen[dt] (?:your|the) (?:profile|application) to/i);
   });

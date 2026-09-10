@@ -11,7 +11,7 @@ import {
 } from "../lib/jobs/queries";
 
 /** Placeholder origin from local scaffolding; never advertise it in a live sitemap. */
-const RESERVED_SITEMAP_ORIGIN = "https://studio-direct.example";
+const RESERVED_SITEMAP_ORIGIN = "https://placeholder.example";
 
 /** Google's per-file cap: at most 50,000 URLs (and 50MB) per sitemap file. */
 export const SITEMAP_URL_LIMIT = 50_000;
