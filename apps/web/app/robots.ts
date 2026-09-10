@@ -1,7 +1,12 @@
 import type { MetadataRoute } from "next";
 
-/** The sitemap refuses this placeholder origin, so robots must not advertise it either. */
-const RESERVED_ORIGIN = "https://placeholder.example";
+/**
+ * The sitemap refuses these placeholder origins, so robots must not advertise them
+ * either. "studio-direct.example" is the real scaffolding placeholder (crawler UA,
+ * apps/crawler/src/digest.ts, both wrangler.jsonc files, packages/db/seed/studio-direct.sql);
+ * "placeholder.example" is kept too so a future rename can't quietly disarm this guard again.
+ */
+const RESERVED_ORIGINS = ["https://studio-direct.example", "https://placeholder.example"];
 
 export const PRIVATE_PATHS = [
   "/api/",
@@ -31,7 +36,7 @@ export function resolveRobotsSitemap(siteUrl: string | null | undefined): string
   }
 
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "/sitemap.xml";
-  if (parsed.origin === RESERVED_ORIGIN) return "/sitemap.xml";
+  if (RESERVED_ORIGINS.includes(parsed.origin)) return "/sitemap.xml";
 
   return `${parsed.origin}/sitemap.xml`;
 }

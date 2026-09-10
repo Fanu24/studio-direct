@@ -1,5 +1,33 @@
 # QA: lean structure and typography pass — 2026-09-10
 
+## BLOCKING: apply migration 0009 to the remote D1 before this deploys
+
+`getCompanyBySlug` (`apps/web/lib/jobs/queries.ts`) now selects the `description`
+column, and `/web3-companies/[slug]` (`apps/web/app/web3-companies/[slug]/page.tsx`)
+has `revalidate = 300` with no `generateStaticParams`, so every company detail page
+renders on demand against the **production** D1, not the build-time local one.
+`.github/workflows/deploy.yml` only ever runs `wrangler d1 migrations apply
+gaming-jobs --local`. If this branch deploys before migration 0009 has been applied
+to the remote database, every company detail page returns 500 in production.
+
+Before deploying, run:
+
+```
+wrangler d1 execute gaming-jobs --remote --file packages/db/migrations/0009_company_description.sql
+```
+
+Then confirm it landed:
+
+```
+SELECT name FROM pragma_table_info('companies') WHERE name = 'description'
+```
+
+**CI will not catch a missing migration.** The deploy workflow's post-deploy smoke
+check probes `/`, `/jobs`, and `/web3-companies` — the directory route, which never
+selects `description` — plus (as of this fix wave) `/web3-companies/riot`, a detail
+page, specifically so this class of failure can no longer pass unnoticed. Before
+this fix, a green CI run was consistent with every company detail page being down.
+
 Task 6 verification, scope limited to steps 1-3 of the brief (build, sweep,
 write this record). Not pushed, no production database touched, live site
 not probed — see "Not tested" at the end.
@@ -94,8 +122,10 @@ viewports (360-1920px), all 21 templates including the corrected
 (This sweep was run twice: once before the local-DB fix — also
 `overflowRows=0` on all three engines, but with `company-detail` measuring
 the error page — and once after, with identical clean results, now against
-the real page. Only the post-fix numbers are reported above as authoritative;
-both runs are on disk.)
+the real page. Only the post-fix numbers are reported above as authoritative.
+`verify-overflow-sweep-round2.mjs` only writes to stdout — it has no
+`writeFile` — so neither run's numbers are re-checkable from the repo; they
+are transcribed here from the terminal output at the time.)
 
 ## Tap-target residue — `verify-tap-target-residue.mjs`, three engines together
 

@@ -6,7 +6,7 @@ import { BoardSearch } from "./_components/board-chrome";
 import { HomeMegaLinks } from "./_components/home-mega";
 import { TagChips } from "./_components/job-row";
 import { JsonLd } from "./_components/json-ld";
-import { homepageSummary } from "../lib/copy";
+import { LINKEDIN_EXCLUSIVITY_TOOLTIP, homepageSummary } from "../lib/copy";
 import type { JobsDatabase } from "../lib/jobs/queries";
 
 type TestElement = ReactElement<
@@ -209,12 +209,26 @@ describe("HomePage", () => {
     // The board is the page.
     expect(rendered).toContain("Web3 Jobs");
 
-    // None of the narrative sections survive.
-    expect(rendered).not.toMatch(/Jobs posted only on studio career pages/);
-    expect(rendered).not.toMatch(/Browse, filter, and search all at once/);
-    expect(rendered).not.toMatch(/Keyword search across the whole catalog/);
+    // None of the narrative sections survive. The three FeatureRow wedges
+    // (career pages / browse / search) named their headings via a `title`
+    // prop, which the `text()` helper above cannot see since it only walks
+    // `props.children` - so asserting on those headings would pass whether
+    // or not the sections existed. Assert instead on strings that were real
+    // JSX children in the pre-cut page (git show 552a062:apps/web/app/page.tsx):
+    // the "See the roles..." link text from the deleted wedge, and the two
+    // teaser <a> button labels, all of which text() actually walks into.
+    expect(rendered).not.toMatch(/See the roles we did not find on LinkedIn/);
+    expect(rendered).not.toMatch(/Explore salary bands/);
+    expect(rendered).not.toMatch(/Explore companies/);
     expect(rendered).not.toMatch(/The studios in the index/);
     expect(rendered).not.toMatch(/Salary data from real jobs/);
+  });
+
+  it("states what the 'Not on LinkedIn' badge means as visible text, not just a title attribute", async () => {
+    const { default: HomePage } = await import("./page");
+    const page = await HomePage({ searchParams: Promise.resolve({}) });
+
+    expect(text(page)).toContain(LINKEDIN_EXCLUSIVITY_TOOLTIP);
   });
 });
 

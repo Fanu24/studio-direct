@@ -10,8 +10,13 @@ import {
   type SitemapEntries,
 } from "../lib/jobs/queries";
 
-/** Placeholder origin from local scaffolding; never advertise it in a live sitemap. */
-const RESERVED_SITEMAP_ORIGIN = "https://placeholder.example";
+/**
+ * Placeholder origins from local scaffolding; never advertise them in a live sitemap.
+ * "studio-direct.example" is the real scaffolding placeholder (crawler UA,
+ * apps/crawler/src/digest.ts, both wrangler.jsonc files, packages/db/seed/studio-direct.sql);
+ * "placeholder.example" is kept too so a future rename can't quietly disarm this guard again.
+ */
+const RESERVED_SITEMAP_ORIGINS = ["https://studio-direct.example", "https://placeholder.example"];
 
 /** Google's per-file cap: at most 50,000 URLs (and 50MB) per sitemap file. */
 export const SITEMAP_URL_LIMIT = 50_000;
@@ -98,7 +103,7 @@ export function resolveSitemapOrigin(siteUrl = process.env.SITE_URL): string | n
   }
 
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-  if (parsed.origin === RESERVED_SITEMAP_ORIGIN) return null;
+  if (RESERVED_SITEMAP_ORIGINS.includes(parsed.origin)) return null;
 
   return parsed.origin;
 }

@@ -269,8 +269,8 @@ export function JobDetailBody({
             {gated ? (
               <div className="jd-unlock-gate">
                 <p className="jd-unlock-gate__lead">
-                  This company does not post to LinkedIn - the apply link on this
-                  listing reveals it and sends you straight to their own page.
+                  This company does not post to LinkedIn - unlocking reveals the apply
+                  link and sends you straight to the company&apos;s own page.
                 </p>
                 <ul className="jd-unlock-gate__list">
                   <li>The real apply link, not a redirect through a public board</li>
