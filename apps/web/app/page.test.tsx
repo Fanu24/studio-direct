@@ -179,7 +179,11 @@ describe("HomePage", () => {
 
     expect(text(h1)).toContain("Web3 Jobs");
     expect(text(h1)).not.toBe("WEB3 IS THE FUTURE");
-    expect(text(page)).toContain(homepageSummary(1, 3));
+    // The counts are stated once, inline under the title. They used to be said
+    // twice - a lead sentence and a two-number band - which cost about 220px
+    // above the jobs. The lead survives only as the meta description.
+    expect(text(page)).toContain("1 live Web3 job at 3 hiring companies");
+    expect(text(page)).not.toContain("1 live Web3 jobs");
     expect(text(page)).not.toContain("blockchain jobs in web3 at");
     // The extra "Related pages" rail is gone: the reference homepage has no
     // such section, and its links already live in the mega link stack.

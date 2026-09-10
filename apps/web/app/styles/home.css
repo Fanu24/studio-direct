@@ -7,31 +7,46 @@
 
 /* Hero section */
 
+/* The hero is a header row, not a landing panel. It used to be 835px tall on
+   desktop and 850px on a 844px phone - taller than the screen - which put the
+   first job row at 1146px and 3749px respectively. Measured, on Chromium:
+   see qa/verify-jobs-above-fold.mjs, which is the check that keeps it honest.
+   Every value below is sized so the board is on screen when the page opens. */
 .home-hero {
-  padding: clamp(88px, 10vw, 152px) 0;
+  padding: clamp(20px, 2.4vw, 34px) 0 clamp(14px, 1.6vw, 20px);
   position: relative;
 }
 
 .home-hero .container {
   display: grid;
-  gap: var(--flow);
+  gap: 10px;
 }
 
 .home-hero h1 {
-  font-size: var(--step-5);
+  /* Two steps down from the old display size. It still reads as the page
+     title; it no longer costs a job row to say so. */
+  font-size: var(--step-3);
   margin: 0;
   max-width: 18ch;
+  line-height: 1.05;
 }
 
-.home-hero .lead {
-  font-size: var(--step-1);
-  max-width: 52ch;
+/* The counts, said once and inline. Two big stacked figures and a lead
+   sentence were saying the same thing twice, for about 220px. */
+.home-hero__count {
+  margin: 0;
+  font-size: var(--step-0);
   color: var(--dim);
+}
+
+.home-hero__count strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .home-hero__search {
   max-width: 580px;
-  margin-top: var(--flow);
+  margin-top: 2px;
 }
 
 /* Sections */
@@ -55,6 +70,13 @@
 .home-section {
   padding: var(--section) 0;
   min-width: 0;
+}
+
+/* The board is the first thing under the hero and must not be pushed down by a
+   full section's worth of padding - that alone was 112px of empty space
+   between the search box and the first job. */
+.home-sections > .home-section:first-child {
+  padding-top: 0;
 }
 
 .home-section .container {

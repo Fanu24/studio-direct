@@ -112,35 +112,24 @@ export default async function HomePage({
         ))}
       <section className="home-hero m-reveal m-reveal--now m-sheen" data-reveal>
         <div className="container">
+          {/* Title, count, search. Nothing else above the jobs: the board has
+              to be on screen when the page arrives, and every line here costs
+              rows. The counts used to be said twice - once in a lead sentence
+              and again in a two-number band - so they are said once now. */}
           <h1 className="display display--sm">Web3 Jobs</h1>
-          <p className="lead m-reveal m-reveal--now" data-reveal data-reveal-delay="1">
-            {homepageSummary(listed.total, companyCount)}
-          </p>
-          {/* Stats band folded into the hero: two numbers, one line, not a
-              section of its own. Reveals with the lead line above it. */}
-          <div className="stats-grid m-reveal m-reveal--now" data-reveal data-reveal-delay="1">
-            {listed.total > 0 ? (
-              <div className="stat">
-                <div className="stat__value m-count" data-reveal>
-                  <span>{listed.total.toLocaleString("en-US")}</span>
-                </div>
-                <div className="stat__label">live Web3 jobs</div>
-              </div>
-            ) : null}
+          <p className="home-hero__count">
+            <strong>{listed.total.toLocaleString("en-US")}</strong>{" "}
+            {listed.total === 1 ? "live Web3 job" : "live Web3 jobs"}
             {companyCount > 0 ? (
-              <div className="stat">
-                <div className="stat__value m-count" data-reveal>
-                  <span>{companyCount.toLocaleString("en-US")}</span>
-                </div>
-                <div className="stat__label">hiring companies</div>
-              </div>
+              <>
+                {" at "}
+                <strong>{companyCount.toLocaleString("en-US")}</strong>{" "}
+                {companyCount === 1 ? "hiring company" : "hiring companies"}
+              </>
             ) : null}
-          </div>
-          <div className="home-hero__search m-reveal m-reveal--now" data-reveal data-reveal-delay="2">
+          </p>
+          <div className="home-hero__search">
             <BoardSearch remoteHref={remoteFilterHref()} />
-          </div>
-          <div className="m-reveal m-reveal--now" data-reveal data-reveal-delay="3">
-            <TagChips />
           </div>
         </div>
       </section>
@@ -163,7 +152,16 @@ export default async function HomePage({
           </div>
         </section>
 
+        {/* Tag chips sit under the board, not above it. They are a browse aid,
+            and above the fold they were 118px of chips between the search box
+            and the first job on a phone. */}
         <section className="home-section m-reveal" data-reveal data-reveal-delay="2">
+          <div className="container">
+            <TagChips />
+          </div>
+        </section>
+
+        <section className="home-section m-reveal" data-reveal data-reveal-delay="3">
           <HomeMegaLinks />
         </section>
       </div>
