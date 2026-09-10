@@ -174,13 +174,22 @@ describe("the migration set, applied in order", () => {
  */
 describe("tag and location lookups do not scan", () => {
   type Planned = { detail: string };
-  type WithAll = DatabaseSyncLike & {
-    prepare(sql: string): { all(...params: unknown[]): unknown[] };
-  };
 
+  /**
+   * DatabaseSyncLike declares only `run` and `get` on a prepared statement,
+   * because nothing else in this file needed rows back. Widening the database
+   * type with an intersection does not work: `prepare` then has two
+   * signatures and the call resolves to the first, which still has no `all`.
+   * Cast the statement instead of the database.
+   */
   function planFor(db: DatabaseSyncLike, sql: string): string {
-    const rows = (db as WithAll).prepare(`EXPLAIN QUERY PLAN ${sql}`).all() as Planned[];
-    return rows.map((row) => row.detail).join(" | ");
+    const statement = db.prepare(`EXPLAIN QUERY PLAN ${sql}`) as unknown as {
+      all(...params: unknown[]): Planned[];
+    };
+    return statement
+      .all()
+      .map((row) => row.detail)
+      .join(" | ");
   }
 
   let db: DatabaseSyncLike;
