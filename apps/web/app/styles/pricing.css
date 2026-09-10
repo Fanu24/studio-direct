@@ -97,8 +97,12 @@
   white-space: nowrap;
 }
 
+/* .price-plan__head is a grid with a uniform 10px gap, so a zero margin here
+   gave the price the same space above and below it. Adding a small top
+   margin breaks that symmetry without touching the gap the tag row and the
+   note below rely on. */
 .price-plan h2 {
-  margin: 0;
+  margin: 8px 0 0;
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
   font-size: clamp(1.9rem, 3vw, 2.4rem);

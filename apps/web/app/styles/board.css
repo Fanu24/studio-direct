@@ -447,9 +447,13 @@ main.board-main {
   color: var(--accent-strong);
 }
 
+/* This h2 overrode the base heading margin with tighter, inverted spacing -
+   4px above and 6px below - back when the base rule had no top margin to
+   inherit from. That put more space below the title than above it, the
+   opposite of the site-wide rhythm. */
 .board-apply__title {
   font-size: 1.2rem;
-  margin: 4px 0 6px;
+  margin: 10px 0 4px;
   line-height: 1.2;
   overflow-wrap: anywhere;
 }

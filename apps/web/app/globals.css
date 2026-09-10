@@ -242,14 +242,31 @@ hr {
    3. Typography
    ========================================================================== */
 
+/* A heading belongs to the section it opens, not to the paragraph above it.
+   With no top margin, the space above a heading was whatever the previous
+   element happened to leave behind - 1em after a paragraph, and zero after a
+   chart, a table or a plain div, none of which carry a bottom margin. The
+   salary pages alternate charts and headings, which is why they measured 0px
+   above against 16px below. */
 h1,
 h2,
 h3,
 h4 {
-  margin: 0 0 0.5em;
+  margin: 1.4em 0 0.5em;
   font-weight: 600;
   color: var(--text);
   text-wrap: balance;
+}
+
+/* A heading that opens its container has nothing above to separate itself
+   from, and a top margin there would push every card, panel and table cell
+   out of shape. This reset is what makes the rule above safe to apply at the
+   base element. */
+h1:first-child,
+h2:first-child,
+h3:first-child,
+h4:first-child {
+  margin-top: 0;
 }
 
 h1 {
@@ -261,7 +278,9 @@ h1 {
 h2 {
   font-size: var(--step-3);
   letter-spacing: -0.025em;
-  line-height: 1.05;
+  /* 1.05 is a display measure. These are section headings in prose, and at
+     32px a 1.05 measure sets the descenders against the line below. */
+  line-height: 1.15;
 }
 
 h3 {

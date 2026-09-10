@@ -146,8 +146,12 @@
   margin: 0;
 }
 
+/* The negative top margin pulled this title up against the studio name
+   above it, tighter than the base rule now allows. .jd-apply already sets a
+   16px grid gap, which is enough separation to the facts list below - this
+   only needs to add space above, not below. */
 .jd-apply__title {
-  margin: -6px 0 4px;
+  margin: 10px 0 0;
   font-size: 1.5rem;
   letter-spacing: -0.03em;
 }
