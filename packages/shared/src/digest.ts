@@ -1,3 +1,5 @@
+import { TENANT_NAME } from "./tenant.ts";
+
 export type DigestRecipientRow = {
   email: string | null;
   stripe_status: string | null;
@@ -85,7 +87,7 @@ export function buildDigestEmail({
   jobs: readonly DigestJob[];
   siteUrl?: string;
 }): DigestEmail {
-  const subject = "Studio Direct: latest jobs not on LinkedIn";
+  const subject = `${TENANT_NAME}: latest jobs not on LinkedIn`;
 
   if (jobs.length === 0) {
     const text = `${EMPTY_HIDDEN_COPY}\n\n${INDEX_DISCLAIMER}`;
