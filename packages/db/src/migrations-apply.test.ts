@@ -160,3 +160,65 @@ describe("the migration set, applied in order", () => {
     expect(row).toMatchObject({ title: "Senior Solidity Engineer", salary_min: 120000 });
   });
 });
+
+/**
+ * The tag and location lookups are the whole programmatic-SEO surface, and on the first
+ * day in production they read 16.2 million rows across 1,283 queries - about 12,600 rows
+ * each, three times D1's free-tier daily cap. Once that cap is hit every DB-backed page
+ * returns a 500 while the worker still reports outcome: ok.
+ *
+ * Asserting that 0008 declares two indexes would prove nothing: the composite primary keys
+ * these tables already carry *look* like they cover the same columns. What has to be true
+ * is that the planner seeks instead of scanning, so that is what these assert - the same
+ * reason this file exists rather than the one that reads migration text.
+ */
+describe("tag and location lookups do not scan", () => {
+  type Planned = { detail: string };
+  type WithAll = DatabaseSyncLike & {
+    prepare(sql: string): { all(...params: unknown[]): unknown[] };
+  };
+
+  function planFor(db: DatabaseSyncLike, sql: string): string {
+    const rows = (db as WithAll).prepare(`EXPLAIN QUERY PLAN ${sql}`).all() as Planned[];
+    return rows.map((row) => row.detail).join(" | ");
+  }
+
+  let db: DatabaseSyncLike;
+
+  beforeEach(() => {
+    db = applyMigrations();
+    seedOneJob(db);
+    db.exec(`
+      INSERT INTO job_tags (job_id, tag_slug) VALUES ('job:1', 'solidity');
+      INSERT INTO locations (slug, kind, label) VALUES ('berlin', 'city', 'Berlin');
+      INSERT INTO job_locations (job_id, location_slug) VALUES ('job:1', 'berlin');
+    `);
+  });
+
+  it("seeks job_tags by tag_slug rather than scanning it", () => {
+    const plan = planFor(
+      db,
+      `SELECT j.id FROM job_tags jt JOIN jobs j ON j.id = jt.job_id
+       WHERE jt.tag_slug = 'solidity' AND j.listed = 1`,
+    );
+
+    expect(plan).toContain("idx_job_tags_tag");
+    expect(plan).not.toMatch(/SCAN (job_tags|jt)\b/);
+  });
+
+  it("seeks job_locations by location_slug rather than scanning it", () => {
+    const plan = planFor(
+      db,
+      `SELECT j.id FROM job_locations jl JOIN jobs j ON j.id = jl.job_id
+       WHERE jl.location_slug = 'berlin' AND j.listed = 1`,
+    );
+
+    expect(plan).toContain("idx_job_locations_location");
+    expect(plan).not.toMatch(/SCAN (job_locations|jl)\b/);
+  });
+
+  it("still answers the other direction, which the primary keys already covered", () => {
+    const plan = planFor(db, `SELECT tag_slug FROM job_tags WHERE job_id = 'job:1'`);
+    expect(plan).not.toMatch(/SCAN /);
+  });
+});
