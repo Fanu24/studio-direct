@@ -71,10 +71,10 @@ export function SalaryStatsTable({
         <table className="table">
           <thead>
             <tr>
-              <th>{labelHeader}</th>
-              <th>Average</th>
-              <th>Min Yearly Salary</th>
-              <th>Max Yearly Salary</th>
+              <th scope="col">{labelHeader}</th>
+              <th scope="col">Average</th>
+              <th scope="col">Min Yearly Salary</th>
+              <th scope="col">Max Yearly Salary</th>
             </tr>
           </thead>
           <tbody>
@@ -142,10 +142,10 @@ export function SalaryBreakdownTable({
           <table className="table">
             <thead>
               <tr>
-                <th>{labelHeader}</th>
-                <th>Average</th>
-                <th>Min Yearly Salary</th>
-                <th>Max Yearly Salary</th>
+                <th scope="col">{labelHeader}</th>
+                <th scope="col">Average</th>
+                <th scope="col">Min Yearly Salary</th>
+                <th scope="col">Max Yearly Salary</th>
               </tr>
             </thead>
             <tbody>

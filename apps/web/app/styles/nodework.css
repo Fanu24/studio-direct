@@ -240,6 +240,17 @@
   font-weight: 600;
 }
 
+/* The 24px floor that globals.css applies to `.table td a` never reached this
+   family: the directory tables carry .salary-table, not .table, so the rule
+   simply did not match. /web3-cities alone had 208 links at 20px. Scoped to
+   `td` so the mono rank column and the `th` labels keep their own rhythm. */
+.salary-table td a {
+  display: inline-block;
+  min-height: 24px;
+  min-width: 24px;
+  padding-block: 2px;
+}
+
 .salary-table .muted {
   color: var(--muted);
   font-weight: 400;

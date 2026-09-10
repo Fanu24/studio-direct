@@ -15,10 +15,12 @@ Per-dimension detail: `2026-09-10-aurora-qa-layout.md`, `-interaction.md`,
 |---|---|---|
 | Critical | 3 | **0** |
 | High | 7 | **0** |
-| Medium | 4 | 4 |
-| Low | 7 | 7 |
+| Medium | 4 | **0** |
+| Low | 7 | **0** |
 
-The acceptance bar — zero Critical, zero High, suite green — is met.
+The acceptance bar — zero Critical, zero High, suite green — is met, and the
+Medium and Low findings were closed in the follow-up pass recorded in
+`2026-09-10-aurora-qa-followup.md`.
 522 tests pass, typecheck is clean, the production build completes at 122 pages.
 
 ## What was found and closed
@@ -72,20 +74,26 @@ The acceptance bar — zero Critical, zero High, suite green — is met.
 
 ## What remains open
 
-All Medium and Low, none blocking.
+**Nothing.** All four Medium and all seven Low findings were closed in a
+follow-up pass on the same day — see `2026-09-10-aurora-qa-followup.md` for the
+measurements. In short:
 
-- Nine links under 24px on the salary pages, in a third component again
-  (`board-apply__company` and unclassed inline links). Down from 16–18 per page.
-- `.salary-line__label a` and `.salary-chart__label a` were raised; the residue
-  is a different family.
-- `SalaryBarChart` wraps interactive links in a `role="img"` container, which is
-  an invalid content model although no engine mishandled it.
-- Salary table `<th>` elements carry no `scope`, while the job and company tables
-  do.
-- `experimental.viewTransition` was removed: QA measured it inert in all three
-  engines because it requires React's experimental channel and this project pins
-  stable React 19. Navigation is unaffected; the animation was never running.
-- Two CSS theaters and the marquee components are dead code, imported nowhere.
+- The sub-24px tap targets were 763, not the nine this report estimated, and
+  the largest group (208 links on `/web3-cities`) had never been named: the
+  Round 1 fix was written as `.table td a` and the directory tables carry
+  `.salary-table`. Six selector families now carry a floor on both axes.
+  763 to 54, and the 54 that remain were each measured to be exempt — 36 are
+  links inside a sentence (WCAG 2.5.8), and 18 are `.company-card__link`,
+  whose `::after` makes the whole 373x257 card the hit area, confirmed by
+  probing what is under the pointer on all three engines.
+- `SalaryBarChart` is `role="group"`, and all 21 of its links per page are
+  now confirmed present in the accessibility tree on three engines.
+- All 16 `<th>` without `scope` have it, `/web3-cities` included.
+- Six dead component files and the CSS for theaters 2, 4 and 5 are gone.
+  Three, not two: the report undercounted. `.m-marquee` stays as a motion
+  primitive.
+- `experimental.viewTransition` was already removed when this report was
+  written; nothing further was needed.
 
 ## Not tested, and why
 

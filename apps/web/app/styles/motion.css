@@ -229,42 +229,40 @@
 
 /* ==========================================================================
    .m-marquee — the element's first child is the track; the track holds two
-   identical groups so translateX(-50%) loops seamlessly. `.marquee__track`
-   (the Marquee component) gets the same loop.
+   identical groups so translateX(-50%) loops seamlessly.
+
+   The `.marquee__track` selectors that used to ride alongside every rule here
+   belonged to the <Marquee> component, which was deleted with its two unused
+   consumers. This primitive stays: it is part of the motion vocabulary a page
+   can reach for, not component code.
    ========================================================================== */
 
 .m-marquee {
   overflow: hidden;
 }
 
-.m-marquee > *,
-.marquee__track {
+.m-marquee > * {
   display: flex;
   width: max-content;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .m-marquee > *,
-  .marquee__track {
+  .m-marquee > * {
     animation: marquee var(--marquee-duration, 40s) linear infinite;
   }
 
-  .m-marquee--reverse > *,
-  .marquee--reverse .marquee__track {
+  .m-marquee--reverse > * {
     animation-direction: reverse;
   }
 
   .m-marquee:hover > *,
-  .m-marquee:focus-within > *,
-  .marquee:hover .marquee__track,
-  .marquee:focus-within .marquee__track {
+  .m-marquee:focus-within > * {
     animation-play-state: paused;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .m-marquee,
-  .marquee {
+  .m-marquee {
     overflow-x: auto;
     -webkit-mask-image: none;
     mask-image: none;
@@ -409,8 +407,7 @@
     scroll-behavior: auto !important;
   }
 
-  .m-marquee > *,
-  .marquee__track {
+  .m-marquee > * {
     animation: none;
   }
 
@@ -605,89 +602,6 @@
   }
 }
 
-@keyframes th2-badge {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  5%,
-  56% {
-    opacity: 0;
-    transform: scale(1.7);
-  }
-  63% {
-    opacity: 1;
-    transform: scale(0.96);
-  }
-  67% {
-    transform: scale(1);
-  }
-}
-
-@keyframes th2-line {
-  0%,
-  100% {
-    opacity: 1;
-    clip-path: inset(0 0 0 0);
-  }
-  5%,
-  12% {
-    opacity: 0;
-    clip-path: inset(0 100% 0 0);
-  }
-  13% {
-    opacity: 1;
-    clip-path: inset(0 100% 0 0);
-    animation-timing-function: steps(28);
-  }
-  22% {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@keyframes th2-line-2 {
-  0%,
-  100% {
-    opacity: 1;
-    clip-path: inset(0 0 0 0);
-  }
-  5%,
-  30% {
-    opacity: 0;
-    clip-path: inset(0 100% 0 0);
-  }
-  31% {
-    opacity: 1;
-    clip-path: inset(0 100% 0 0);
-    animation-timing-function: steps(28);
-  }
-  42% {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@keyframes th2-line-3 {
-  0%,
-  100% {
-    opacity: 1;
-    clip-path: inset(0 0 0 0);
-  }
-  5%,
-  50% {
-    opacity: 0;
-    clip-path: inset(0 100% 0 0);
-  }
-  51% {
-    opacity: 1;
-    clip-path: inset(0 100% 0 0);
-    animation-timing-function: steps(28);
-  }
-  58% {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
 @keyframes th3-caret {
   0%,
   15% {
@@ -836,142 +750,6 @@
   40%,
   100% {
     border-color: var(--accent-line);
-  }
-}
-
-@keyframes th4-press {
-  0%,
-  23% {
-    transform: none;
-  }
-  25% {
-    transform: scale(0.965);
-  }
-  28%,
-  100% {
-    transform: none;
-  }
-}
-
-@keyframes th4-quota-before {
-  0%,
-  4% {
-    opacity: 0;
-  }
-  6%,
-  25% {
-    opacity: 1;
-  }
-  29%,
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes th4-quota-after {
-  0%,
-  4% {
-    opacity: 1;
-  }
-  6%,
-  25% {
-    opacity: 0;
-  }
-  29%,
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes th4-result {
-  0%,
-  4% {
-    opacity: 1;
-    transform: none;
-  }
-  5%,
-  30% {
-    opacity: 0;
-    transform: translateY(0.5em);
-  }
-  38%,
-  100% {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes th4-cursor {
-  0%,
-  4% {
-    transform: none;
-  }
-  6% {
-    transform: translate(4.5em, 3.2em);
-  }
-  22% {
-    transform: none;
-  }
-  24% {
-    transform: translateY(0.18em);
-  }
-  27%,
-  100% {
-    transform: none;
-  }
-}
-
-@keyframes th5-row {
-  0%,
-  4% {
-    opacity: 1;
-    transform: none;
-  }
-  5%,
-  12% {
-    opacity: 0;
-    transform: translateY(0.9em);
-  }
-  20%,
-  100% {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes th5-row-2 {
-  0%,
-  4% {
-    opacity: 1;
-    transform: none;
-  }
-  5%,
-  22% {
-    opacity: 0;
-    transform: translateY(0.9em);
-  }
-  30%,
-  100% {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes th5-row-3 {
-  0%,
-  4% {
-    opacity: 1;
-    transform: none;
-  }
-  5%,
-  32% {
-    opacity: 0;
-    transform: translateY(0.9em);
-  }
-  40%,
-  100% {
-    opacity: 1;
-    transform: none;
   }
 }
 

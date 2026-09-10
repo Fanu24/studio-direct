@@ -428,7 +428,15 @@ main.board-main {
   font-size: 0.84rem;
 }
 
+/* This link is lifted above the card's full-bleed ::after overlay by the
+   z-index below, which means its own box is the entire hit area - there is no
+   larger parent target behind it to fall back on, the way .company-card__link
+   has. It measured 16px tall on every board and salary page. */
 .board-apply__company a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  min-width: 24px;
   color: inherit;
   text-decoration: none;
   position: relative;

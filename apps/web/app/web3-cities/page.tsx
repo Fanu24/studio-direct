@@ -79,11 +79,11 @@ export default async function Web3CitiesPage() {
             <table className="salary-table">
               <thead>
                 <tr>
-                  <th>Rank</th>
-                  <th>City</th>
-                  <th>Country</th>
-                  <th>Region</th>
-                  <th>Jobs</th>
+                  <th scope="col">Rank</th>
+                  <th scope="col">City</th>
+                  <th scope="col">Country</th>
+                  <th scope="col">Region</th>
+                  <th scope="col">Jobs</th>
                 </tr>
               </thead>
               {/*

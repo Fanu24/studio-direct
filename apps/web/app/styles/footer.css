@@ -68,7 +68,14 @@
   color: var(--dim);
 }
 
+/* The heading of a column is itself a link to that column's hub, and it was
+   left at the 14px line box of the uppercase mono heading when the links below
+   it were raised to the 24px floor. Same component, same fix. */
 .footer-column h2 a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  min-width: 24px;
   color: inherit;
   text-decoration: none;
 }
@@ -128,6 +135,17 @@
 
 .site-footer__legal a:hover {
   color: var(--text);
+}
+
+/* Terms, Privacy and Legal render on every page at 15px. They are a list of
+   links rather than links inside a sentence, so the WCAG 2.5.8 inline
+   exception does not cover them the way it covers the "Built by Nodework"
+   line next to them. */
+.site-footer__meta a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  min-width: 24px;
 }
 
 .site-footer__meta {

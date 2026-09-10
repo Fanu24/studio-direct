@@ -364,6 +364,10 @@
 .jobs-company-table__name {
   display: inline-flex;
   align-items: center;
+  /* "R3" measured 20.1px wide against a 27.1px height - a target can fail the
+     floor on one axis only, so both need a floor. */
+  min-width: 24px;
+  min-height: 24px;
   gap: 12px;
   font-weight: 600;
   text-decoration: none;

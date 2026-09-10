@@ -73,7 +73,7 @@ export function SalaryBarChart({
   const topLabel = formatSalaryRange(Math.round(domainMax / 1.08), Math.round(domainMax / 1.08));
 
   return (
-    <div aria-label={chartLabel} className="salary-chart" role="img">
+    <div aria-label={chartLabel} className="salary-chart" role="group">
       <div aria-hidden="true" className="salary-chart__row salary-chart__scale">
         <span />
         <span className="salary-chart__scale-track">
@@ -306,9 +306,9 @@ export function SalarySeniorityChart({
         <table className="table table--compact">
           <thead>
             <tr>
-              <th>Level</th>
-              <th>{compare ? (label ?? "Average") : "Average"}</th>
-              {compare ? <th>{compare.label}</th> : null}
+              <th scope="col">Level</th>
+              <th scope="col">{compare ? (label ?? "Average") : "Average"}</th>
+              {compare ? <th scope="col">{compare.label}</th> : null}
             </tr>
           </thead>
           <tbody>

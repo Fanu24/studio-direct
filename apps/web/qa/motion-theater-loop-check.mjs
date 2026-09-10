@@ -16,7 +16,12 @@ const PROBES = [
   { theater: "th1 (CareerPagesTheater)", selector: ".th1__sources .t-site--1", durationMs: 11000, prop: "borderColor" },
   { theater: "th1 (CareerPagesTheater) card", selector: ".th1__board .t-card--1", durationMs: 11000, prop: "opacity" },
   { theater: "th3 (SearchTheater) caret", selector: ".th3__caret", durationMs: 10000, prop: "visibility" },
-  { theater: "th6 (OneBoardTheater) chip", selector: ".th6 .t-chip", durationMs: 11000, prop: "borderColor" },
+  // `.th6 .t-chip` was the original probe here and it samples a chip that was
+  // never animated - it reported animationName "none" on all three engines
+  // whether the theater was working or not, so it could not have caught a
+  // regression in it. The two elements below are the ones th6 actually drives.
+  { theater: "th6 (OneBoardTheater) hidden chip", selector: ".th6__chip-hidden", durationMs: 11000, prop: "opacity" },
+  { theater: "th6 (OneBoardTheater) plain card", selector: ".th6__card--plain", durationMs: 11000, prop: "opacity" },
 ];
 
 const results = [];
