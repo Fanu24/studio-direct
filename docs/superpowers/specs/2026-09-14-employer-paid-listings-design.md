@@ -42,11 +42,14 @@ const highlightStd = 99;   const highlightCstm = 149;
 const logoPrice = 49;      const supportPrice  = 99;
 ```
 
-Volume ladder, posts to discount: 2 -> 20%, 4 -> 29%, 6 -> 30%, then one point
-per two posts up to 30 -> 42%, continuing to a floor of 40 posts -> 55%.
-Bundled posts are "valid for 24 months".
+Volume ladder: their `discount` object maps a slider position to a post count
+and a percentage, and the two diverge above 30 posts (slider 32 is 31 posts,
+slider 50 is 40 posts). Transcribed **by post count** it is the
+`BUNDLE_LADDER` table in section 1, which is the authoritative copy; there is
+no formula, and no percentage may be interpolated between its rows. Bundled
+posts are "valid for 24 months".
 
-Two things about their page we are deliberately **not** copying:
+Three things about their page we are deliberately **not** copying:
 
 - **The view multipliers.** Every add-on row carries a badge: "3x more views",
   "6x more views", "12x more views", "24x more views", "1.5x more views",
@@ -60,6 +63,14 @@ Two things about their page we are deliberately **not** copying:
   auto-renew already selected, so the default cart is $448, not $299. Ours
   opens at $299 with nothing selected and updates the total as options are
   chosen.
+- **Premium support at $99.** We do not sell it, because we have nothing to
+  sell. The repo has no contact route, no published support address and no
+  channel of any kind: a search for a contact page, a `support@` address or a
+  `mailto:` across `apps/web` finds nothing, and `/ads` currently routes
+  employers to `/login` because there is no alternative. Charging $99 for a
+  service that does not exist is the same failure as publishing a view
+  multiplier we cannot substantiate. If a support channel is ever built, the
+  price is already transcribed above and can be switched on then.
 
 ## Decisions taken
 
@@ -105,8 +116,10 @@ export const HIGHLIGHT_TIERS = {
 } as const;
 
 export const LOGO_CENTS = 4_900;
-export const SUPPORT_CENTS = 9_900;
 ```
+
+There is no `SUPPORT_CENTS`. Premium support is not sold; see the reference
+prices above.
 
 `quoteListing(selection)` returns `{ lines, subtotalCents, discountCents,
 totalCents }`, where a line is `{ code, label, unitCents, quantity,
@@ -115,11 +128,20 @@ stores as `line_items_json`, and what the receipt and confirmation email
 render. There is exactly one price calculation in the codebase and everything
 else reads its output.
 
-`quoteBundle(posts)` applies the ladder. The ladder is stored as an explicit
-table of `{ minPosts, percent }` breakpoints rather than a formula, because the
-reference ladder is not linear: it jumps 20 -> 29 between 2 and 4 posts, then
-climbs a point per two posts, then jumps 51 -> 55 at the top. Below 2 posts
-there is no discount; above 40 the discount is capped at 55%.
+`quoteBundle(posts)` applies the ladder. `BUNDLE_LADDER` is an explicit table
+of `{ minPosts, percent }` rows transcribed verbatim from the reference, by
+post count:
+
+```
+ 2->20   4->29   6->30   8->31  10->32  12->33  14->34  16->35  18->36
+20->37  22->38  24->39  26->40  28->41  30->42  31->43  32->44  33->45
+34->46  35->47  36->48  37->49  38->50  39->51  40->55
+```
+
+Only two rules are not in the table: below the first row there is no discount,
+and at or above the last row the percent is that row's value. Nothing is
+interpolated, and no percentage is derived by formula — the ladder is not
+linear, and it changes step size twice.
 
 Money is integer cents everywhere. No floats, no currency conversion, no
 locale-dependent parsing. `formatUsd(cents)` is the only thing that produces a
@@ -191,8 +213,56 @@ CREATE INDEX IF NOT EXISTS idx_job_orders_status ON job_orders (status, created_
 CREATE UNIQUE INDEX IF NOT EXISTS idx_job_orders_manage ON job_orders (manage_token_hash);
 ```
 
-The partial unique index on `stripe_session_id` is what makes webhook delivery
-idempotent: Stripe retries, and a retry must not publish a second listing.
+The partial unique index on `stripe_session_id` keeps at most one order row per
+Checkout session. It is a data-integrity constraint on the row
+`POST /api/listings` writes. **It is not a webhook idempotency mechanism** —
+the webhook never inserts an order row, so the index is never contended. What
+actually makes delivery idempotent is the `stripe_events` table below plus the
+conditional status update in the lifecycle.
+
+### Order lifecycle
+
+Exactly one writer per transition, and every transition is a guarded UPDATE
+rather than a read-then-write.
+
+- **`pending`** — written by `POST /api/listings` at insert.
+- **`paid`** — written by the webhook, as one conditional statement:
+  `UPDATE job_orders SET status='paid', paid_at=?, stripe_payment_intent=?,
+  updated_at=? WHERE stripe_session_id=? AND status='pending'`. Zero rows
+  changed means a replay, and the handler returns without repeating the work.
+  This is the guard that protects **bundle** fulfilment, which has no `job_id`
+  for the publish check to key on.
+- **`published`** — written at the end of `publishOrder`, only for
+  `kind = 'single'`.
+- A **bundle order terminates at `paid`.** There is no listing to publish. The
+  manage page renders a `paid` bundle as complete and lists its credits, never
+  as still awaiting payment.
+- **`failed`** — `checkout.session.async_payment_failed`.
+- **`cancelled`** — `checkout.session.expired`.
+- **`refunded`** — written by hand; there is no self-serve refund.
+
+### `stripe_events`
+
+The real idempotency mechanism. Stripe delivers at least once and retries any
+non-2xx, and the damage from a replay is not theoretical: minting credits is an
+unconditional insert, so one retry of a 25-post bundle would mint 25 extra
+credits — $7,475 of free listings — and would also double-increment the coupon
+counter and re-send the receipt.
+
+```sql
+CREATE TABLE IF NOT EXISTS stripe_events (
+  id TEXT PRIMARY KEY NOT NULL,
+  type TEXT NOT NULL,
+  order_id TEXT,
+  received_at TEXT NOT NULL
+);
+```
+
+The webhook's **first** write, before any fulfilment, is
+`INSERT INTO stripe_events (id, type, order_id, received_at) VALUES (?,?,?,?)
+ON CONFLICT(id) DO NOTHING`. Zero rows changed means the event has already been
+handled: answer 200 and stop. Credit minting, the coupon increment, the sticky
+extension and the receipt email all sit behind this guard.
 
 Indexes lead with the column actually filtered.
 `0008_tag_location_lookup_indexes.sql` exists because
@@ -213,6 +283,7 @@ same credit, and what was bought and what it became stays readable.
 | `id` | TEXT PK | |
 | `tenant_id` | TEXT NOT NULL | |
 | `order_id` | TEXT NOT NULL | the bundle order that minted it |
+| `slot_index` | INTEGER NOT NULL | 0 to N-1 within that order |
 | `buyer_email` | TEXT NOT NULL | who may spend it |
 | `expires_at` | TEXT NOT NULL | `created_at` plus 24 months |
 | `spent_at` | TEXT | |
@@ -224,7 +295,13 @@ same credit, and what was bought and what it became stays readable.
 CREATE INDEX IF NOT EXISTS idx_job_credits_email
   ON job_credits (buyer_email, spent_at, expires_at);
 CREATE INDEX IF NOT EXISTS idx_job_credits_order ON job_credits (order_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_job_credits_slot
+  ON job_credits (order_id, slot_index);
 ```
+
+`idx_job_credits_slot` is belt and braces behind `stripe_events`: minting is
+`INSERT OR IGNORE` over slots 0 to N-1, so even a replay that somehow got past
+the event guard cannot mint an extra credit.
 
 ### `coupons`
 
@@ -241,6 +318,14 @@ CREATE INDEX IF NOT EXISTS idx_job_credits_order ON job_credits (order_id);
 
 A coupon never reduces a total below zero, and a percent coupon applies to the
 subtotal after the bundle discount, not before.
+
+**The sub-minimum clamp.** Stripe refuses a `mode=payment` session under its
+$0.50 minimum charge, so a coupon that all but clears the cart must never reach
+Stripe. `applyCoupon` clamps a resulting total in the range 1 to 49 cents down
+to 0. The buyer typed a valid coupon and can do nothing about a 37-cent
+remainder; forgiving it costs at most 49 cents and removes a branch the UI
+would otherwise have to explain. A zero total then takes the free-order path in
+section 3, which skips Stripe and publishes inline.
 
 ### Columns added to `jobs`
 
@@ -268,15 +353,26 @@ every job under that profile."
 **No new column for sticky.** `jobs.featured_until` already exists (migration
 0004) and is already read by the sort. See section 5.
 
-### Tables dropped
+### Tables dropped: migration `0011_drop_candidate_paywall.sql`
 
 ```sql
 DROP TABLE IF EXISTS unlocks;
 DROP TABLE IF EXISTS subscriptions;
 ```
 
-Safe because nobody has ever subscribed. Their four readers are handled in
-section 9.
+**A separate file for deploy ordering, not tidiness.** 0010 only widens the
+schema, so it is safe to apply *before* the deploy. These two DROPs are safe
+only *after* it: until the new worker is live, the code running in production
+reads both tables on every request — `lib/unlocks/quota.ts` via `/api/unlock`,
+`lib/unlocks/history.ts` via `/dashboard` (which is `force-dynamic`),
+`lib/profile/export.ts` via the GDPR export, and `lib/profile/delete-account.ts`
+via account deletion. D1 answers a dropped table with `no such table`, which
+the app catches and renders as a 500 while the worker still reports
+`outcome: ok` — the exact failure mode that made the first production day
+unreadable.
+
+Dropping the data is safe regardless: nobody has ever subscribed. Their
+readers are handled in section 9.
 
 ### `packages/db/src/schema.ts`
 
@@ -294,7 +390,7 @@ with our differences marked:
 
 1. Your name, your email (labelled "stays private", as theirs is)
 2. Company name, company URL (must parse as `http` or `https`), company logo
-   upload
+   URL
 3. Position / job title
 4. Description
 5. Location, or Remote
@@ -303,10 +399,34 @@ with our differences marked:
 7. Twitter handle
 8. Salary range, min and max, yearly USD
 9. Invoice details - address, legal name, VAT number
-10. How to apply: **on Nodework** (our on-site form, the existing
-    `job_applications` flow) or **redirect to your own URL**
-11. Add-ons: sticky, highlight, logo, premium support, auto-renew
+10. Your own posting URL, if you have one
+11. Add-ons: sticky, highlight, logo, auto-renew
 12. Coupon code
+
+**The logo is a URL, not an upload.** `companies.logo_url` is rendered straight
+into an `<img src>` on the company directory and detail pages, and emitted as
+`hiringOrganization.logo` in the JSON-LD. Every value in that column today is
+an absolute URL. The only upload precedent in the repo, `lib/profile/cv.ts`,
+stores an R2 *object key* and there is no route anywhere that reads an object
+back out, so an uploaded file would not be a URL and the add-on would ship
+broken. The logo add-on therefore buys *rendering the company mark on the row*,
+and the buyer supplies an `https` URL validated by the same rule as the company
+URL. No R2 object, no image-serving route, no wrangler change. If hosted
+uploads are ever wanted, that is a later slice with its own serving route,
+MIME allowlist and size cap.
+
+**Apply always stays on Nodework.** Field 10 is not a choice between our form
+and a redirect. `jobs.apply_url` is NOT NULL, so fulfilment must write
+something; the employer's own posting URL is stored there and is what the
+crawler dedupe guard in section 4 canonicalises against. It is **never**
+rendered as the public apply button. Every listing, paid or crawled, uses the
+on-site `job_applications` flow. This is the only reading consistent with what
+the site already promises — `/about` says "Apply stays on Nodework. Imported
+apply URLs are not used as the public button", the current `/post-web3-job`
+says "candidates submit on this site, not a redirect chain", and
+`lib/jobs/jsonld.ts` hardcodes `directApply: true` with the on-site apply URL
+as the action target, which a redirect listing would make a false structured
+data claim. When the employer has no URL, store the on-site apply URL.
 
 The running total is computed client-side from the same catalog table the
 server uses, and recomputed server-side at checkout. **The client total is
@@ -360,10 +480,26 @@ snapshot to everyone.
 - `POST /api/listings` - validate, quote, insert `job_orders` as `pending`,
   create a Stripe Checkout session, return its URL. Returns 503
   `{code:"billing_disabled"}` when `STRIPE_ENABLED !== "true"`, matching the
-  existing checkout route's contract exactly.
-- `POST /api/listings/redeem` - spend a bundle credit against a manage token.
-  No Stripe involved; publishes immediately.
-- `POST /api/stripe/webhook` - extended, not replaced.
+  existing checkout route's contract exactly. **When the re-quoted total is 0**
+  — a 100%-off coupon, or one clamped there by the sub-minimum rule in
+  section 7 — and auto-renew was not selected, Stripe is skipped entirely: the
+  order is marked `paid` inline and `publishOrder` runs in the request. Stripe
+  refuses a `mode=payment` session under its $0.50 minimum, so sending a
+  zero-total cart there would 502 and the buyer would never get the listing
+  they were promised.
+- `POST /api/listings/redeem` - validate the draft exactly as `/api/listings`
+  does, **reject any paid add-on** with 400 `{code:"addons_not_redeemable"}`,
+  then spend a credit and publish inline. A credit buys the base post and
+  nothing else, so no Stripe session is ever created here. A buyer who wants a
+  sticky buys that listing as a normal single post instead.
+- `POST /api/stripe/webhook` - extended, not replaced. It handles
+  `checkout.session.completed` (subject to the payment gate in section 4),
+  `checkout.session.async_payment_succeeded` (the same fulfilment path),
+  `checkout.session.async_payment_failed` (`status = 'failed'`; publish
+  nothing, and if it somehow already published, set `listed = 0`),
+  `checkout.session.expired` (`status = 'cancelled'`), and `invoice.paid` plus
+  `customer.subscription.deleted` from section 8. Every other event type is
+  acknowledged with 200 and ignored, as today.
 
 ### Buying without an account
 
@@ -383,6 +519,46 @@ $299.
 `publishOrder(db, order, now)` in `apps/web/lib/listings/publish.ts`. Called
 from the webhook and from the credit-redemption route. **Idempotent**: it
 returns the existing `job_id` if `job_orders.job_id` is already set.
+
+### The payment gate
+
+Fulfilment from `checkout.session.completed` runs **only when the session is
+actually funded**: `session.payment_status` is `paid`, or `no_payment_required`
+for the zero-total session a full coupon produces. Do not test `=== 'paid'`
+alone; that silently refuses to publish a fully-couponed order.
+
+Stripe fires `checkout.session.completed` when the session *completes*, not
+when funds settle. A delayed-notification method arrives with
+`payment_status: "unpaid"` and settles later via
+`checkout.session.async_payment_succeeded` or `async_payment_failed`. On
+`unpaid`, record `stripe_session_id` and `stripe_payment_intent`, leave the
+order `pending`, and return 200 without publishing. The existing
+`applyStripeEvent` has no such check, and the webhook is being extended rather
+than replaced, so this gate has to be added deliberately or the old unguarded
+pattern is what gets copied.
+
+### Fulfilment is resumable, not transactional
+
+D1 in the Workers runtime has **no interactive transactions**. `db.batch()` is
+the only atomic primitive, it appears nowhere in production code (only in two
+crawler test files), and it cannot express this sequence anyway: step 1 needs
+the company id before step 2, and step 5 needs the insert's error before it can
+retry the slug.
+
+`publishOrder` is therefore written as a **resumable sequence in which every
+step is individually idempotent** and any step may be re-entered by a Stripe
+retry. Two consequences that the order of writes below depends on:
+
+- **The job insert is an upsert**, `ON CONFLICT (tenant_id, canonical_key) DO
+  UPDATE`, on `'employer:' + order.id`, mirroring the crawler's `upsertJob`.
+  A plain INSERT would throw forever on a retry after a mid-way crash, and the
+  paid listing would never publish.
+- **`job_orders.job_id` is written immediately after the job insert**, not at
+  the end. It is the re-entry flag, and a flag written last is a flag that is
+  never there when it is needed.
+- Do **not** guard entry with a one-way `status = 'publishing'` gate. A crash
+  after that gate makes every later retry bounce off it, which is the wedge
+  this subsection exists to prevent.
 
 Order of writes:
 
@@ -412,34 +588,39 @@ Order of writes:
    migration-0003 suffix pattern,
    `slug + '-' + substr(replace(id,'-',''), 1, 8)`. Two listings from the same
    employer with the same title collide otherwise.
-6. `listed = 1`, `posted_at = now` as ISO-8601. Never RFC 1123 - SQLite
+6. `job_orders.job_id` is written here, immediately after the insert
+   succeeds, so a retry short-circuits at the top.
+7. `apply_url` = the employer's posting URL if they gave one, else the on-site
+   apply URL. Stored for dedupe and support; never rendered as the public apply
+   button.
+8. `listed = 1`, `posted_at = now` as ISO-8601. Never RFC 1123 - SQLite
    compares TEXT, and a mixed-format `posted_at` previously sorted every
    `"Fri, ..."` above every `"2026-..."`, silently breaking date ordering, the
    30-day windows and the growth leaderboard.
-7. `exclusivity = 'unknown'`. Not `hidden_from_linkedin`: that value drives the
+9. `exclusivity = 'unknown'`. Not `hidden_from_linkedin`: that value drives the
    "Not on LinkedIn" badge, which is a claim about the job we have no way to
    verify for a self-submitted listing.
-8. `description_html` sanitized **at write time** with
+10. `description_html` sanitized **at write time** with
    `sanitizeJobDescriptionHtml`, not only at render. The raw value otherwise
    reaches `lib/jobs/jsonld.ts` and `lib/jobs/meta.ts` too.
-9. `salary_min` and `salary_max` stored **only** when both bounds parse and are
+11. `salary_min` and `salary_max` stored **only** when both bounds parse and are
    yearly USD, matching `web3CareerStatedSalary`. `rebuildSalaryRollups`
    averages this column directly, so one bad employer figure corrupts every
    `/web3-salaries` page.
-10. **Taxonomy** via a new `attachListingTaxonomy` in
+12. **Taxonomy** via a new `attachListingTaxonomy` in
     `apps/web/lib/listings/taxonomy.ts`. It must not be the crawler's
     `attachTaxonomy`, which opens with `DELETE FROM job_tags WHERE job_id = ?`
     and `DELETE FROM job_locations WHERE job_id = ?`. It reuses the same
     vocabulary guards and the same `locationHierarchy` expansion, so a Berlin
     listing gets `berlin`, `germany` and `europe` rows exactly as a crawled one
     does.
-11. `job_benefits` rows are written. This is the first code path in the repo
+13. `job_benefits` rows are written. This is the first code path in the repo
     that ever writes them, and it makes the `/{benefit}-jobs` landings - which
     render empty today - start to fill once a benefit clears the `count >= 5`
     sitemap threshold. That is an intended SEO surface change, called out here
     so it is not discovered later as a surprise.
-12. `job_orders.status = 'published'`, `job_id` set, `paid_at` stamped.
-13. Confirmation email to the buyer with the receipt and the manage link.
+14. `job_orders.status = 'published'`, `job_id` set, `paid_at` stamped.
+15. Confirmation email to the buyer with the receipt and the manage link.
 
 No `job_sightings` row is written. Sightings drive `unlistStaleApiJobs`, whose
 21-day staleness sweep would otherwise unlist a paid listing.
@@ -450,6 +631,16 @@ A namespaced `canonical_key` prevents an *overwrite*, but not a *duplicate*: if
 the crawler later imports the same job from the API, a second row appears. The
 crawler's ingest gains one guard - skip a draft whose canonicalised apply URL
 matches an existing `source = 'employer'` job in the same tenant.
+
+That lookup runs once per draft on a table with no index on `apply_url`, which
+is how the 16-million-row day happened. Migration 0010 adds a partial index so
+it seeks instead of scanning, and stays small because almost every job is
+crawled, not bought:
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_jobs_employer_apply
+  ON jobs (apply_url) WHERE source = 'employer';
+```
 
 ## 5. Sticky and highlight on the board
 
@@ -489,9 +680,23 @@ bound parameter does for free.
 
 `orderBy: 'salary'` - used by `/highest-paying-web3-jobs` and the salary pages -
 ignores `featured_until` and `highlight` entirely, and keeps ignoring them. A
-salary ranking that can be bought is not a salary ranking. `/ads` says so
-explicitly, alongside the existing statement that featured placement "is a
-placement format, not a ranking bribe".
+salary ranking that can be bought is not a salary ranking.
+
+**`/ads` is rewritten here, not in section 9.** Three claims on it go false the
+moment sticky and highlight are self-serve, and a fourth was always too broad:
+
+- "Sorts to the top of every list the job already qualifies for" - narrowed to
+  name the exception: date-ordered lists only, never the salary-ordered pages.
+- "There is no self-serve checkout for featured placement yet. Reach out
+  through the account route below and we will set it up manually." - false.
+- The second "There is no self-serve checkout for this yet. Create a free
+  Nodework account so we have a way to reach you" - false.
+- `/post-web3-job`'s "There is a featured placement format described on the
+  advertising page. It is also not self-serve yet." - false.
+
+The "Not offered yet" list stays exactly as it is: no banners, no display
+units, no newsletter sponsorship, no guaranteed impressions. Those are still
+true, and they are the part of the page worth keeping.
 
 ## 6. Bundles and credits
 
@@ -515,10 +720,23 @@ statement is what makes a double-submit safe. Zero rows changed means no credit
 was available, and the caller is told so rather than being given a free
 listing.
 
-Add-ons are **not** included in a bundle credit. A credit buys the $299 base
-post; sticky, highlight, logo and support are purchased per listing at
-redemption time through the normal checkout. This matches the reference, whose
-bundle calculator prices add-ons separately from the post count.
+Add-ons are **not** included in a bundle credit, and **cannot be bought during
+a redemption**. A credit buys the $299 base post and nothing else;
+`/api/listings/redeem` rejects a selection carrying sticky, highlight, logo or
+auto-renew with 400 `{code:"addons_not_redeemable"}`. A buyer who wants a
+sticky buys that listing as a normal single post through `/api/listings`
+instead of spending a credit.
+
+The alternative - taking a Stripe payment for the add-ons during a redemption -
+was rejected because the spend above is irreversible as written: it has no
+un-spend path, so a cancelled add-on payment would destroy a $299 credit and
+publish nothing. Adding an add-on to an already-published listing is out of
+scope in this slice, alongside editing one.
+
+The redemption order row is a real `job_orders` row with `kind = 'single'`,
+`total_cents = 0`, a single `bundle_credit` line, and `job_credits.spent_order_id`
+pointing at it, so every published listing has an order behind it and the
+manage page can show what became of each credit.
 
 ## 7. Coupons
 
@@ -532,14 +750,36 @@ hand with `wrangler d1 execute`.
 ## 8. Auto-renew
 
 The 30-day sticky may be set to renew. Implemented as a Stripe Checkout session
-in `mode=subscription` where the *only* recurring line item is the 30-day
-sticky at $299 a month, with the base post and every other add-on riding along
-as one-time charges via `subscription_data[add_invoice_items][...]` on the
-first invoice. `invoice.paid` then extends `featured_until` by 30 days from the
-later of now and the current expiry; `customer.subscription.deleted` stops
-extending and lets the current window run out.
+in `mode=subscription` with the 30-day sticky as the only line item carrying
+`line_items[0][price_data][recurring][interval]=month` at $299, and the base
+post and every other add-on as additional one-time `line_items[n]` with no
+`recurring` block.
 
-When auto-renew is off - the default - the session is a plain `mode=payment`.
+**Not `add_invoice_items`.** That field's `price_data` requires a `product` ID
+string and has no `product_data`, so it cannot create a product inline, and no
+Stripe Product or Price object exists for this catalog — the catalog module is
+defined as pure and I/O-free precisely so that none has to. Plain `line_items`
+takes the same inline `price_data[product_data][name]` shape
+`checkoutFormForPlan` already emits, and Stripe's own Checkout reference says
+one-time prices in a subscription session "will be on the initial invoice
+only", which is exactly the behaviour wanted.
+
+`invoice.paid` extends `featured_until` by 30 days from the later of now and
+the current expiry, subject to two guards:
+
+- **The first invoice is skipped.** An `invoice.paid` whose `billing_reason` is
+  `subscription_create` is ignored: that is the payment fulfilment already ran
+  on, and `publishOrder` has already set `featured_until` to 30 days out.
+  Without this the buyer gets 60 days for one payment. Only
+  `subscription_cycle` and `subscription_update` extend.
+- **Each invoice extends at most once.** The extension is incremental, so
+  unlike an absolute `period_end` upsert it is not self-idempotent, and neither
+  the session index nor `publishOrder`'s `job_id` check guards it — both are
+  about publishing. The `stripe_events` row is the guard.
+
+`customer.subscription.deleted` stops extending and lets the current window run
+out. When auto-renew is off - the default - the session is a plain
+`mode=payment`.
 
 This is the most intricate part of the slice and the first thing to cut if the
 work needs to be smaller. Cutting it means the sticky simply expires and the
@@ -560,13 +800,49 @@ Deleted:
 - `apps/crawler/src/digest.ts` and its test - `sendHiddenDigest` is imported
   only by its own test, is not wired to the cron, and hard-depends on
   `subscriptions`
+- `apps/web/app/jobs/[slug]/unlock-form.tsx` and `unlock-form.test.ts` - the
+  only importer of `lib/unlocks/client`. An orphaned file still fails
+  `tsc --noEmit`, so it has to go with the directory, not merely stop being
+  rendered.
+- `unlockGateResponse` in `apps/web/lib/profile/gate.ts` and its test block.
+  `/api/unlock` was its only caller. `safeNextPath`, `onboardingLocation`,
+  `needsOnboarding` and `saveOnboardingProfile` stay - `/login` and
+  `/onboarding` still use them.
+- the "Email digest" panel in `apps/web/app/settings/page.tsx`, whose copy
+  promises the digest "once billing is live" and whose only implementation is
+  the crawler digest deleted above.
 
 Changed:
 
-- `job-detail-view.tsx`: `const gated = showBadge(job.exclusivity)` goes. Every
-  job gets the plain on-site apply path. The "Not on LinkedIn" badge itself
-  stays - it is a fact about the job, and was only ever incidentally the
-  paywall trigger.
+- `job-detail-view.tsx` (which lives at `app/[slug]/[id]/job-detail-view.tsx`,
+  not in `_components`): `const gated = showBadge(job.exclusivity)` goes, along
+  with the `UnlockApplyForm` import and its render. Every job gets the plain
+  on-site apply path. The "Not on LinkedIn" badge itself stays - it is a fact
+  about the job, and was only ever incidentally the paywall trigger.
+- `app/dashboard/page.tsx` loses every unlock and plan surface: the
+  `lib/unlocks/history` and `lib/unlocks/quota` imports, the
+  `UnlockHistoryDatabase` member of `DashboardEnv`, the three calls in its
+  `Promise.all`, the `meter`, the shell lead "Your unlocks, profile and plan at
+  a glance.", the "Unlocks this week" tile, the "Plan" tile and the whole
+  "Recent unlocks" section. What remains is the profile tile and the latest
+  jobs. `.dash-tiles` is a multi-column grid, so decide explicitly whether the
+  profile tile is promoted or the grid collapses; the now-dead
+  `.dash-tile--unlocks` and `.dash-meter` rules in `app/styles/account.css` go
+  with it.
+- `app/settings/page.tsx` says account deletion "removes your profile, CV and
+  unlock history". There is no unlock history any more.
+- `lib/profile/talent-pool.test.ts` imports `../unlocks/week` and
+  `../unlocks/quota`. Whatever it needs from them moves with it or is inlined.
+- `app/api/stripe/webhook/route.test.ts` imports `isPaidSubscription` from
+  `lib/unlocks/quota`.
+- `PRIVACY_COPY.jobProductPurpose` in `lib/legal/copy.ts` is the site's GDPR
+  Purpose 1 statement, rendered as the entire body of the `#job-board` section
+  on `/privacy`. It currently says we process "your account, profile, unlocks,
+  CV, and billing data ... (sign-in, search, apply links, quota, and paid
+  plans)". Unlocks, quota and candidate paid plans all stop existing, and a new
+  category of data appears that it does not mention at all: employer buyer
+  data - name, email, invoice details and payment records in `job_orders`. The
+  purpose statement is rewritten for both.
 - `lib/profile/export.ts`: the GDPR export drops its `unlocks` and
   `subscription` keys.
 - `lib/profile/delete-account.ts`: `SQL_DELETE_ORDER` drops both tables. The
@@ -613,6 +889,13 @@ invariant, and none is silently deleted.
 | `wrangler.test.ts` | `vars.STRIPE_ENABLED === "false"`; exact 4-binding and 6-secret arrays |
 | `app/_components/site-chrome.test.tsx` | chrome exposes `/ads`, `/pricing`, `/post-web3-job` |
 | `app/_components/footer-data.test.ts` | two hardcoded route allowlists; the "Other" column ends exactly on `/login` and `/login?intent=start` |
+| `app/dashboard/page.test.tsx` | mocks `lib/unlocks/history`; asserts "Unlocks this week", "2 of 5 used, resets Monday UTC", "Free plan" and "Recent unlocks" |
+| `app/api/unlock/route.test.ts` | the whole gate contract; deleted with the route |
+| `app/jobs/[slug]/unlock-form.test.ts` | deleted with the component |
+| `lib/profile/gate.test.ts` | the `unlockGateResponse` block only; the rest stays |
+| `lib/profile/export.test.ts`, `lib/profile/delete-account.test.ts`, `app/api/account/delete/route.test.ts` | the export's `unlocks` / `subscription` keys and the exact `SQL_DELETE_ORDER` |
+| `app/privacy/page.test.tsx` | asserts `PRIVACY_COPY.jobProductPurpose` renders; it asserts the constant, so it will not catch a stale rewrite |
+| `app/ads/page.test.tsx` | the "not self-serve yet" claims |
 
 Two mechanical constraints on writing the new tests:
 
@@ -679,9 +962,10 @@ precedent: `job-apply-form.tsx` is the only real form in the codebase.
 Unit, with `pnpm --filter @gaming/web test`:
 
 - `listing-catalog.test.ts` - every sticky tier, both highlight tiers, logo,
-  support, every breakpoint of the volume ladder including the 20 -> 29 jump
-  and the 55% cap, coupon percent and amount, the never-below-zero floor, and
-  the exact reference totals ($299 alone; $448 for their default cart).
+  every row of `BUNDLE_LADDER` including both changes of step size and the cap
+  at the last row, coupon percent and amount, the never-below-zero floor, the
+  1-to-49-cent clamp, and the exact reference totals ($299 alone; $448 for
+  their default cart).
 - `publish.test.ts` - against a `node:sqlite` database seeded from the real
   migrations: publishes once, is idempotent on a second call, resolves a slug
   collision, refuses a non-yearly-USD salary, writes the three-row Berlin
@@ -690,7 +974,11 @@ Unit, with `pnpm --filter @gaming/web test`:
 - `credits.test.ts` - concurrent redemption spends exactly one credit; an
   expired credit is not spendable.
 - webhook - a replayed `checkout.session.completed` publishes one listing, not
-  two.
+  two; a replayed bundle completion mints N credits, not 2N; a session with
+  `payment_status: "unpaid"` publishes nothing; `async_payment_failed` after an
+  `unpaid` completion leaves the order `failed` and no listing live; an
+  `invoice.paid` with `billing_reason: "subscription_create"` does not extend
+  the sticky window a second time.
 - route tests for `/api/listings` under both states of `STRIPE_ENABLED`, and
   for a client-supplied total that disagrees with the server quote.
 
@@ -723,7 +1011,16 @@ Until both are done the funnel renders, validates and quotes, and the pay
 button reports that checkout is not open - the same contract
 `/api/stripe/checkout` uses today.
 
-Migration 0010 must be applied to production **before** the deploy that starts
+**The two migrations go on opposite sides of the deploy.**
+
+`0010_employer_listings.sql` only widens the schema, so it is applied
+**before** the deploy that starts selecting the new columns.
+`0011_drop_candidate_paywall.sql` drops tables the currently-live worker still
+reads on every request, so it is applied **after** the deploy, once the code
+that reads them is gone. Running 0011 first 500s `/dashboard`, the GDPR export
+and account deletion for the whole window between migration and deploy.
+
+Migration 0010 must be applied to production before the deploy that starts
 selecting the new columns. `/web3-companies/[slug]` has `revalidate = 300` and
 no `generateStaticParams`, so it renders against the production database on
 every request; a schema-widening deploy that lands first returns 500 from every

@@ -13,7 +13,10 @@
 ## Global Constraints
 
 - **Money is integer cents.** No floats, no currency conversion. `LISTING_CURRENCY = "usd"`.
-- **Prices are exactly the reference's:** base 29_900; sticky 4_900 / 9_900 / 14_900 / 19_900 / 29_900 for 1 / 3 / 7 / 14 / 30 days; highlight 9_900 standard, 14_900 custom; logo 4_900; support 9_900.
+- **Prices are exactly the reference's:** base 29_900; sticky 4_900 / 9_900 / 14_900 / 19_900 / 29_900 for 1 / 3 / 7 / 14 / 30 days; highlight 9_900 standard, 14_900 custom; logo 4_900. **Premium support is not sold** — the repo has no contact route, no support address and no channel of any kind, and this project does not charge for what it cannot deliver.
+- **Apply always stays on Nodework.** `jobs.apply_url` holds the employer's own posting URL for dedupe and support; it is never rendered as the public apply button. There is no redirect option.
+- **The company logo is a URL, not an upload.** `companies.logo_url` is rendered straight into an `<img src>` and emitted as `hiringOrganization.logo` in JSON-LD; every value in that column today is an absolute URL.
+- **The webhook is idempotent through `stripe_events`,** not through any index on `job_orders`. Stripe delivers at least once and retries every non-2xx.
 - **Every migration file must be idempotent.** `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`. `ALTER TABLE ADD COLUMN` has no `IF NOT EXISTS` and fails loudly on a second run; that is accepted and documented in the file header, as in `0009_company_description.sql`.
 - **`verbatimModuleSyntax: true`** — type-only imports must be written `import type { X } from "y"` or `import { a, type B } from "y"`.
 - **`apps/web/lib/**` uses named exports only.** `export default` appears only in `app/**` for Next page/layout/route files.
@@ -46,7 +49,6 @@
 | `apps/web/lib/listings/email.ts` | Receipt and manage-link email bodies. |
 | `apps/web/app/api/listings/route.ts` | Submit a listing, create a checkout session. |
 | `apps/web/app/api/listings/redeem/route.ts` | Spend a bundle credit. |
-| `apps/web/app/api/listings/logo/[key]/route.ts` | Serve an uploaded company logo out of R2. |
 | `apps/web/app/post-web3-job/checkout/success/page.tsx` | Post-payment confirmation. |
 | `apps/web/app/post-web3-job/checkout/cancel/page.tsx` | Abandoned checkout. |
 | `apps/web/app/post-web3-job/manage/[token]/page.tsx` | Order status, credits, spend a credit. |
@@ -93,7 +95,7 @@
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `LISTING_CURRENCY`, `LISTING_BASE_CENTS`, `STICKY_TIERS`, `HIGHLIGHT_TIERS`, `LOGO_CENTS`, `SUPPORT_CENTS`, `BUNDLE_LADDER`, types `StickyDays`, `HighlightTier`, `ListingSelection`, `QuoteLine`, `Quote`, `Coupon`, and functions `quoteListing`, `quoteBundle`, `bundleDiscountPercent`, `applyCoupon`, `formatUsd`, `isStickyDays`, `isHighlightTier`.
+- Produces: `LISTING_CURRENCY`, `LISTING_BASE_CENTS`, `STICKY_TIERS`, `HIGHLIGHT_TIERS`, `LOGO_CENTS`, `BUNDLE_LADDER`, types `StickyDays`, `HighlightTier`, `ListingSelection`, `QuoteLine`, `Quote`, `Coupon`, and functions `quoteListing`, `quoteBundle`, `bundleDiscountPercent`, `applyCoupon`, `formatUsd`, `isStickyDays`, `isHighlightTier`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -114,7 +116,6 @@ const BARE: ListingSelection = {
   highlight: "none",
   highlightColor: null,
   logo: false,
-  support: false,
   autoRenew: false,
 };
 
@@ -137,11 +138,10 @@ describe("quoteListing", () => {
     expect(totals).toEqual([29_900, 34_800, 39_800, 44_800, 49_800, 59_800]);
   });
 
-  it("prices both highlight tiers, the logo and support", () => {
+  it("prices both highlight tiers and the logo", () => {
     expect(quoteListing({ ...BARE, highlight: "standard" }).totalCents).toBe(39_800);
     expect(quoteListing({ ...BARE, highlight: "custom" }).totalCents).toBe(44_800);
     expect(quoteListing({ ...BARE, logo: true }).totalCents).toBe(34_800);
-    expect(quoteListing({ ...BARE, support: true }).totalCents).toBe(39_800);
   });
 
   it("adds every add-on together", () => {
@@ -150,10 +150,9 @@ describe("quoteListing", () => {
       highlight: "custom",
       highlightColor: "#008fd6",
       logo: true,
-      support: true,
       autoRenew: true,
     });
-    expect(quote.totalCents).toBe(29_900 + 29_900 + 14_900 + 4_900 + 9_900);
+    expect(quote.totalCents).toBe(29_900 + 29_900 + 14_900 + 4_900);
   });
 });
 
@@ -220,6 +219,34 @@ describe("applyCoupon", () => {
     expect(quote.totalCents).toBe(0);
   });
 
+  it("clamps a sub-minimum remainder to zero", () => {
+    // Stripe refuses a mode=payment session under $0.50, so a coupon that all
+    // but clears the cart must never reach it. 29_900 - 29_870 = 30 cents.
+    const quote = applyCoupon(quoteListing(BARE), {
+      code: "NEARLY",
+      kind: "amount",
+      value: 29_870,
+      maxRedemptions: null,
+      redeemedCount: 0,
+      startsAt: null,
+      expiresAt: null,
+    }, now);
+    expect(quote.totalCents).toBe(0);
+  });
+
+  it("leaves a total at or above the stripe minimum alone", () => {
+    const quote = applyCoupon(quoteListing(BARE), {
+      code: "ALMOST",
+      kind: "amount",
+      value: 29_850,
+      maxRedemptions: null,
+      redeemedCount: 0,
+      startsAt: null,
+      expiresAt: null,
+    }, now);
+    expect(quote.totalCents).toBe(50);
+  });
+
   it("ignores an expired or exhausted coupon", () => {
     const expired = applyCoupon(quoteListing(BARE), {
       code: "OLD",
@@ -267,7 +294,6 @@ Expected: FAIL, "Failed to resolve import ./listing-catalog".
 export const LISTING_CURRENCY = "usd" as const;
 export const LISTING_BASE_CENTS = 29_900;
 export const LOGO_CENTS = 4_900;
-export const SUPPORT_CENTS = 9_900;
 
 export const STICKY_TIERS = [
   { days: 0, cents: 0 },
@@ -313,7 +339,6 @@ export type ListingSelection = {
   highlight: HighlightTier;
   highlightColor: string | null;
   logo: boolean;
-  support: boolean;
   autoRenew: boolean;
 };
 
@@ -386,7 +411,6 @@ export function quoteListing(selection: ListingSelection): Quote {
   }
 
   if (selection.logo) lines.push(line("logo", "Company logo on the row", LOGO_CENTS));
-  if (selection.support) lines.push(line("support", "Premium support", SUPPORT_CENTS));
 
   return totalled(lines, 0);
 }
@@ -416,6 +440,9 @@ function couponIsUsable(coupon: Coupon, now: Date): boolean {
   return true;
 }
 
+/** Stripe refuses a mode=payment session below this. */
+export const STRIPE_MINIMUM_CENTS = 50;
+
 export function applyCoupon(quote: Quote, coupon: Coupon | null, now: Date): Quote {
   if (!coupon || !couponIsUsable(coupon, now)) return quote;
 
@@ -424,10 +451,16 @@ export function applyCoupon(quote: Quote, coupon: Coupon | null, now: Date): Quo
     ? Math.round((base * Math.min(100, Math.max(0, coupon.value))) / 100)
     : Math.max(0, coupon.value);
 
+  const raw = Math.max(0, base - off);
+  // A 37-cent remainder is not something the buyer can do anything about, and
+  // Stripe will not take it. Forgive it: at most 49 cents, and it removes a
+  // branch the UI would otherwise have to explain.
+  const total = raw > 0 && raw < STRIPE_MINIMUM_CENTS ? 0 : raw;
+
   return {
     ...quote,
-    discountCents: quote.discountCents + Math.min(base, off),
-    totalCents: Math.max(0, base - off),
+    discountCents: quote.subtotalCents - total,
+    totalCents: total,
   };
 }
 
@@ -478,6 +511,7 @@ it("creates the employer listing tables", () => {
   expect(names).toContain("job_orders");
   expect(names).toContain("job_credits");
   expect(names).toContain("coupons");
+  expect(names).toContain("stripe_events");
 
   const jobColumns = db
     .prepare("PRAGMA table_info(jobs)")
@@ -570,6 +604,7 @@ CREATE TABLE IF NOT EXISTS job_credits (
   id TEXT PRIMARY KEY NOT NULL,
   tenant_id TEXT NOT NULL,
   order_id TEXT NOT NULL,
+  slot_index INTEGER NOT NULL,
   buyer_email TEXT NOT NULL,
   expires_at TEXT NOT NULL,
   spent_at TEXT,
@@ -581,6 +616,25 @@ CREATE TABLE IF NOT EXISTS job_credits (
 CREATE INDEX IF NOT EXISTS idx_job_credits_email
   ON job_credits (buyer_email, spent_at, expires_at);
 CREATE INDEX IF NOT EXISTS idx_job_credits_order ON job_credits (order_id);
+
+-- Minting is INSERT OR IGNORE over slots 0..N-1, so a replayed webhook cannot
+-- mint an extra credit even if it somehow got past the stripe_events guard.
+-- Without this, one retry of a 25-post bundle mints 25 free listings.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_job_credits_slot
+  ON job_credits (order_id, slot_index);
+
+-- The actual webhook idempotency mechanism. Stripe delivers at least once and
+-- retries every non-2xx; the unique index on job_orders.stripe_session_id does
+-- NOT help, because the webhook never inserts an order row - POST /api/listings
+-- already did. The handler's first write is
+--   INSERT INTO stripe_events (...) VALUES (...) ON CONFLICT(id) DO NOTHING
+-- and zero rows changed means "already handled, return 200 and stop".
+CREATE TABLE IF NOT EXISTS stripe_events (
+  id TEXT PRIMARY KEY NOT NULL,
+  type TEXT NOT NULL,
+  order_id TEXT,
+  received_at TEXT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS coupons (
   code TEXT PRIMARY KEY NOT NULL,
@@ -605,6 +659,14 @@ ALTER TABLE jobs ADD COLUMN order_id TEXT;
 ALTER TABLE jobs ADD COLUMN highlight_color TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_jobs_order ON jobs (order_id);
+
+-- The crawler's new anti-duplicate guard looks a draft's canonicalised apply
+-- URL up against employer listings, once per draft. jobs has no index on
+-- apply_url, and an unindexed per-draft scan of jobs is exactly how 1,283
+-- queries came to read 16,180,262 rows in a day. Partial, so it stays small:
+-- almost every job is crawled, not bought.
+CREATE INDEX IF NOT EXISTS idx_jobs_employer_apply
+  ON jobs (apply_url) WHERE source = 'employer';
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -701,12 +763,11 @@ const RAW = {
   twitter: "@acme",
   salaryMin: "120000",
   salaryMax: "180000",
-  applyMode: "onsite",
-  applyUrl: "",
+  postingUrl: "",
   buyerName: "Dana Fox",
   buyerEmail: "dana@acme.example",
   invoiceInfo: "Acme Labs, Berlin, VAT DE123",
-  logoKey: "",
+  companyLogoUrl: "",
 };
 
 describe("parseListingDraft", () => {
@@ -758,11 +819,13 @@ describe("parseListingDraft", () => {
     expect(result.draft.salaryMin).toBeNull();
   });
 
-  it("requires an apply URL when the employer chose redirect", () => {
-    const result = parseListingDraft({ ...RAW, applyMode: "redirect", applyUrl: "" });
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.errors.applyUrl).toBeTruthy();
+  it("accepts a submission with no posting URL of its own", () => {
+    expect(parseListingDraft({ ...RAW, postingUrl: "" }).ok).toBe(true);
+  });
+
+  it("rejects a posting URL or logo URL that is not http", () => {
+    expect(parseListingDraft({ ...RAW, postingUrl: "acme.example/jobs/1" }).ok).toBe(false);
+    expect(parseListingDraft({ ...RAW, companyLogoUrl: "acme.example/logo.png" }).ok).toBe(false);
   });
 
   it("requires a buyer email", () => {
@@ -795,14 +858,12 @@ import { sanitizeJobDescriptionHtml } from "../jobs/sanitize-description";
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const HTTP_URL = /^https?:\/\/[^\s]+$/i;
 
-export type ApplyMode = "onsite" | "redirect";
-
 export type ListingDraft = {
   title: string;
   descriptionHtml: string;
   companyName: string;
   companyUrl: string;
-  logoKey: string | null;
+  companyLogoUrl: string | null;
   location: string | null;
   locationSlug: string | null;
   remote: "remote" | "hybrid" | "onsite";
@@ -812,8 +873,7 @@ export type ListingDraft = {
   twitter: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
-  applyMode: ApplyMode;
-  applyUrl: string | null;
+  postingUrl: string | null;
   buyerName: string;
   buyerEmail: string;
   invoiceInfo: string | null;
@@ -891,10 +951,16 @@ export function parseListingDraft(raw: Record<string, string>): DraftResult {
     errors.benefits = "One of those benefits is not on the list.";
   }
 
-  const applyMode: ApplyMode = raw.applyMode === "redirect" ? "redirect" : "onsite";
-  const applyUrl = (raw.applyUrl ?? "").trim();
-  if (applyMode === "redirect" && !HTTP_URL.test(applyUrl)) {
-    errors.applyUrl = "Give the URL candidates should apply at.";
+  // The employer's own posting URL. Optional, stored for dedupe and support,
+  // never rendered as the public apply button - apply always stays on Nodework.
+  const postingUrl = (raw.postingUrl ?? "").trim();
+  if (postingUrl && !HTTP_URL.test(postingUrl)) {
+    errors.postingUrl = "That posting URL must start with https://.";
+  }
+
+  const companyLogoUrl = (raw.companyLogoUrl ?? "").trim();
+  if (companyLogoUrl && !HTTP_URL.test(companyLogoUrl)) {
+    errors.companyLogoUrl = "The logo URL must start with https://.";
   }
 
   const buyerName = cleanText(raw.buyerName, 120);
@@ -907,7 +973,6 @@ export function parseListingDraft(raw: Record<string, string>): DraftResult {
 
   const salary = yearlyUsd(raw.salaryMin, raw.salaryMax);
   const twitter = cleanText(raw.twitter, 60).replace(/^@/, "");
-  const logoKey = cleanText(raw.logoKey, 200);
 
   return {
     ok: true,
@@ -916,7 +981,7 @@ export function parseListingDraft(raw: Record<string, string>): DraftResult {
       descriptionHtml,
       companyName,
       companyUrl,
-      logoKey: logoKey || null,
+      companyLogoUrl: companyLogoUrl || null,
       location: locationText || null,
       locationSlug,
       remote,
@@ -926,8 +991,7 @@ export function parseListingDraft(raw: Record<string, string>): DraftResult {
       twitter: twitter || null,
       salaryMin: salary.min,
       salaryMax: salary.max,
-      applyMode,
-      applyUrl: applyMode === "redirect" ? applyUrl : null,
+      postingUrl: postingUrl || null,
       buyerName,
       buyerEmail,
       invoiceInfo: cleanText(raw.invoiceInfo, 1000) || null,
@@ -1395,23 +1459,41 @@ export async function publishOrder(
     slugCandidates: [base, `${base}-${jobId.replace(/-/g, "").slice(0, 8)}`],
   });
 
+  // The re-entry flag, written as soon as the job exists.
+  await db
+    .prepare("UPDATE job_orders SET job_id = ?, updated_at = ? WHERE id = ?")
+    .bind(jobId, iso, order.id)
+    .run();
+
   await attachListingTaxonomy(db, jobId, draft);
+
   await db
     .prepare(
       `UPDATE job_orders
-          SET status = 'published', job_id = ?, updated_at = ?
+          SET status = 'published', paid_at = COALESCE(paid_at, ?), updated_at = ?
         WHERE id = ?`,
     )
-    .bind(jobId, iso, order.id)
+    .bind(iso, iso, order.id)
     .run();
 
   return { jobId, slug };
 }
 ```
 
-`stickyUntil` reads the sticky line's day count out of `order.lines` (the frozen quote), so the window is whatever was actually paid for, not whatever the form says now. `apply_url` is NOT NULL: for `applyMode === "onsite"` store the absolute URL of our own apply page, built from `SITE_URL` when it is set and the relative `/jobs/{slug}/apply` when it is not.
+`stickyUntil` reads the sticky line's day count out of `order.lines` (the frozen quote), so the window is whatever was actually paid for, not whatever the form says now.
 
-Fulfilment is several statements and **D1 has no interactive transactions in the Workers runtime**. Order the writes so a crash leaves recoverable state: company first (harmless if orphaned), job second, taxonomy third, order status last. A replay then re-enters at the top and short-circuits on `order.jobId`. Check whether `db.batch()` is already used anywhere in `apps/web` or `apps/crawler`; if it is, use it for the job insert plus the order update and say so in a comment.
+`apply_url` is NOT NULL, so fulfilment must write something: store `draft.postingUrl` when the employer gave one, else the absolute URL of our own apply page, built from `SITE_URL` when it is set and `/jobs/{slug}/apply` when it is not. Either way it is **stored for dedupe and support and never rendered** — every listing, paid or crawled, uses the on-site apply flow, which is what `/about` and `lib/jobs/jsonld.ts` (`directApply: true`) already promise.
+
+`companies.logo_url` is set to `draft.companyLogoUrl` only when the order carries a `logo` line.
+
+**Fulfilment is resumable, not transactional.** D1 has no interactive transactions in the Workers runtime; `db.batch()` is the only atomic primitive, appears nowhere in production code (only two crawler test files), and cannot express this sequence anyway — step 1 needs the company id before step 2, and the slug retry needs the insert's error. So every step is individually idempotent and any step may be re-entered by a Stripe retry. Three rules make that work:
+
+1. **The job insert is an upsert**, mirroring the crawler's `upsertJob`:
+   `INSERT INTO jobs (...) VALUES (...) ON CONFLICT (tenant_id, canonical_key) DO UPDATE SET ...` on `'employer:' + order.id`. A plain INSERT throws forever on a retry after a mid-way crash, and the paid listing never publishes.
+2. **`job_orders.job_id` is written immediately after the job insert**, not at the end. It is the re-entry flag, and a flag written last is never there when it is needed — a crash at the taxonomy step would otherwise leave `job_id` null and send the retry straight back into a duplicate insert.
+3. **Do not guard entry with a one-way `status = 'publishing'`.** A crash after that gate makes every later retry bounce off it, which is the wedge this design exists to avoid. Entry is guarded only by `job_orders.job_id IS NOT NULL`.
+
+Order the remaining writes so a crash leaves recoverable state: company first (harmless if orphaned), job second, `job_id` third, taxonomy fourth, order status last.
 
 - [ ] **Step 5: Run test to verify it passes**
 
@@ -1446,6 +1528,13 @@ it("mints one row per post with a 24 month window", async () => {
   const rows = db.raw.prepare("SELECT expires_at FROM job_credits").all();
   expect(rows).toHaveLength(10);
   expect((rows[0] as { expires_at: string }).expires_at).toBe("2028-09-14T00:00:00.000Z");
+});
+
+it("mints the same N credits when called twice for the same order", async () => {
+  const db = seed();
+  await mintCredits(db, bundleOrder(10), NOW);
+  await mintCredits(db, bundleOrder(10), NOW);
+  expect(db.raw.prepare("SELECT COUNT(*) AS n FROM job_credits").get()).toEqual({ n: 10 });
 });
 
 it("spends exactly one credit, oldest expiring first", async () => {
@@ -1498,6 +1587,8 @@ UPDATE job_credits
 Read rows-changed the way `apps/web/lib/unlocks/quota.ts` does today — it reads `result.meta.changes` with a fallback to `result.changes`, because the D1 binding and the test adapter report it differently. Copy that helper into this module before Task 16 deletes the file it currently lives in.
 
 `expires_at` is computed with `setUTCMonth(getUTCMonth() + 24)` on a copy of `now`, so it lands on the same day of month two years out.
+
+`mintCredits` inserts slots `0` to `N-1` with `INSERT OR IGNORE` against the unique `(order_id, slot_index)` index, so calling it twice for one order mints nothing the second time. That is defence in depth behind the `stripe_events` guard in Task 12, not a substitute for it — the credit ledger is where a replay would do the most expensive damage.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -1597,7 +1688,7 @@ git commit -m "feat(web): coupon lookup and redemption"
 - Consumes: `JobOrder` from `../listings/orders`.
 - Produces: `checkoutFormForOrder(order, { successUrl, cancelUrl }): URLSearchParams`.
 
-**Before writing this, verify against Stripe's current API reference** that `mode=subscription` accepts `subscription_data[add_invoice_items][n][price_data]` for one-time charges alongside a recurring line item. If it does not, implement auto-renew as two charges (a `mode=payment` session for the post and its add-ons, and a separate `mode=subscription` session for the renewal) and note the change in the spec.
+**Auto-renew uses plain `line_items`, not `add_invoice_items`.** That field's `price_data` requires a `product` ID string and has no `product_data`, so it cannot create a product inline, and this catalog has no Stripe Product or Price objects — the catalog module is pure and I/O-free precisely so that none has to be provisioned. In `mode=subscription`, the 30-day sticky is the one line carrying `price_data[recurring][interval]=month`; the base post and every other add-on are additional `line_items[n]` with no `recurring` block, which Stripe puts on the initial invoice only. Every line uses the inline `price_data[product_data][name]` shape `checkoutFormForPlan` already emits.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1633,7 +1724,8 @@ it("makes the 30 day sticky recurring when auto-renew was bought", () => {
   expect(form.mode).toBe("subscription");
   expect(form["line_items[0][price_data][recurring][interval]"]).toBe("month");
   expect(form["subscription_data[metadata][orderId]"]).toBe(autoRenewOrder().id);
-  expect(form["subscription_data[add_invoice_items][0][price_data][unit_amount]"]).toBe("29900");
+  expect(form["line_items[1][price_data][unit_amount]"]).toBe("29900");
+  expect(form["line_items[1][price_data][recurring][interval]"]).toBeUndefined();
 });
 
 it("never emits a euro amount", () => {
@@ -1731,18 +1823,16 @@ it("links the order to the account when the buyer is signed in", async () => {
   expect(db.raw.prepare("SELECT user_id FROM job_orders").get()).toEqual({ user_id: "user-1" });
 });
 
-it("stores an uploaded logo and keeps its key on the order", async () => {
+it("skips stripe entirely when a coupon clears the cart", async () => {
+  insertCoupon(db, { code: "ALLFREE", kind: "percent", value: 100 });
   const { POST } = await import("./route");
-  await POST(multipartRequest(validForm(), logoFile()));
-  const order = db.raw.prepare("SELECT draft_json FROM job_orders").get() as { draft_json: string };
-  expect(JSON.parse(order.draft_json).logoKey).toMatch(/^logos\//);
-  expect(mocks.filesPut).toHaveBeenCalledOnce();
-});
+  const response = await POST(formRequest({ ...validForm(), coupon: "ALLFREE" }));
 
-it("refuses a logo that is not an image or is over 512KB", async () => {
-  const { POST } = await import("./route");
-  expect((await POST(multipartRequest(validForm(), oversizeFile()))).status).toBe(422);
-  expect(mocks.filesPut).not.toHaveBeenCalled();
+  expect(mocks.fetch).not.toHaveBeenCalled();
+  expect(await response.json()).toEqual({ url: "/post-web3-job/checkout/success?order=" + orderId(db) });
+  expect(db.raw.prepare("SELECT status, total_cents FROM job_orders").get())
+    .toEqual({ status: "published", total_cents: 0 });
+  expect(db.raw.prepare("SELECT COUNT(*) AS n FROM jobs WHERE listed = 1").get()).toEqual({ n: 1 });
 });
 ```
 
@@ -1753,7 +1843,7 @@ Expected: FAIL, module not found.
 
 - [ ] **Step 3: Write the implementation**
 
-Order of operations: read the form, verify Turnstile, check `STRIPE_ENABLED`, `parseListingDraft`, store the logo if one was uploaded, read the selection and clamp it through `isStickyDays` / `isHighlightTier`, `quoteListing`, `findCoupon` + `applyCoupon`, read the Better Auth session, `requireTenantId`, `createPendingOrder`, build the session, `fetch` Stripe, `attachStripeSession`, return `{ url }`.
+Order of operations: read the form, verify Turnstile, check `STRIPE_ENABLED`, `parseListingDraft`, read the selection and clamp it through `isStickyDays` / `isHighlightTier`, `quoteListing`, `findCoupon` + `applyCoupon`, read the Better Auth session, `requireTenantId`, `createPendingOrder`, then either the free path or the Stripe path, and return `{ url }`.
 
 The client's own total is never read. A `totalCents` field in the form is ignored entirely.
 
@@ -1764,50 +1854,27 @@ const session = await createAuth(env).api.getSession({ headers: request.headers 
 const userId = session?.user?.id ?? null;
 ```
 
-- [ ] **Step 4: Store the logo**
+- [ ] **Step 4: The free-order path**
 
-The form is `enctype="multipart/form-data"`, so the logo arrives in the same POST and no second endpoint or round trip is needed. Read `apps/web/lib/profile/cv.ts` first and follow its validation shape.
+Stripe refuses a `mode=payment` session below its $0.50 minimum, so a zero-total cart must never reach it — the buyer would see a 502 and never get the listing the coupon promised.
 
 ```ts
-const LOGO_MAX_BYTES = 512 * 1024;
-const LOGO_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
-
-async function storeLogo(bucket: R2Bucket, file: File | null): Promise<string | null> {
-  if (!file || file.size === 0) return null;
-  if (file.size > LOGO_MAX_BYTES) throw new LogoError("Logo must be under 512KB.");
-  if (!LOGO_TYPES.includes(file.type)) throw new LogoError("Logo must be a PNG, JPEG, WebP or SVG.");
-
-  const key = `logos/${crypto.randomUUID()}`;
-  await bucket.put(key, await file.arrayBuffer(), {
-    httpMetadata: { contentType: file.type },
-  });
-  return key;
+if (quote.totalCents === 0 && !selection.autoRenew) {
+  await markOrderPaid(db, order.id, { paymentIntent: null, subscriptionId: null, now });
+  await redeemCoupon(db, coupon.code);
+  const { jobId } = await publishOrder(db, await reload(db, order.id), now);
+  return Response.json({ url: `/post-web3-job/checkout/success?order=${order.id}` });
 }
 ```
 
-A `LogoError` becomes a 422 with the message on the `logo` field, alongside any draft errors.
+Auto-renew is excluded because a renewing subscription still needs a Stripe session even when the first period is free.
 
-- [ ] **Step 5: Serve the stored logo**
-
-Create `apps/web/app/api/listings/logo/[key]/route.ts`: a GET that reads the object out of `FILES` and returns it with its stored content type and `cache-control: public, max-age=31536000, immutable` (the key is a UUID, so the object never changes). Return 404 when the object is missing, and refuse any key that does not start with `logos/`, so the route cannot be used to read CVs out of the same bucket.
-
-`publishOrder` (Task 7) sets `companies.logo_url` to `/api/listings/logo/{key}` when the logo add-on was bought.
-
-Add a test:
-
-```ts
-it("refuses to serve anything outside the logos prefix", async () => {
-  const { GET } = await import("./route");
-  expect((await GET(new Request("https://x.example"), { params: { key: "cv/secret" } })).status).toBe(404);
-});
-```
-
-- [ ] **Step 6: Run test to verify it passes**
+- [ ] **Step 5: Run test to verify it passes**
 
 Run: `pnpm --filter @gaming/web test -- api/listings`
-Expected: PASS, 9 tests.
+Expected: PASS, 8 tests.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add apps/web/app/api/listings
@@ -1861,11 +1928,55 @@ it("ignores an event for an order that does not exist", async () => {
   expect(await fulfilStripeEvent(db, completedEvent("cs_missing"), NOW)).toBe(false);
 });
 
-it("extends the sticky window on invoice.paid", async () => {
+it("mints N credits, not 2N, when a bundle completion is replayed", async () => {
+  const db = await seedPendingBundle(25);
+  await fulfilStripeEvent(db, completedEvent("cs_2"), NOW);
+  await fulfilStripeEvent(db, completedEvent("cs_2"), NOW);
+  expect(db.raw.prepare("SELECT COUNT(*) AS n FROM job_credits").get()).toEqual({ n: 25 });
+});
+
+it("publishes nothing for a session that is not funded yet", async () => {
+  const db = await seedPendingSingle();
+  await fulfilStripeEvent(db, completedEvent("cs_1", { paymentStatus: "unpaid" }), NOW);
+  expect(db.raw.prepare("SELECT COUNT(*) AS n FROM jobs").get()).toEqual({ n: 0 });
+  expect(db.raw.prepare("SELECT status FROM job_orders").get()).toEqual({ status: "pending" });
+});
+
+it("publishes a zero-total session that required no payment", async () => {
+  const db = await seedPendingFree();
+  await fulfilStripeEvent(db, completedEvent("cs_4", { paymentStatus: "no_payment_required" }), NOW);
+  expect(db.raw.prepare("SELECT COUNT(*) AS n FROM jobs WHERE listed = 1").get()).toEqual({ n: 1 });
+});
+
+it("marks an order failed when the delayed payment fails", async () => {
+  const db = await seedPendingSingle();
+  await fulfilStripeEvent(db, completedEvent("cs_1", { paymentStatus: "unpaid" }), NOW);
+  await fulfilStripeEvent(db, asyncFailedEvent("cs_1"), NOW);
+  expect(db.raw.prepare("SELECT status FROM job_orders").get()).toEqual({ status: "failed" });
+  expect(db.raw.prepare("SELECT COUNT(*) AS n FROM jobs").get()).toEqual({ n: 0 });
+});
+
+it("extends the sticky window on a renewal invoice", async () => {
   const db = await seedPublishedAutoRenew();
-  await fulfilStripeEvent(db, invoicePaidEvent("sub_1"), new Date("2026-10-14T00:00:00.000Z"));
+  await fulfilStripeEvent(db, invoicePaidEvent("sub_1", "subscription_cycle"), new Date("2026-10-14T00:00:00.000Z"));
   const job = db.raw.prepare("SELECT featured_until FROM jobs").get() as { featured_until: string };
   expect(Date.parse(job.featured_until)).toBeGreaterThan(Date.parse("2026-11-01T00:00:00.000Z"));
+});
+
+it("does not extend on the subscription's first invoice", async () => {
+  const db = await seedPublishedAutoRenew();
+  const before = db.raw.prepare("SELECT featured_until FROM jobs").get();
+  await fulfilStripeEvent(db, invoicePaidEvent("sub_1", "subscription_create"), NOW);
+  expect(db.raw.prepare("SELECT featured_until FROM jobs").get()).toEqual(before);
+});
+
+it("does not extend twice for a replayed renewal invoice", async () => {
+  const db = await seedPublishedAutoRenew();
+  const event = invoicePaidEvent("sub_1", "subscription_cycle");
+  await fulfilStripeEvent(db, event, NOW);
+  const once = db.raw.prepare("SELECT featured_until FROM jobs").get();
+  await fulfilStripeEvent(db, event, NOW);
+  expect(db.raw.prepare("SELECT featured_until FROM jobs").get()).toEqual(once);
 });
 ```
 
@@ -1876,7 +1987,39 @@ Expected: FAIL, module not found.
 
 - [ ] **Step 3: Write the implementation**
 
-`fulfilStripeEvent` resolves the order by `event.data.object.metadata.orderId`, falling back to `client_reference_id` and then to `stripe_session_id`. It handles `checkout.session.completed` (mark paid, then publish or mint credits, then redeem the coupon), `invoice.paid` (extend `featured_until` by 30 days from the later of now and the current value), and `customer.subscription.deleted` (clear `stripe_subscription_id` and stop extending). Every other event type returns `false` and is acknowledged with 200, which is what the route already does.
+**The first write is the event guard, before any fulfilment:**
+
+```ts
+const seen = await db
+  .prepare(
+    `INSERT INTO stripe_events (id, type, order_id, received_at)
+     VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING`,
+  )
+  .bind(event.id, event.type ?? "", orderId, now.toISOString())
+  .run();
+if (rowsChanged(seen) === 0) return false;   // already handled
+```
+
+Read rows-changed with the same `meta.changes` helper Task 8 uses. Everything below sits behind this guard: minting credits, incrementing the coupon, extending a sticky window, and sending the receipt are all non-idempotent on their own.
+
+`fulfilStripeEvent` resolves the order by `event.data.object.metadata.orderId`, falling back to `client_reference_id` and then to `stripe_session_id`, and handles:
+
+- **`checkout.session.completed`** — only when the session is actually funded. Stripe fires this when the session *completes*, not when the money settles: a delayed-notification method arrives `payment_status: "unpaid"` and settles later. The gate is `payment_status === "paid" || payment_status === "no_payment_required"` — not `=== "paid"` alone, which would silently refuse to publish a fully-couponed order. On `unpaid`, record the session and payment intent, leave the order `pending`, and return. Otherwise move the order to `paid` with the conditional update below, then publish (single) or mint credits (bundle), then redeem the coupon.
+- **`checkout.session.async_payment_succeeded`** — the same fulfilment path.
+- **`checkout.session.async_payment_failed`** — `status = 'failed'`; publish nothing, and if it somehow already published, set `listed = 0`.
+- **`checkout.session.expired`** — `status = 'cancelled'`.
+- **`invoice.paid`** — extend `featured_until` by 30 days from the later of now and the current expiry, **only** when `billing_reason` is `subscription_cycle` or `subscription_update`. A `subscription_create` invoice is the payment fulfilment already ran on, and `publishOrder` has already set the window; extending it too gives the buyer 60 days for one payment.
+- **`customer.subscription.deleted`** — clear `stripe_subscription_id` and stop extending; the current window runs out.
+
+Every other event type returns `false` and is acknowledged with 200, which is what the route already does.
+
+**The paid transition is a guarded UPDATE, not a read-then-write.** This is what protects bundle fulfilment, which has no `job_id` for the publish check to key on:
+
+```sql
+UPDATE job_orders
+   SET status = 'paid', paid_at = ?, stripe_payment_intent = ?, updated_at = ?
+ WHERE stripe_session_id = ? AND status = 'pending'
+```
 
 The route itself keeps its current shape: verify the signature, parse, then call `fulfilStripeEvent` instead of `applyStripeEvent`, and always answer `{received:true}`.
 
@@ -1916,6 +2059,16 @@ it("publishes a listing against an unspent credit", async () => {
     .toEqual({ n: 2 });
 });
 
+it("refuses to spend a credit on a listing with paid add-ons", async () => {
+  const { db, token } = await seedBundleWithCredits(1);
+  const { POST } = await import("./route");
+  const response = await POST(formRequest({ ...validForm(), token, stickyDays: "7" }));
+  expect(response.status).toBe(400);
+  expect(await response.json()).toEqual({ code: "addons_not_redeemable" });
+  expect(db.raw.prepare("SELECT COUNT(*) AS n FROM job_credits WHERE spent_at IS NULL").get())
+    .toEqual({ n: 1 });
+});
+
 it("refuses an unknown manage token", async () => {
   const { POST } = await import("./route");
   expect((await POST(formRequest({ ...validForm(), token: "deadbeef" }))).status).toBe(404);
@@ -1946,12 +2099,16 @@ Expected: FAIL, module not found.
 
 - [ ] **Step 3: Write the implementation**
 
-Validate the draft **before** spending the credit, so an invalid submission cannot burn one. Then create a `single` order with `total_cents = 0`, `coupon_code = null` and a `credit` line, spend the credit, and call `publishOrder`. If `spendCredit` returns false, answer 409 `{code:"no_credit"}` and leave the order at `status = 'cancelled'`.
+**Reject any paid add-on first**, with 400 `{code:"addons_not_redeemable"}`. A credit buys the $299 base post and nothing else. Taking a Stripe payment for add-ons mid-redemption was considered and rejected: the credit spend is an irreversible UPDATE with no un-spend path, so a cancelled add-on payment would destroy a $299 credit and publish nothing. A buyer who wants a sticky buys that listing as a normal single post through `/api/listings` instead.
+
+Then validate the draft **before** spending the credit, so an invalid submission cannot burn one. Create a `single` order with `total_cents = 0`, `coupon_code = null` and one `bundle_credit` line, spend the credit, and call `publishOrder`. If `spendCredit` returns false, answer 409 `{code:"no_credit"}` and leave the order at `status = 'cancelled'`.
+
+`job_credits.spent_order_id` points at that order row, so every published listing has an order behind it and the manage page can show what each credit became.
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pnpm --filter @gaming/web test -- listings/redeem`
-Expected: PASS, 4 tests.
+Expected: PASS, 5 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -2112,8 +2269,10 @@ git commit -m "fix(web): a sticky that expired is not still sticky"
 - [ ] **Step 1: Find every importer before deleting anything**
 
 ```bash
-grep -rn --include=*.ts --include=*.tsx "lib/unlocks\|unlocks/\|FREE_UNLOCKS_PER_WEEK\|RECENT_UNLOCKS_LIMIT\|unlockGateResponse\|submitUnlockForm\|UnlockApplyForm" apps/web packages | sort
+grep -rn --include=*.ts --include=*.tsx "lib/unlocks\|unlocks/\|FREE_UNLOCKS_PER_WEEK\|RECENT_UNLOCKS_LIMIT\|unlockGateResponse\|submitUnlockForm\|UnlockApplyForm\|isPaidSubscription\|loadSubscriptionStatus" apps/web packages | sort
 ```
+
+Expect hits in at least: `app/dashboard/page.tsx`, `app/dashboard/page.test.tsx`, `app/jobs/[slug]/unlock-form.tsx`, `app/jobs/[slug]/unlock-form.test.ts`, `app/[slug]/[id]/job-detail-view.tsx`, `lib/profile/gate.ts`, `lib/profile/gate.test.ts`, `lib/profile/talent-pool.test.ts`, `lib/profile/export.ts`, `lib/profile/delete-account.ts`, `app/api/stripe/webhook/route.test.ts`.
 
 Every hit is either deleted or rewritten in this task. Record the list before you start.
 
@@ -2138,9 +2297,19 @@ Expected: FAIL, the copy still contains "unlock".
 
 - [ ] **Step 4: Remove the gate**
 
-In `job-detail-view.tsx`, delete `const gated = showBadge(job.exclusivity)` and the branch it drives; every job renders the plain apply path. Keep `showBadge` itself and the "Not on LinkedIn" badge — it is a fact about the job and was only incidentally the paywall trigger.
+The job detail view lives at `app/[slug]/[id]/job-detail-view.tsx`, not in `_components`. Delete `const gated = showBadge(job.exclusivity)` and the branch it drives, plus the `UnlockApplyForm` import and its render; every job renders the plain apply path. Keep `showBadge` itself and the "Not on LinkedIn" badge — it is a fact about the job and was only incidentally the paywall trigger.
 
-Then delete `apps/web/lib/unlocks/` and `apps/web/app/api/unlock/`, and drop the `unlocks` and `subscription` keys from `lib/profile/export.ts` and both table names from `SQL_DELETE_ORDER` in `lib/profile/delete-account.ts`, updating the assertions in `export.test.ts`, `delete-account.test.ts` and `api/account/delete/route.test.ts` to match the new shape rather than deleting them.
+**Deleting `lib/unlocks/` breaks five importers the grep in Step 1 will have found. All five are handled here, or `tsc --noEmit` fails:**
+
+- `app/jobs/[slug]/unlock-form.tsx` and `unlock-form.test.ts` are **deleted** — the only importer of `lib/unlocks/client`. An orphaned file still fails type-check, so removing the render is not enough.
+- `app/dashboard/page.tsx` loses every unlock and plan surface: the `lib/unlocks/history` and `lib/unlocks/quota` imports, the `UnlockHistoryDatabase` member of `DashboardEnv`, the `countUnlocksThisWeek` / `loadSubscriptionStatus` / `listRecentUnlocks` calls in its `Promise.all`, the `meter`, the shell lead "Your unlocks, profile and plan at a glance.", the "Unlocks this week" tile, the "Plan" tile and the whole "Recent unlocks" section. What remains is the profile tile and the latest jobs. `.dash-tiles` is a multi-column grid, so either promote the profile tile or collapse the grid — decide, do not leave a one-item grid. The now-dead `.dash-tile--unlocks` and `.dash-meter` rules in `app/styles/account.css` go too. `app/dashboard/page.test.tsx` currently mocks `lib/unlocks/history` and asserts "Unlocks this week", "2 of 5 used, resets Monday UTC", "Free plan" and "Recent unlocks"; rewrite it against the new page.
+- `unlockGateResponse` in `lib/profile/gate.ts` and its `describe` block in `gate.test.ts` are deleted — `/api/unlock` was its only caller. `safeNextPath`, `onboardingLocation`, `needsOnboarding` and `saveOnboardingProfile` stay; `/login` and `/onboarding` still use them.
+- `lib/profile/talent-pool.test.ts` imports `../unlocks/week` and `../unlocks/quota`. Inline what it needs or move the helper.
+- `app/api/stripe/webhook/route.test.ts` imports `isPaidSubscription` from `lib/unlocks/quota`; that assertion goes with the subscription model.
+
+Then drop the `unlocks` and `subscription` keys from `lib/profile/export.ts` and both table names from `SQL_DELETE_ORDER` in `lib/profile/delete-account.ts`, updating the assertions in `export.test.ts`, `delete-account.test.ts` and `api/account/delete/route.test.ts` to match the new shape rather than deleting them.
+
+`app/settings/page.tsx` says account deletion "removes your profile, CV and unlock history" — there is no unlock history any more — and carries an "Email digest" panel promising the digest "once billing is live" whose only implementation is the crawler digest deleted in Task 17. Both go.
 
 In `app/about/page.tsx`, the claim "No weekly quota on Apply" is currently false for `hidden_from_linkedin` jobs. It becomes true here; re-read the surrounding NOTS list and correct anything else that no longer holds.
 
@@ -2190,6 +2359,13 @@ it("no longer advertises a candidate subscription", () => {
   expect(copy).not.toContain("9 / month");
   expect(copy).not.toContain("59 / year");
 });
+
+it("states the GDPR purpose without unlocks or a quota, and names employer data", () => {
+  const purpose = PRIVACY_COPY.jobProductPurpose.toLowerCase();
+  expect(purpose).not.toContain("unlock");
+  expect(purpose).not.toContain("quota");
+  expect(purpose).toContain("employer");
+});
 ```
 
 - [ ] **Step 3: Run test to verify it fails**
@@ -2199,7 +2375,12 @@ Expected: FAIL, `PRICING_COPY.candidate` is undefined.
 
 - [ ] **Step 4: Rewrite the copy and delete the modules**
 
-Rewrite `PRICING_COPY` in `lib/legal/copy.ts` with no import from `lib/billing/plans`, then delete the files listed above. `isStripeCheckoutEnabled` and `verifyStripeWebhook` already moved to `lib/billing/stripe.ts` in Task 3, so `plans.ts` has no remaining consumer — confirm that with the grep in Step 1 before deleting it.
+Rewrite **two** constants in `lib/legal/copy.ts`, not one:
+
+- `PRICING_COPY`, with no import from `lib/billing/plans`.
+- `PRIVACY_COPY.jobProductPurpose`, which is the site's GDPR Purpose 1 statement and is rendered as the entire body of the `#job-board` section on `/privacy`. It currently reads "we use your account, profile, unlocks, CV, and billing data to operate Nodework as a job board (sign-in, search, apply links, quota, and paid plans)". Unlocks, quota and candidate paid plans all stop existing, and a category it never mentioned appears: employer buyer data — name, email, invoice details and payment records in `job_orders`. Rewrite for both. `app/privacy/page.test.tsx` asserts the constant rather than a literal, so it will not catch a stale rewrite; add a literal assertion that the words "unlock" and "quota" no longer appear.
+
+Then delete the files listed above. `isStripeCheckoutEnabled` and `verifyStripeWebhook` already moved to `lib/billing/stripe.ts` in Task 3, so `plans.ts` has no remaining consumer — confirm that with the grep in Step 1 before deleting it.
 
 - [ ] **Step 5: Write migration 0011**
 
@@ -2317,7 +2498,7 @@ it("asks for every field the listing needs", () => {
   for (const field of [
     "title", "description", "companyName", "companyUrl", "location", "remote",
     "mainTag", "tags", "benefits", "twitter", "salaryMin", "salaryMax",
-    "applyMode", "applyUrl", "buyerName", "buyerEmail", "invoiceInfo", "coupon",
+    "postingUrl", "companyLogoUrl", "buyerName", "buyerEmail", "invoiceInfo", "coupon",
   ]) {
     expect(names).toContain(field);
   }
@@ -2498,6 +2679,17 @@ it("still refuses inventory it does not have", () => {
   expect(copy).not.toMatch(/\d+x more views/);
 });
 
+it("no longer says featured placement cannot be bought", () => {
+  const copy = text(AdsPage()).toLowerCase();
+  expect(copy).not.toContain("no self-serve checkout");
+  expect(copy).not.toContain("not self-serve yet");
+  expect(copy).not.toContain("we will set it up manually");
+});
+
+it("does not claim a paid placement tops every list", () => {
+  expect(text(AdsPage())).not.toContain("every list the job already qualifies for");
+});
+
 it("says a paid placement does not move the salary rankings", () => {
   expect(text(AdsPage()).toLowerCase()).toContain("salary");
 });
@@ -2510,12 +2702,21 @@ Expected: FAIL.
 
 - [ ] **Step 3: Update the page**
 
-Add `{PriceTable({ variant: "addons" })}`, keep the "Not offered yet" list, and add one sentence: a featured placement sorts a listing to the top of the board and its tag and location pages, and deliberately does not affect the salary-ordered pages.
+Add `{PriceTable({ variant: "addons" })}` and keep the "Not offered yet" list exactly as it is — no banners, no display units, no newsletter sponsorship, no guaranteed impressions are all still true, and that list is the most valuable part of the page.
+
+Three claims on the page go false the moment sticky and highlight are self-serve, and a fourth was always too broad. All four are rewritten:
+
+- `FEATURED_FACTS[0]`, "Sorts to the top of every list the job already qualifies for" — narrowed to name the exception: date-ordered lists only, never the salary-ordered pages (`/highest-paying-web3-jobs` and the salary pages), because a salary ranking that can be bought is not a salary ranking.
+- The FAQ answer to "Can I buy this today?": "There is no self-serve checkout for featured placement yet. Reach out through the account route below and we will set it up manually."
+- The CTA copy: "There is no self-serve checkout for this yet. Create a free Nodework account so we have a way to reach you."
+- In `app/post-web3-job/page.tsx` (rewritten in Task 19, listed here so it is not missed): "There is a featured placement format described on the advertising page. It is also not self-serve yet."
+
+The existing line that featured placement "is a placement format, not a ranking bribe, and the job still has to be real" stays. It is now load-bearing rather than aspirational.
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pnpm --filter @gaming/web test -- ads`
-Expected: PASS, 3 tests.
+Expected: PASS, 5 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -2676,9 +2877,14 @@ git commit -m "chore: verify the listing funnel end to end"
 
 Not part of any task; these are the two things only the repository owner can do.
 
-1. Apply `0010_employer_listings.sql` and `0011_drop_candidate_paywall.sql` to production **before** the deploy that starts selecting the new columns:
+1. **The two migrations go on opposite sides of the deploy.**
+
+   `0010_employer_listings.sql` only widens the schema, so it is applied **before** the deploy that starts selecting the new columns:
    `wrangler d1 execute gaming-jobs --remote --file packages/db/migrations/0010_employer_listings.sql`
-   Confirm the result by asking `sqlite_master` for the index names rather than trusting the exit code. `wrangler d1 migrations apply --remote` does not work against this database.
+
+   `0011_drop_candidate_paywall.sql` is applied **after** the deploy. It drops tables the currently-live worker still reads on every request — `lib/unlocks/quota.ts` via `/api/unlock`, `lib/unlocks/history.ts` via `/dashboard` (which is `force-dynamic`), `lib/profile/export.ts` via the GDPR export, `lib/profile/delete-account.ts` via account deletion. D1 answers a dropped table with `no such table`, which the app catches and renders as a 500 while the worker still reports `outcome: ok`. Running it first breaks all four for the whole window between migration and deploy.
+
+   Confirm each result by asking `sqlite_master` for the table and index names rather than trusting the exit code. `wrangler d1 migrations apply --remote` does not work against this database: production's `d1_migrations` table is empty, so it restarts from `0001_init.sql` and dies on "table tenants already exists".
 2. Set the `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` wrangler secrets, point a Stripe webhook endpoint at `/api/stripe/webhook`, then flip `vars.STRIPE_ENABLED` to `"true"` in `apps/web/wrangler.jsonc` and update the assertion in `wrangler.test.ts` in the same commit.
 
 `/web3-companies/[slug]` has `revalidate = 300` and no `generateStaticParams`, so it renders against the production database on every request. A schema-widening deploy that lands before the migration returns 500 from every template that reads a new column.
