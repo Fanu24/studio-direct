@@ -4,7 +4,7 @@
 
 ## Cosa è stato riutilizzato e corretto
 
-Il sorgente privato è stato ottenuto dallo ZIP fornito dal proprietario. Base GitHub osservata: `ce48d627e0aba29b0918c72c1b43cc90d81ad03a`. Il lavoro è su una copia locale con branch `feat/web3-functional-parity`, non pubblicata su GitHub.
+Il sorgente privato è stato ottenuto dallo ZIP fornito dal proprietario. Base GitHub verificata: `ce48d627e0aba29b0918c72c1b43cc90d81ad03a`. L'aggiornamento è preparato sul branch `feat/web3-platform-update`, derivato dalla cronologia originale di `main`, per la revisione tramite pull request. La pubblicazione del codice non attiva il deploy.
 
 Riutilizzati Next.js, OpenNext, Cloudflare D1/R2/Queues, autenticazione, sanitizzazione, ricerca SQL/FTS, tassonomia e parte delle pagine SEO. Il modello candidato con quota di sblocchi e abbonamenti non è stato mantenuto come scelta di prodotto: la ricerca e le candidature sono gratuite. Il database locale nuovo non contiene annunci dimostrativi; le fixture restano confinate ai test.
 

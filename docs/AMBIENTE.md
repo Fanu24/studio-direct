@@ -4,7 +4,7 @@ Aggiornato il 16 settembre 2026. Il collegamento degli account è rimandato su r
 
 ## Avvio
 
-Prerequisiti: Node.js 24 LTS e pnpm 9.15.0. Estrarre lo ZIP del sorgente, aprire un terminale nella cartella del progetto ed eseguire:
+Prerequisiti: Node.js 24 LTS e pnpm 9.15.0. Clonare il repository e selezionare il branch dell'aggiornamento, oppure estrarre lo ZIP del sorgente. Aprire un terminale nella cartella del progetto ed eseguire:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -14,7 +14,7 @@ pnpm dev
 
 Aprire http://localhost:3000. `setup:local` crea una chiave di autenticazione casuale, i file `.dev.vars` ignorati da Git e il database locale. Non sovrascrive una configurazione già esistente, non inserisce annunci dimostrativi e non modifica risorse remote. La configurazione del prototipo su Cloudflare resta da verificare prima di utilizzarla.
 
-Sul computer di questa sessione il sorgente modificato si trova in `work/source/studio-direct-main`; l'anteprima è già avviata sulla porta 3000. Lo ZIP consegnato non contiene dipendenze, credenziali, database locali né l'account fittizio usato nei controlli.
+Il repository e lo ZIP del sorgente non contengono dipendenze installate, credenziali, database locali né l'account fittizio usato nei controlli. Il setup crea questi elementi di sviluppo sul computer di chi avvia il progetto.
 
 ## Accesso senza servizio email
 
