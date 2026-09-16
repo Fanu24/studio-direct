@@ -1,4 +1,4 @@
-import { isHubRoleSlug } from "@gaming/shared";
+import { isJobTag } from "@gaming/shared";
 
 export const COMPLETENESS_NUDGE_THRESHOLD = 80;
 export const CV_COMPLETENESS_POINTS = 20;
@@ -214,7 +214,7 @@ export async function saveProfileSkills(
   userId: string,
   skills: string[],
 ): Promise<void> {
-  const allowed = [...new Set(skills.filter(isHubRoleSlug))];
+  const allowed = [...new Set(skills.filter(isJobTag))];
 
   await db
     .prepare(`DELETE FROM profile_skills WHERE user_id = ?`)

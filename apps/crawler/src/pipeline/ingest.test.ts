@@ -92,7 +92,7 @@ describe("ingestDrafts", () => {
     expect(repo.sightings).toHaveLength(2);
   });
 
-  it("stores onsite drafts as unlisted", async () => {
+  it("keeps onsite drafts in the full catalogue", async () => {
     const repo = new MemoryJobsRepository();
 
     await ingestDrafts(
@@ -105,7 +105,7 @@ describe("ingestDrafts", () => {
       context(repo),
     );
 
-    expect(repo.jobs[0]).toMatchObject({ remote: "onsite", listed: 0 });
+    expect(repo.jobs[0]).toMatchObject({ remote: "onsite", listed: 1 });
   });
 
   it("drops staffing drafts before writing", async () => {
@@ -156,8 +156,8 @@ describe("ingestDrafts", () => {
     expect(repo.jobs).toHaveLength(2);
     expect(repo.jobs[0]?.slug).not.toBe(repo.jobs[1]?.slug);
     expect(repo.jobs.map((job) => job.slug).sort()).toEqual([
-      "moonshot-senior-software-engineer",
-      "pixelforge-senior-software-engineer",
+      expect.stringMatching(/^moonshot-senior-software-engineer-/),
+      expect.stringMatching(/^pixelforge-senior-software-engineer-/),
     ]);
     expect(new Set(repo.jobs.map((job) => job.canonicalKey)).size).toBe(2);
   });

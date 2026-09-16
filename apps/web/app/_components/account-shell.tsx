@@ -38,6 +38,7 @@ export function AccountShell({
               </Link>
             ))}
           </nav>
+          <nav className="cluster" aria-label="More account pages"><Link href="/alerts">Job alerts</Link><Link href="/saved-jobs">Saved jobs</Link><Link href="/profile/visibility">Profile visibility</Link><Link href="/employer">Employer dashboard</Link><Link href="/recruiter">Recruiter access</Link><Link href="/advertiser">Advertising</Link><Link href="/support">Support</Link></nav>
         </div>
       </header>
       <div className="container container--content acct-body">

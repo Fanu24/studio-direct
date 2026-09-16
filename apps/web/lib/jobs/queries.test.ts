@@ -133,6 +133,7 @@ describe("listJobs", () => {
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (
+ listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
         id TEXT PRIMARY KEY,
         tenant_id TEXT NOT NULL,
         company_id TEXT NOT NULL,
@@ -715,6 +716,7 @@ describe("listCompanies", () => {
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (
+ listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
         id TEXT PRIMARY KEY,
         tenant_id TEXT NOT NULL,
         company_id TEXT NOT NULL,
@@ -886,6 +888,7 @@ describe("listTopGrowingCompanies", () => {
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (
+ listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
         id TEXT PRIMARY KEY,
         tenant_id TEXT NOT NULL,
         company_id TEXT NOT NULL,
@@ -984,6 +987,7 @@ describe("salary filters and stats", () => {
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (
+ listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
         id TEXT PRIMARY KEY,
         tenant_id TEXT NOT NULL,
         company_id TEXT NOT NULL,
@@ -1258,6 +1262,7 @@ describe("hire facets, salary breakdown, and getSalaryRollup dimensions", () => 
         listed INTEGER NOT NULL DEFAULT 1
       );
       CREATE TABLE jobs (
+ listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
         id TEXT PRIMARY KEY,
         tenant_id TEXT NOT NULL,
         company_id TEXT NOT NULL,

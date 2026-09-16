@@ -1,3 +1,4 @@
+vi.mock('../../../../lib/billing/reversals',()=>({prepareCommerceDeletion:vi.fn(async()=>{})}));
 import { createRequire } from "node:module";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -179,6 +180,7 @@ describe("POST /api/account/delete", () => {
     if (phrase !== null) body.set("confirm", phrase);
     return new Request("http://localhost/api/account/delete", {
       method: "POST",
+      headers: {origin:"http://localhost"},
       body,
     });
   }

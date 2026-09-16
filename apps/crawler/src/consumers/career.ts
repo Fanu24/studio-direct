@@ -1,3 +1,5 @@
+import {JOB_TAGS,canonicalApplyUrl} from "@gaming/shared";
+import {attachTaxonomy} from "./web3-api";
 import type { QueueMessage } from "@gaming/shared";
 
 import {
@@ -32,6 +34,7 @@ export type CareerMessageResult =
 function fetchHostname(company: CareerConsumerCompany): string {
   if (company.ats_type === "greenhouse") return "boards-api.greenhouse.io";
   if (company.ats_type === "lever") return "api.lever.co";
+  if (company.ats_type === "ashby") return "api.ashbyhq.com";
   if (company.career_url) return new URL(company.career_url).hostname;
   throw new Error(`Company has no fetchable career URL: ${company.id}`);
 }
@@ -109,6 +112,14 @@ export async function handleCareerMessage(
       allowlistedCompany: true,
       now: startedAtDate,
     });
+
+    for(const draft of drafts){
+      const saved=await repo.findJobByCanonicalKey(company.tenantId,canonicalApplyUrl(draft.applyUrl));
+      if(!saved)continue;
+      const title=' '+draft.title.toLowerCase().replace(/[^a-z0-9+#]+/g,' ')+' ';
+      const inferred=JOB_TAGS.filter(tag=>title.includes(' '+tag.replaceAll('-',' ')+' '));
+      await attachTaxonomy(env.DB,saved.id,{...draft,tags:[...new Set([...(draft.tags??[]),...inferred])]});
+    }
 
     const [jobs, linkedinRun, linkedinSightings] = await Promise.all([
       repo.getJobsByIds(ingest.jobIds),

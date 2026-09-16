@@ -232,7 +232,7 @@ export default async function JobsPage({
           <span className="jobs-num">{result.total.toLocaleString("en-US")}</span>{" "}
           {result.total === 1 ? "job found" : "jobs found"}
         </p>
-        <BoardSearch defaultQuery={filters.q} remoteHref={remoteFilterHref()} />
+        <BoardSearch defaultQuery={filters.q} remoteActive={filters.remoteOnly} remoteHref={toggleFilterHref(params,'remote','1')} />
         <div
           aria-label="Filter by seniority, source or LinkedIn visibility"
           className="jobs-chip-track"

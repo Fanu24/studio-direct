@@ -13,7 +13,8 @@ import {
 } from "../../../../lib/jobs/queries";
 import { requireTenantId } from "../../../../lib/tenant";
 
-export const revalidate = 300;
+import { applicationDestination } from '../../../../lib/jobs/application-destination';
+export const dynamic = 'force-dynamic';
 
 type ApplyParams = Promise<{ slug: string }>;
 type ApplySearch = Promise<{ sent?: string; error?: string }>;
@@ -55,6 +56,11 @@ export default async function LegacyApplyPage({
   if (!job) notFound();
   if (job.externalId) redirect(jobApplyHref(job));
 
+  const {env}=await getCloudflareContext({async:true});
+  const db=(env as unknown as {DB:JobsDatabase}).DB;
+  const destination=await applicationDestination(db,await requireTenantId(db),job.id);
+  if(!destination)notFound();
+  if(destination.mode==='external')redirect(destination.url);
   const search = await searchParams;
   const next = jobApplyHref(job);
 
@@ -70,12 +76,10 @@ export default async function LegacyApplyPage({
         <h1>Apply on Nodework</h1>
         <p className="lead">
           {job.title}. {job.remote === "remote" ? "Remote" : job.location || remoteLabel(job.remote)}.
-          The form stays here - we do not bounce you to another job board.
+          Your application will be shared with the employer for this role.
         </p>
         <p className="small muted">
-          We store the application against this listing. We do not forward profiles to
-          companies, and the recruiter talent pool is a separate opt-in in Settings that is
-          off by default.
+          The employer can review your application in their dashboard. Joining the recruiter talent pool is a separate, optional choice in Settings.
         </p>
       </header>
       <JobApplyForm

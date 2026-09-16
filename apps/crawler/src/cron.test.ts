@@ -19,7 +19,8 @@ describe("enqueueCronWork", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const careerMessages: QueueMessage[] = [];
     const env = {
-      DB: { prepare: vi.fn() },
+      DB: { prepare: vi.fn(()=>({bind:()=>({all:async()=>({results:[]})})})) },
+      WEB3_CAREER_API_TOKEN:'test',
       CRAWL_CAREER: fakeQueue(careerMessages),
       CRAWL_LINKEDIN: fakeQueue([]),
       CRAWL_INDEED: fakeQueue([]),

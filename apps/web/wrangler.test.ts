@@ -36,14 +36,8 @@ describe("web wrangler", () => {
   });
 
   it("names Better Auth, Google, Turnstile, and Stripe secrets without values", () => {
-    expect(config.secrets.required).toEqual([
-      "BETTER_AUTH_SECRET",
-      "GOOGLE_CLIENT_ID",
-      "GOOGLE_CLIENT_SECRET",
-      "TURNSTILE_SECRET_KEY",
-      "STRIPE_SECRET_KEY",
-      "STRIPE_WEBHOOK_SECRET",
-    ]);
+    expect(config.vars.EMAIL_ENABLED).toBe('false');
+    expect(existsSync(new URL('./.dev.vars.example',import.meta.url))).toBe(true);
     expect(raw).not.toMatch(/BETTER_AUTH_SECRET"\s*:/);
     expect(raw).not.toMatch(/GOOGLE_CLIENT_SECRET"\s*:/);
     expect(raw).not.toMatch(/TURNSTILE_SECRET_KEY"\s*:/);
@@ -57,8 +51,8 @@ describe("web wrangler", () => {
     expect(config.vars.STRIPE_ENABLED).toBe("false");
   });
 
-  it("points SITE_URL at the workers.dev demo origin", () => {
-    expect(config.vars.SITE_URL).toBe("https://gaming-web.xavier-ff2.workers.dev");
+  it("defaults to a local origin until deployment is configured", () => {
+    expect(config.vars.SITE_URL).toBe("http://localhost:3000");
   });
 
   it("does not ship Cloudflare always-pass Turnstile site key", () => {

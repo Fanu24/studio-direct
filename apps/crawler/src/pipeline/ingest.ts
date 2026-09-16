@@ -117,11 +117,11 @@ export async function ingestDrafts(
     const id = existing?.id ?? crypto.randomUUID();
 
     const listed =
-      draft.source === "web3_career_api" ? 1 : remote === "onsite" ? 0 : 1;
+      1;
     const slug =
       draft.source === "web3_career_api" && draft.externalId
         ? `${jobSeoSlug(draft.title, draft.companyName)}-${draft.externalId}`
-        : jobPublicSlug(draft.companyName, draft.title);
+        : `${jobPublicSlug(draft.companyName, draft.title)}-${id.slice(-12)}`;
 
     const job = await ctx.repo.upsertJob({
       id,

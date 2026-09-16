@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       secretKey: env.TURNSTILE_SECRET_KEY,
     });
     if (!result.ok) {
-      return Response.json({ error: result.error }, { status: result.status });
+      return Response.json({ code:"CHALLENGE_FAILED", message: result.error, error: result.error }, { status: result.status });
     }
   }
 

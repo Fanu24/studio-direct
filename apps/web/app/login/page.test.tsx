@@ -1,3 +1,4 @@
+vi.mock('@opennextjs/cloudflare',()=>({getCloudflareContext:async()=>({env:{TURNSTILE_SITE_KEY:process.env.TURNSTILE_SITE_KEY,GOOGLE_CLIENT_ID:'test',GOOGLE_CLIENT_SECRET:'test'}})}));
 import React, { type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 

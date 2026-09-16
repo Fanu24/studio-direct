@@ -1,0 +1,10 @@
+import {beforeEach,it,expect,vi} from 'vitest';
+const m=vi.hoisted(()=>({first:vi.fn(),batch:vi.fn(),user:vi.fn(),fetch:vi.fn()}));
+vi.mock('../../../../lib/platform',()=>({platform:async()=>({DB:{prepare:()=>({bind:()=>({first:m.first})}),batch:m.batch},STRIPE_SECRET_KEY:'sk_test_fixture'}),currentUser:m.user,sameOrigin:(r:Request)=>r.headers.get('origin')===new URL(r.url).origin,appOrigin:()=> 'http://localhost'}));
+const request=(origin='http://localhost')=>new Request('http://localhost/api/employer/manage',{method:'POST',headers:{origin},body:new URLSearchParams({action:'close',id:'job-1'})});
+beforeEach(()=>{vi.clearAllMocks();vi.stubGlobal('fetch',m.fetch);m.user.mockResolvedValue({id:'owner'});m.first.mockResolvedValue({stripe_subscription_id:'sub_owned'});m.fetch.mockResolvedValue(Response.json({id:'sub_owned',status:'canceled'}));});
+it('rejects cross-origin close requests',async()=>{const {POST}=await import('./route');expect((await POST(request('https://other.example'))).status).toBe(403);expect(m.fetch).not.toHaveBeenCalled();});
+it('requires authentication',async()=>{m.user.mockResolvedValue(null);const {POST}=await import('./route');expect((await POST(request())).status).toBe(401);expect(m.fetch).not.toHaveBeenCalled();});
+it('cannot cancel a listing the caller does not own',async()=>{m.first.mockResolvedValue(null);const {POST}=await import('./route');expect((await POST(request())).status).toBe(404);expect(m.fetch).not.toHaveBeenCalled();});
+it('retains the listing if Stripe cannot stop renewal',async()=>{m.fetch.mockResolvedValue(Response.json({error:{code:'api_error'}},{status:500}));const {POST}=await import('./route');expect((await POST(request())).status).toBe(502);expect(m.batch).not.toHaveBeenCalled();});
+it('stops renewal before closing the owned listing',async()=>{const {POST}=await import('./route');expect((await POST(request())).status).toBe(303);expect(m.fetch).toHaveBeenCalledWith('https://api.stripe.com/v1/subscriptions/sub_owned',expect.objectContaining({method:'DELETE'}));expect(m.batch).toHaveBeenCalledOnce();});

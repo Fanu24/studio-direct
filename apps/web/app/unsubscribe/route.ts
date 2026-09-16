@@ -1,0 +1,2 @@
+import {platform} from '../../lib/platform';
+export async function GET(request:Request){const token=new URL(request.url).searchParams.get('token')??'';if(!/^[a-f0-9-]{72}$/i.test(token))return new Response('Invalid unsubscribe link',{status:400});const env=await platform();await env.DB.prepare('UPDATE job_alerts SET enabled=0 WHERE unsubscribe_token=?').bind(token).run();return new Response('You have been unsubscribed from this job alert.',{headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}

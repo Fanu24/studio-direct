@@ -1,4 +1,4 @@
-import { HUB_ROLE_SLUGS, hubSlugLabel } from "@gaming/shared";
+import { JOB_TAGS, tagLabel } from "@gaming/shared";
 import React, { type ReactElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -123,8 +123,8 @@ describe("ProfilePage", () => {
       "location",
       "remote_pref",
     ]));
-    expect(skillValues).toEqual(expect.arrayContaining([...HUB_ROLE_SLUGS]));
-    expect(copy).toContain(hubSlugLabel("gameplay-programmer"));
+    expect(skillValues).toEqual(expect.arrayContaining([...JOB_TAGS]));
+    expect(copy).toContain(tagLabel("solidity"));
     expect(names).not.toContain("talent_pool_opt_in");
     expect(copy.toLowerCase()).not.toContain("talent pool");
     expect(copy).not.toContain("Clerk");

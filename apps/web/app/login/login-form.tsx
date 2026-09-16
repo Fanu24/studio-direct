@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { Children, useState, type FormEvent, type ReactNode } from "react";
+import { Children, cloneElement, useRef, useState, type FormEvent, type ReactNode, type ReactElement } from "react";
 
 import { authClient } from "../../lib/auth/client";
 
@@ -58,6 +58,7 @@ export async function submitLoginMagicLink({
  * above the button in both DOM and visual order.
  */
 export function LoginForm({
+  localTesting=false,
   callbackURL = "/",
   children,
   newUserCallbackURL = "/onboarding",
@@ -67,9 +68,17 @@ export function LoginForm({
   children: ReactNode;
   newUserCallbackURL?: string;
   siteKey: string;
+  localTesting?: boolean;
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [token,setToken]=useState(localTesting?'XXXX.DUMMY.TOKEN.XXXX':'');
+  const widget=useRef<HTMLDivElement>(null);
+  const widgetId=useRef<string|null>(null);
+  function renderChallenge(){
+    const api=(window as unknown as {turnstile?:{render:(el:HTMLElement,options:Record<string,unknown>)=>string}}).turnstile;
+    if(api&&widget.current&&widgetId.current===null&&siteKey)widgetId.current=api.render(widget.current,{sitekey:siteKey,callback:(value:string)=>setToken(value),'expired-callback':()=>setToken(''),'error-callback':()=>setToken('')});
+  }
   const items = Children.toArray(children);
   const submit = items.length > 1 ? items.pop() : null;
 
@@ -77,9 +86,7 @@ export function LoginForm({
     event.preventDefault();
     const form = event.currentTarget;
     const email = String(new FormData(form).get("email") ?? "");
-    const token =
-      (form.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null)
-        ?.value ?? "";
+    if(!token){setError('Please wait for the security check to finish.');return;}
 
     setError(null);
     const { error: sendError } = await submitLoginMagicLink({
@@ -89,6 +96,7 @@ export function LoginForm({
       token,
     });
 
+    if(!localTesting)setToken('');
     if (sendError) {
       setError(
         sendError.message
@@ -104,12 +112,13 @@ export function LoginForm({
 
   return (
     <>
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+      {!localTesting ? <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+        onReady={renderChallenge}
         async
         defer
         strategy="afterInteractive"
-      />
+      /> : <p>Local test mode: your sign-in link appears in the development terminal.</p>}
       {error ? (
         <p className="notice notice--danger" role="alert">
           <strong>Error. </strong>
@@ -124,8 +133,8 @@ export function LoginForm({
       ) : null}
       <form className="auth-form" onSubmit={onSubmit}>
         {items}
-        <div className="auth-form__turnstile cf-turnstile" data-sitekey={siteKey} />
-        {submit}
+        <div className="auth-form__turnstile" ref={widget} />
+        {submit ? cloneElement(submit as ReactElement<{disabled:boolean}>,{disabled:!token}) : null}
       </form>
     </>
   );

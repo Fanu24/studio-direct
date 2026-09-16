@@ -105,7 +105,8 @@ describe("SettingsPage", () => {
         && element.props.action === "/api/account/talent-pool",
     );
 
-    expect(copy).toMatch(/settings/i);
+    expect(page.props.title).toBe("Settings");
+    expect(hrefs).toContain("/alerts");
     expect(copy).toContain("Show my profile to verified companies and recruiters");
     expect(copy).toMatch(/does not require/i);
     expect(copy).not.toContain("Clerk");

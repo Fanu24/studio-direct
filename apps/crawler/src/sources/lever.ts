@@ -16,6 +16,9 @@ interface LeverPosting {
     location?: string;
   };
   description?: string;
+  lists?: Array<{text?:string;content?:string}>;
+  additional?:string;
+  closing?:string;
 }
 
 export function leverPostingsUrl(atsSlug: string): string {
@@ -65,7 +68,7 @@ export function parseLeverPostings(
       title: posting.text,
       location,
       remote: remoteType(location, posting.workplaceType),
-      descriptionHtml: posting.description ?? "",
+      descriptionHtml: [posting.description??'',...(posting.lists??[]).map(list=>`${list.text?`<h3>${list.text.replace(/[<>&]/g,'')}</h3>`:''}<ul>${list.content??''}</ul>`),posting.additional??'',posting.closing??''].filter(Boolean).join('\n'),
       applyUrl: posting.applyUrl,
       postedAt:
         typeof posting.createdAt === "number"

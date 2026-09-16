@@ -5,9 +5,10 @@ import { isQueueMessage, type QueueMessage } from "@gaming/shared";
 import { handleCareerMessage } from "./consumers/career";
 import { handleIndeedMessage } from "./consumers/indeed";
 import { handleLinkedinMessage } from "./consumers/linkedin";
-import { handleWeb3ApiMessage, unlistStaleApiJobs } from "./consumers/web3-api";
+import { handleWeb3ApiMessage } from "./consumers/web3-api";
 import { enqueueCronWork } from "./cron";
 import { rebuildSalaryRollups } from "./pipeline/rollups";
+import {handleAlert} from './consumers/alerts';
 
 type QueueHandlerResult =
   | { action: "ack" }
@@ -62,7 +63,7 @@ export async function routeQueueBatch(
   const hasMatchingMessage = batch.messages.some((message) => {
     if (!isQueueMessage(message.body)) return false;
     if (batch.queue === "crawl-career") {
-      return message.body.kind === "career" || message.body.kind === "web3_api";
+      return message.body.kind === "career" || message.body.kind === "web3_api" || message.body.kind==='alert';
     }
     return message.body.kind === expectedKind;
   });
@@ -78,7 +79,9 @@ export async function routeQueueBatch(
     }
 
     let result: QueueHandlerResult;
-    if (batch.queue === "crawl-career" && message.body.kind === "career") {
+    if(batch.queue==='crawl-career'&&message.body.kind==='alert'){
+      result=await handleAlert(message.body.alertId,env);
+    } else if (batch.queue === "crawl-career" && message.body.kind === "career") {
       result = await handlers.career(message.body, env);
     } else if (batch.queue === "crawl-career" && message.body.kind === "web3_api") {
       result = await handlers.web3Api(message.body, env);
@@ -136,7 +139,7 @@ export default {
     )
       .bind(
         crypto.randomUUID(),
-        "web3_career_api",
+        "scheduler",
         nowIso,
         nowIso,
         1,
@@ -145,7 +148,10 @@ export default {
       .run();
 
     try {
-      await unlistStaleApiJobs(env.DB, now);
+      // Queue dispatch is not proof of a successful sweep. Never expire imported jobs here.
+      await env.DB.prepare(`UPDATE jobs SET listed=0,updated_at=? WHERE id IN
+        (SELECT job_id FROM employer_listings WHERE expires_at<=? OR closed_at IS NOT NULL) AND listed=1`)
+        .bind(nowIso,nowIso).run();
       await rebuildSalaryRollups(env.DB, nowIso);
     } catch (error) {
       console.error("Salary rollup or stale unlist failed", error);

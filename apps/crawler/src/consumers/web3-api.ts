@@ -135,7 +135,7 @@ export function locationHierarchy(
   return levels;
 }
 
-async function attachTaxonomy(
+export async function attachTaxonomy(
   db: D1Database,
   jobId: string,
   draft: JobDraft,

@@ -1,0 +1,16 @@
+# pnpm setup:local creates an ignored local file; never commit real secrets.
+SITE_URL=http://localhost:3000
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=REPLACE_WITH_RANDOM_32_BYTE_SECRET
+LOCAL_MAIL=true
+EMAIL_ENABLED=false
+EMAIL_FROM=noreply@localhost.invalid
+ADMIN_EMAILS=admin@example.test
+# Official Cloudflare test keys, for localhost only.
+TURNSTILE_SITE_KEY=1x00000000000000000000AA
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+STRIPE_ENABLED=false
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=

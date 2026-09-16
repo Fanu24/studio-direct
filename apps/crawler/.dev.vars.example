@@ -1,1 +1,5 @@
+SITE_URL=http://localhost:3000
+EMAIL_ENABLED=false
+EMAIL_FROM=noreply@localhost.invalid
+# Optional licensed API source. Direct ATS crawling does not need this token.
 WEB3_CAREER_API_TOKEN=

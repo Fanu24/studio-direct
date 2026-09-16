@@ -26,12 +26,12 @@ const HTTP_URL = /^https?:\/\/[^\s]+$/i;
 
 function isUniqueConflict(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /unique|constraint/i.test(message);
+  return /UNIQUE constraint failed: job_applications\.job_id, job_applications\.email/i.test(message);
 }
 
 export function safeNextPath(value: string, fallback = "/jobs"): string {
   const next = value.trim();
-  if (!next.startsWith("/") || next.startsWith("//") || next.includes("://")) {
+  if (!next.startsWith("/") || next.startsWith("//") || next.includes("://") || /[\\\u0000-\u001f]/.test(next)) {
     return fallback;
   }
   return next;
@@ -76,9 +76,10 @@ export async function submitJobApplication(
 
   const job = await db
     .prepare(
-      `SELECT id
-       FROM jobs
-       WHERE id = ? AND tenant_id = ? AND listed = 1`,
+      `SELECT j.id
+       FROM jobs j JOIN employer_listings l ON l.job_id=j.id
+       WHERE j.id = ? AND j.tenant_id = ? AND j.listed = 1
+         AND l.apply_mode='internal' AND l.closed_at IS NULL AND julianday(l.expires_at)>julianday('now')`,
     )
     .bind(raw.jobId, raw.tenantId)
     .first<{ id: string }>();

@@ -1,3 +1,4 @@
+import {sameOrigin} from '../../../../lib/platform';
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 import { createAuth, type AuthEnv } from "../../../../lib/auth/index";
@@ -17,6 +18,7 @@ async function talentPoolEnv(): Promise<TalentPoolRouteEnv> {
 }
 
 export async function POST(request: Request) {
+  if(!sameOrigin(request))return Response.json({code:'invalid_origin'},{status:403});
   const env = await talentPoolEnv();
   const session = await createAuth(env).api.getSession({
     headers: request.headers,

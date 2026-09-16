@@ -1,6 +1,6 @@
 import { formatSalaryRange, tagLabel } from "@gaming/shared";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import {Fragment,type ReactNode } from "react";
 
 import { LINKEDIN_EXCLUSIVITY_TOOLTIP } from "../../lib/copy";
 import { showBadge } from "../../lib/jobs/exclusivity";
@@ -12,6 +12,8 @@ import {
 } from "../../lib/jobs/queries";
 import { sanitizeJobDescriptionHtml } from "../../lib/jobs/sanitize-description";
 import { formatPosted, remoteLabel } from "./job-card";
+import {SaveJob} from './save-job';
+import {SponsorBanner} from './sponsor-banner';
 
 function companyMark(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -136,6 +138,7 @@ export function JobBoard({
   return (
     <div className="board m-reveal" data-reveal>
       <section aria-label="Job listings" className="board__list">
+        <SponsorBanner slot={1}/>
         <table
           className={`board-table${
             rankOffset !== undefined
@@ -168,8 +171,11 @@ export function JobBoard({
               const salary = salaryLabel(job);
               const place = placeLabel(job);
               return (
+                <Fragment key={job.id}>
+                {[3,7,11].includes(index)?<tr><td colSpan={5}><SponsorBanner slot={index===3?2:index===7?3:4}/></td></tr>:null}
                 <tr
                   className={`board-tr m-lift${isActive ? " is-active" : ""}`}
+                  style={job.highlightColor&&/^#[0-9a-f]{6}$/i.test(job.highlightColor)?{backgroundColor:`${job.highlightColor}22`,borderLeft:`4px solid ${job.highlightColor}`}:undefined}
                   key={job.id}
                 >
                   <td className="board-col-job">
@@ -240,7 +246,7 @@ export function JobBoard({
                       </span>
                     ) : null}
                   </td>
-                </tr>
+                </tr></Fragment>
               );
             })}
           </tbody>
@@ -289,6 +295,7 @@ export function JobBoard({
               className="board-body jd-body"
               dangerouslySetInnerHTML={{ __html: descriptionHtml }}
             />
+            <div className="cluster"><SaveJob key={active.id} jobId={active.id}/><Link href={jobPublicHref(active)} target="_blank" rel="noopener">Open in new tab</Link><Link href="/saved-jobs">Saved jobs</Link></div>
             {active.tags.length > 0 ? (
               <nav className="board-pane-tags">
                 {active.tags.map((tag) => (

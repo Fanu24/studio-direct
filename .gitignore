@@ -19,3 +19,5 @@ coverage/
 
 # scratch inventories and scraped fixtures
 tmp/
+
+.next-check/
