@@ -1,29 +1,29 @@
 # Stato della parità funzionale
 
-16 settembre 2026. Il progetto non è ancora certificabile come equivalente al 100% a Web3.career. Questa consegna rende riproducibile l'ambiente locale e introduce i principali flussi commerciali; il collegamento degli account è rimandato per scelta del proprietario.
+17 settembre 2026. Il progetto non è ancora certificabile come equivalente al 100% a Web3.career. Google OAuth e Stripe sandbox sono ora collegati e collaudati; accessi candidati/aziende e discovery massiva sono descritti nel [resoconto QA](qa/2026-09-17-auth-payments-discovery.md).
 
 ## Cosa è stato riutilizzato e corretto
 
-Il sorgente privato è stato ottenuto dallo ZIP fornito dal proprietario. Base GitHub verificata: `ce48d627e0aba29b0918c72c1b43cc90d81ad03a`. L'aggiornamento è preparato sul branch `feat/web3-platform-update`, derivato dalla cronologia originale di `main`, per la revisione tramite pull request. La pubblicazione del codice non attiva il deploy.
+Il sorgente privato è stato ottenuto dallo ZIP fornito dal proprietario. La prima consegna è stata integrata in `main` con PR #1. Questo aggiornamento è sul branch `feat/auth-payments-source-discovery`, a partire da `02be6b2`, per revisione tramite pull request. La pubblicazione del codice non attiva il deploy.
 
 Riutilizzati Next.js, OpenNext, Cloudflare D1/R2/Queues, autenticazione, sanitizzazione, ricerca SQL/FTS, tassonomia e parte delle pagine SEO. Il modello candidato con quota di sblocchi e abbonamenti non è stato mantenuto come scelta di prodotto: la ricerca e le candidature sono gratuite. Il database locale nuovo non contiene annunci dimostrativi; le fixture restano confinate ai test.
 
 | Area | Implementato nella consegna | Limite ancora aperto |
 |---|---|---|
 | Ricerca e risultati | Suggerimenti skill/aziende, filtro remoto, 15 risultati, annunci diretti e importati, preferiti, dettaglio, pin e highlight con scadenza | Verifica completa di tutte le combinazioni del search center e della conservazione dei filtri |
-| Annunci a pagamento | Configuratore, prezzo server, checkout preparato, webhook firmato, pubblicazione dopo pagamento, 30 giorni, scelta candidatura interna/esterna | Sandbox reale; editor ricco, campi benefit/social/skill principale, modifica e ripubblicazione completa |
+| Annunci a pagamento | Configuratore, prezzo server, checkout sandbox verificato, webhook firmato, pubblicazione dopo pagamento, 30 giorni, candidatura interna/esterna, recupero bozza | Editor ricco, campi benefit/social/skill principale, modifica e ripubblicazione completa |
 | Upsell | Supporto premium, logo R2, pin, highlight e colore, rinnovo, Customer Portal | Prezzi intermedi dei bundle da verificare sul configuratore; distribuzione esterna/social non integrata |
-| Bundle | Crediti per proprietario, scadenza a 24 mesi, consumo una volta sola, controllo pagamento | Collaudo acquisto reale in sandbox e ciclo di rimborso completo |
+| Bundle | Acquisto sandbox e consumo credito verificati; proprietà, scadenza a 24 mesi e idempotenza | Ciclo di rimborso completo |
 | Candidature | Form interno con consenso e dashboard datore; inoltro alle pagine ATS esterne | Allegato CV per singola candidatura, notifiche al datore e gestione avanzata delle candidature |
 | Profili e recruiter | Profilo/CV, skill Web3, visibilità pubblica separata dal consenso recruiter, verifica aziende, prezzo configurabile, accesso pagato con scadenza, download CV privato e audit | Ricerca avanzata, esportazioni commerciali e funzioni dietro login del concorrente da verificare |
-| Sponsor | Quattro slot, prenotazione esclusiva, checkout preparato, banner nelle liste, dashboard impression/click | Recupero delle prenotazioni abbandonate e collaudo Stripe; le metriche non sono utenti unici certificati |
+| Sponsor | Quattro slot, prenotazione esclusiva, Stripe sandbox verificato, banner nelle liste, dashboard impression/click | Recupero prenotazioni abbandonate; le metriche non sono utenti unici certificati |
 | CPM/CPC | Requisito registrato separatamente dagli sponsor diretti | Adapter del network pubblicitario, consenso del provider e configurazione ads.txt ancora da implementare |
 | Alert | Creazione/rimozione personale, filtro, consenso, coda giornaliera, link di disiscrizione | Email reali disabilitate; collaudo consegna e retry con provider |
-| Aggregazione | Scheduler per fonti configurate; Greenhouse, Lever, Ashby e JobPosting JSON-LD; deduplica, scadenza, tassonomia per titoli ATS | Nessun pool da 500 aziende importato; adattatori per Careers personalizzate e qualità dati su fonti reali |
-| Discovery | CLI da elenco siti oppure metadati CoinMarketCap; rilevamento Careers/ATS, report e importazione delle fonti approvate | Verifica massiva, manutenzione della lista; sitemap concorrente non implementata |
+| Aggregazione | Greenhouse, Lever, Ashby e JSON-LD; 53 portali verificati e 577 annunci importati, deduplica e scadenza | Altri adattatori Careers e controllo editoriale dei dati |
+| Discovery | DefiLlama, a16z crypto e 70 aziende curate; 1.192 voci/1.175 siti analizzati; registro, controllo identità ATS, rinnovo giornaliero configurato | 118 pagine richiedono adattatori, 12 associazioni revisione; cron remoto da attivare; aggregatori opzionali |
 | SEO | Recuperate pagine lavori/tag/località, aziende, salari e listicle; ricerca e dati dinamici condivisi | Audit integrale URL/contenuti/indicizzazione e allineamento di tutte le varianti al riferimento |
-| Amministrazione | Verifica recruiter, prezzo, risposte supporto, aggiunta fonti, log crawler | Pannello operativo completo per moderazione, riconciliazione pagamenti e gestione catalogo |
-| Ambiente | Setup locale idempotente, D1 condiviso, secret casuale, email locali, workflow Linux manuale | Collegamenti, deploy e collaudo end-to-end su Cloudflare reale |
+| Amministrazione | Verifica recruiter, prezzo, supporto, aggiunta fonti, registro discovery e salute crawler | Pannello operativo completo per moderazione e riconciliazione pagamenti |
+| Ambiente e accessi | Setup locale, Google e magic link, onboarding e dashboard separati per candidati/aziende, CI Linux | Email reali, deploy e collaudo su Cloudflare reale |
 
 La parità richiesta comprende anche ciò che non è visibile pubblicamente: non è stata dimostrata ispezionando solo pagine pubbliche e non è corretto dichiararla completata in base al numero di test.
 
@@ -39,13 +39,15 @@ Per la ricerca sono stati osservati anche [Solidity](https://web3.career/solidit
 
 ## Verifiche
 
-- Installazione con lockfile congelato e migrazioni fino a `0014` su D1 locale: riuscite. Nessun database remoto modificato.
+- Migrazioni fino a `0016` su D1 locale: riuscite. Nessun database remoto modificato.
 - Typecheck dei workspace: riuscito.
-- Build Next.js: riuscita, 136 pagine generate. Questo è il build dell'applicazione, non una certificazione del bundle OpenNext su Workers.
-- Suite Node: 528 test web, 143 shared, 18 database e 94 crawler/configurazione, per 783 test. Le prove comprendono transazioni SQLite reali, idempotenza pagamenti, importo/currency, crediti, accesso recruiter e revoca consenso, cancellazione account con record commerciali e arresto dei rinnovi prima della chiusura annunci.
+- Build Next.js: riuscita. Questo è il build dell'applicazione, non una certificazione del bundle OpenNext su Workers.
+- Suite Node: 537 test web, 156 shared, 18 database e 100 crawler/configurazione, per 811 test riusciti. Coprono anche tenant OAuth, separazione ingressi, proprietà ordini, discovery e code paginate, oltre ai controlli commerciali della prima consegna.
 - Workers: 12 asserzioni passate; il runtime Windows ha emesso avvisi filesystem e un errore interno di chiusura. Serve ripetizione pulita nella CI Linux prima del lancio.
-- Nove pagine pubbliche hanno risposto HTTP 200. Browser: configuratore $695 → $299, login locale, onboarding, dashboard candidato e accesso amministratore verificati.
-- Discovery massiva, pagamenti sandbox, email reali e deployment Cloudflare: non eseguiti. Non ci sono incassi, annunci reali acquisiti o ricavi pubblicitari dimostrati.
+- Browser: magic link candidato/datore, Google candidato/datore, onboarding distinti, pubblicazione annunci, bundle e credito, sponsor, recruiter, logo, bozza checkout e Customer Portal verificati.
+- Cinque pagamenti Stripe sandbox completati con webhook e attivazione dei servizi; annullamento rinnovo verificato. Nessun incasso reale.
+- Crawler reale con code Miniflare: 53 fonti completate, 577 annunci Careers importati, zero errori al termine. La scansione più ampia mantiene visibili fonti bloccate o non supportate.
+- Email reali e deployment Cloudflare non eseguiti. Il cron configurato non è ancora operativo online.
 
 ## Lavoro successivo già identificato
 

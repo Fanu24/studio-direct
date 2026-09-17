@@ -9,6 +9,7 @@ import { handleWeb3ApiMessage } from "./consumers/web3-api";
 import { enqueueCronWork } from "./cron";
 import { rebuildSalaryRollups } from "./pipeline/rollups";
 import {handleAlert} from './consumers/alerts';
+import {enqueueDiscovery,handleCatalog,handleSourceDiscovery} from './discovery';
 
 type QueueHandlerResult =
   | { action: "ack" }
@@ -63,7 +64,7 @@ export async function routeQueueBatch(
   const hasMatchingMessage = batch.messages.some((message) => {
     if (!isQueueMessage(message.body)) return false;
     if (batch.queue === "crawl-career") {
-      return message.body.kind === "career" || message.body.kind === "web3_api" || message.body.kind==='alert';
+      return ['career','web3_api','alert','discover_catalog','discover_source'].includes(message.body.kind);
     }
     return message.body.kind === expectedKind;
   });
@@ -79,7 +80,11 @@ export async function routeQueueBatch(
     }
 
     let result: QueueHandlerResult;
-    if(batch.queue==='crawl-career'&&message.body.kind==='alert'){
+    if(batch.queue==='crawl-career'&&message.body.kind==='discover_catalog'){
+      result=await handleCatalog(env);
+    } else if(batch.queue==='crawl-career'&&message.body.kind==='discover_source'){
+      result=await handleSourceDiscovery(message.body.sourceId,env);
+    } else if(batch.queue==='crawl-career'&&message.body.kind==='alert'){
       result=await handleAlert(message.body.alertId,env);
     } else if (batch.queue === "crawl-career" && message.body.kind === "career") {
       result = await handlers.career(message.body, env);
@@ -131,6 +136,7 @@ export default {
     const now = new Date();
     const nowIso = now.toISOString();
     const stats = await enqueueCronWork(env);
+    await enqueueDiscovery(env,now);
 
     await env.DB.prepare(
       `INSERT INTO crawl_runs

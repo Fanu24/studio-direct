@@ -92,7 +92,7 @@ export async function handleCareerMessage(
     const delaySeconds =
       lock.retryAfterMs === undefined
         ? undefined
-        : Math.max(1, Math.ceil(lock.retryAfterMs / 1_000));
+        : Math.max(60, Math.ceil(lock.retryAfterMs / 1_000));
     return delaySeconds === undefined
       ? { action: "retry" }
       : { action: "retry", delaySeconds };
@@ -171,9 +171,18 @@ export async function handleCareerMessage(
       },
     });
 
+    await env.DB.prepare('UPDATE companies SET last_crawled_at=?,last_crawl_error=NULL WHERE id=?')
+      .bind(finishedAt,company.id).run();
+
     return { action: "ack" };
   } catch (error) {
-    if (!(error instanceof RateLimitedError)) throw error;
+    const detail=error instanceof Error?error.message.slice(0,240):'Career fetch failed';
+    await env.DB.prepare('UPDATE companies SET last_crawl_error=? WHERE id=?').bind(detail,company.id).run();
+    if (!(error instanceof RateLimitedError)) {
+      await env.DB.prepare('INSERT INTO crawl_runs(id,source,started_at,finished_at,ok,stats_json) VALUES(?,?,?,?,0,?)')
+        .bind(runId,'career_page',startedAt,now().toISOString(),JSON.stringify({companyId:company.id,error:detail})).run();
+      throw error;
+    }
     const delaySeconds = retryDelaySeconds(error);
 
     await writeRateLimitedRun(env.DB, {

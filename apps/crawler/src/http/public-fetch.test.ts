@@ -42,6 +42,7 @@ describe("fetchPublicText", () => {
     expect(fetchImpl).toHaveBeenCalledWith("https://example.test/jobs", {
       method: "GET",
       headers: { "User-Agent": PRODUCT_USER_AGENT },
+      signal: expect.any(AbortSignal),
     });
   });
 });

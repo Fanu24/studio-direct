@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { Children, cloneElement, useRef, useState, type FormEvent, type ReactNode, type ReactElement } from "react";
+import { Children, cloneElement, useEffect, useRef, useState, type FormEvent, type ReactNode, type ReactElement } from "react";
 
 import { authClient } from "../../lib/auth/client";
 
@@ -26,11 +26,13 @@ export function resetTurnstileWidget(
 }
 
 export async function submitLoginMagicLink({
+  errorCallbackURL,
   callbackURL = "/",
   email,
   newUserCallbackURL = "/onboarding",
   token,
 }: {
+  errorCallbackURL?: string;
   callbackURL?: string;
   email: string;
   newUserCallbackURL?: string;
@@ -41,6 +43,7 @@ export async function submitLoginMagicLink({
       email,
       callbackURL,
       newUserCallbackURL,
+      ...(errorCallbackURL ? {errorCallbackURL} : {}),
       fetchOptions: {
         headers: {
           "x-captcha-response": token,
@@ -59,17 +62,22 @@ export async function submitLoginMagicLink({
  */
 export function LoginForm({
   localTesting=false,
+  errorCallbackURL,
   callbackURL = "/",
   children,
   newUserCallbackURL = "/onboarding",
   siteKey,
 }: {
+  errorCallbackURL?: string;
   callbackURL?: string;
   children: ReactNode;
   newUserCallbackURL?: string;
   siteKey: string;
   localTesting?: boolean;
 }) {
+  const [pending,setPending]=useState(false);
+  const [ready,setReady]=useState(false);
+  useEffect(()=>setReady(true),[]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [token,setToken]=useState(localTesting?'XXXX.DUMMY.TOKEN.XXXX':'');
@@ -84,19 +92,21 @@ export function LoginForm({
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if(pending)return;
     const form = event.currentTarget;
     const email = String(new FormData(form).get("email") ?? "");
     if(!token){setError('Please wait for the security check to finish.');return;}
 
-    setError(null);
+    setError(null);setMessage(null);setPending(true);
+    try {
     const { error: sendError } = await submitLoginMagicLink({
       callbackURL,
       email,
       newUserCallbackURL,
       token,
+      errorCallbackURL,
     });
 
-    if(!localTesting)setToken('');
     if (sendError) {
       setError(
         sendError.message
@@ -108,6 +118,8 @@ export function LoginForm({
     setMessage(
       "Check your email for a sign-in link. You can send another magic link from this page if the email does not arrive.",
     );
+    } catch {setError("Could not connect. Please try sending the magic link again.");}
+    finally {if(!localTesting)setToken('');setPending(false);}
   }
 
   return (
@@ -134,34 +146,31 @@ export function LoginForm({
       <form className="auth-form" onSubmit={onSubmit}>
         {items}
         <div className="auth-form__turnstile" ref={widget} />
-        {submit ? cloneElement(submit as ReactElement<{disabled:boolean}>,{disabled:!token}) : null}
+        {submit ? cloneElement(submit as ReactElement<{disabled:boolean}>,{disabled:!ready||!token||pending}) : null}
       </form>
     </>
   );
 }
 
 export function GoogleSignInButton({
+  errorCallbackURL,
   callbackURL = "/",
   children,
   newUserCallbackURL = "/onboarding",
 }: {
+  errorCallbackURL?: string;
   callbackURL?: string;
   children: ReactNode;
   newUserCallbackURL?: string;
 }) {
-  return (
-    <button
-      className="button button--ghost button--block"
-      type="button"
-      onClick={() => {
-        void authClient.signIn.social({
-          provider: "google",
-          callbackURL,
-          newUserCallbackURL,
-        });
-      }}
-    >
-      {children}
-    </button>
-  );
+  const [error,setError]=useState<string|null>(null),[pending,setPending]=useState(false);
+  async function signIn() {
+    setError(null);setPending(true);
+    try {
+      const result=await authClient.signIn.social({provider:'google',callbackURL,newUserCallbackURL,...(errorCallbackURL?{errorCallbackURL}:{})});
+      if(result.error){setError(result.error.message??'Google sign-in failed. Please try again.');setPending(false);}
+    } catch {setError('Could not connect to Google. Please try again.');setPending(false);}
+  }
+  return <><button className="button button--ghost button--block" type="button" disabled={pending} onClick={()=>void signIn()}>{children}</button>
+    {error?<p role="alert" className="notice notice--danger">{error}</p>:null}</>;
 }

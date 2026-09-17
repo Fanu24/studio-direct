@@ -165,7 +165,8 @@ describe("handleCareerMessage", () => {
       ),
     ).rejects.toThrow("close-stale failed");
 
-    expect(bindings).toEqual([]);
+    expect(bindings).toContainEqual(['close-stale failed',company.id]);
+    expect(bindings.some(values=>values[4]===1)).toBe(false);
   });
 
   it("retries without fetching when the ATS host lock is held", async () => {
@@ -186,7 +187,7 @@ describe("handleCareerMessage", () => {
       },
     );
 
-    expect(result).toEqual({ action: "retry", delaySeconds: 1 });
+    expect(result).toEqual({ action: "retry", delaySeconds: 60 });
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 

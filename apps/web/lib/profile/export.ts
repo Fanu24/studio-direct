@@ -68,7 +68,7 @@ export async function exportAccountData(
     ]);
 
   const owned_records:Record<string,Record<string,unknown>[]>={};
-  for(const table of ['saved_jobs','job_alerts','employer_orders','bundle_credits','marketplace_orders','recruiter_accounts','support_requests']){
+  for(const table of ['saved_jobs','job_alerts','employer_orders','bundle_credits','marketplace_orders','recruiter_accounts','employer_accounts','support_requests']){
     const exists=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind(table).first();
     if(exists)owned_records[table]=await allRows(db,`SELECT * FROM ${table} WHERE user_id=?`,userId);
   }

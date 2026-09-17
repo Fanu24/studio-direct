@@ -22,6 +22,7 @@ export function safeNextPath(next?: string | null): string | null {
   if (typeof next !== "string") return null;
 
   const path = next.trim();
+  if(/[\\\u0000-\u0020\u007f]/.test(path))return null;
   if (!path.startsWith("/")) return null;
   if (path.startsWith("//") || path.startsWith("/\\")) return null;
   if (path.includes("://")) return null;

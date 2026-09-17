@@ -74,7 +74,9 @@ export function createAuth(env: AuthEnv) {
       additionalFields: {
         tenantId: {
           type: "string",
-          required: true,
+          // Google validates provider data before database hooks. The server hook
+          // below supplies this field; clients and identity providers cannot choose it.
+          required: false,
           input: false,
           fieldName: "tenant_id",
         },

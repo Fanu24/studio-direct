@@ -76,7 +76,7 @@ describe("LoginPage", () => {
     });
   });
 
-  it("falls back to the homepage for an unsafe or absent next param", async () => {
+  it("falls back to the candidate dashboard for an unsafe or absent next param", async () => {
     vi.stubEnv("TURNSTILE_SITE_KEY", "1x00000000000000000000AA");
     const { default: LoginPage } = await import("./page");
     const { LoginForm } = await import("./login-form");
@@ -87,8 +87,8 @@ describe("LoginPage", () => {
     const loginForm = elements(page).find((element) => element.type === LoginForm);
 
     expect(loginForm?.props).toMatchObject({
-      callbackURL: "/",
-      newUserCallbackURL: "/onboarding",
+      callbackURL: "/dashboard",
+      newUserCallbackURL: "/onboarding?next=%2Fdashboard",
     });
   });
 

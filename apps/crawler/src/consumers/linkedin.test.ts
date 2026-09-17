@@ -100,6 +100,7 @@ describe("handleLinkedinMessage", () => {
       {
         method: "GET",
         headers: { "User-Agent": PRODUCT_USER_AGENT },
+      signal: expect.any(AbortSignal),
       },
     );
     expect(repo.upsertJob).not.toHaveBeenCalled();

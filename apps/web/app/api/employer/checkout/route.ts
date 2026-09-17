@@ -1,4 +1,5 @@
 import { platform,currentUser,sameOrigin,appOrigin } from '../../../../lib/platform';
+import {employerAccessResponse,employerLogin} from '../../../../lib/auth/employer';
 import { requireTenantId } from '../../../../lib/tenant';
 import { parseSelection } from '../../../../lib/billing/listing-catalog';
 import { parseListing } from '../../../../lib/billing/listing-input';
@@ -6,12 +7,14 @@ import { createEmployerOrder } from '../../../../lib/billing/employer-orders';
 
 export async function POST(request:Request) {
   if(!sameOrigin(request))return Response.json({error:'Invalid request origin'},{status:403});
-  const env=await platform(),user=await currentUser(env,request);
-  if(!user)return Response.json({error:'Sign in to post a job',login:'/login?next=/post-web3-job'},{status:401});
-  if(env.STRIPE_ENABLED!=='true'||!env.STRIPE_SECRET_KEY)return Response.json({error:'Checkout is not configured yet'},{status:503});
   let raw;
   try{raw=await request.json();}catch{return Response.json({error:'Invalid request'},{status:400});}
   if(!raw||!['job','bundle'].includes(raw.kind)||typeof raw.id!=='string'||!/^[a-f0-9-]{36}$/i.test(raw.id))return Response.json({error:'Invalid order'},{status:400});
+  const next=raw.kind==='bundle'?'/post-web3-job/bundle':'/post-web3-job';
+  const env=await platform(),user=await currentUser(env,request);
+  if(!user)return Response.json({error:'Sign in to post a job',login:employerLogin(next)},{status:401});
+  const access=await employerAccessResponse(env.DB,user.id,next);if(access)return access;
+  if(env.STRIPE_ENABLED!=='true'||!env.STRIPE_SECRET_KEY)return Response.json({error:'Checkout is not configured yet'},{status:503});
   let order;
   try{
     const selection=parseSelection(raw.selection,raw.kind);
@@ -22,7 +25,7 @@ export async function POST(request:Request) {
   if(order.status!=='pending')return Response.json({error:'This order is already processed'},{status:409});
   const options=JSON.parse(order.selection_json),origin=appOrigin(env);
   const body=new URLSearchParams({mode:options.autoRenew?'subscription':'payment',customer_email:user.email,
-    success_url:`${origin}/employer?order=${order.id}`,cancel_url:`${origin}/post-web3-job?cancelled=1`,
+    success_url:`${origin}/employer?order=${order.id}`,cancel_url:`${origin}${next}?cancelled=1`,
     'metadata[orderId]':order.id,'line_items[0][quantity]':'1','line_items[0][price_data][currency]':'usd',
     'line_items[0][price_data][unit_amount]':String(order.total_cents),
     'line_items[0][price_data][product_data][name]':order.kind==='bundle'?`Nodework ${options.quantity} job credits`:'Nodework job listing',

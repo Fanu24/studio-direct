@@ -82,6 +82,7 @@ describe("CareerJobSource", () => {
     expect(fetchImpl).toHaveBeenCalledWith(leverPostingsUrl("pixelworks"), {
       method: "GET",
       headers: { "User-Agent": PRODUCT_USER_AGENT },
+      signal: expect.any(AbortSignal),
     });
     expect(drafts).toHaveLength(3);
   });

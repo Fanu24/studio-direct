@@ -76,6 +76,7 @@ describe("CareerJobSource", () => {
     expect(fetchImpl).toHaveBeenCalledWith(greenhouseBoardUrl("pixelworks"), {
       method: "GET",
       headers: { "User-Agent": PRODUCT_USER_AGENT },
+      signal: expect.any(AbortSignal),
     });
     expect(drafts).toHaveLength(2);
   });

@@ -1,12 +1,18 @@
 import Link from 'next/link';
+import {loadEmployer,employerOnboarding} from '../../lib/auth/employer';
+import {EmployerShell} from '../_components/employer-shell';
+import {CheckoutStatus} from '../_components/checkout-status';
 import { redirect } from 'next/navigation';
 import { platform,currentUser } from '../../lib/platform';
 import { formatUsd } from '../../lib/billing/listing-catalog';
 export const dynamic='force-dynamic';
 export const metadata={title:'Employer dashboard',robots:{index:false,follow:false}};
-export default async function EmployerPage(){
+export default async function EmployerPage({searchParams}:{searchParams?:Promise<{order?:string}>}){
+  const orderId=(await searchParams)?.order;
   const env=await platform(),user=await currentUser(env);
-  if(!user)redirect('/login?next=/employer');
+  if(!user)redirect('/employer/login?next=/employer');
+  const account=await loadEmployer(env.DB,user.id);
+  if(!account)redirect(employerOnboarding());
   const [orders,listings,credits,applications]=await Promise.all([
     env.DB.prepare('SELECT * FROM employer_orders WHERE user_id=? ORDER BY created_at DESC LIMIT 100').bind(user.id).all<{id:string;kind:string;status:string;total_cents:number;stripe_customer_id:string|null}>(),
     env.DB.prepare(`SELECT j.id,j.title,j.slug,j.listed,l.expires_at FROM employer_listings l JOIN jobs j ON j.id=l.job_id WHERE l.user_id=? ORDER BY j.created_at DESC LIMIT 100`).bind(user.id).all<{id:string;title:string;slug:string;listed:number;expires_at:string}>(),
@@ -15,9 +21,10 @@ export default async function EmployerPage(){
       JOIN employer_listings l ON l.job_id=a.job_id JOIN jobs j ON j.id=a.job_id WHERE l.user_id=? ORDER BY a.created_at DESC LIMIT 100`).bind(user.id)
       .all<{id:string;name:string;email:string;note:string;profile_url:string|null;created_at:string;title:string}>(),
   ]);
-  return <main className="container container--content stack"><h1>Employer dashboard</h1>
+  return <EmployerShell><p>{account.company_name}</p>
+    {orderId&&orders.results.some(o=>o.id===orderId)?<CheckoutStatus orderId={orderId}/>:null}
     <p><Link href="/post-web3-job">Post a job</Link> · <Link href="/post-web3-job/bundle">Buy a bundle</Link> · <Link href="/support">Contact support</Link></p>
-    <p>After checkout, publication appears here once Stripe confirms payment. Closing a listing does not cancel a subscription; use Manage billing to stop future renewals.</p>
+    <p>After checkout, publication appears here once Stripe confirms payment. Closing a listing also stops its future automatic renewals. Use Manage billing to review your billing details.</p>
     <h2>Your listings</h2>{!listings.results.length?<p>No published listings yet.</p>:listings.results.map(j=><article className="panel" key={j.id}>
       <h3><Link href={`/jobs/${j.slug}`}>{j.title}</Link></h3><p>{j.listed?'Published':'Closed'} · Expires {j.expires_at.slice(0,10)}</p>
       {j.listed?<form action="/api/employer/manage" method="post"><input type="hidden" name="action" value="close"/><input type="hidden" name="id" value={j.id}/><button type="submit">Close listing</button></form>:null}</article>)}
@@ -26,5 +33,5 @@ export default async function EmployerPage(){
       <a href={`mailto:${a.email}`}>{a.email}</a><p>{a.note}</p>{a.profile_url?<a href={a.profile_url} rel="noopener noreferrer" target="_blank">Applicant profile</a>:null}<p>{a.created_at.slice(0,10)}</p></article>)}
     <h2>Orders</h2>{orders.results.map(o=><article key={o.id} className="panel"><p>{o.kind==='bundle'?'Job bundle':'Job listing'} · {formatUsd(o.total_cents)} before checkout discounts/tax · {o.status}</p>
       {o.stripe_customer_id?<form action="/api/employer/manage" method="post"><input type="hidden" name="action" value="billing"/><input type="hidden" name="id" value={o.id}/><button type="submit">Manage billing and renewals</button></form>:null}</article>)}
-  </main>;
+  </EmployerShell>;
 }

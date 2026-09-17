@@ -1,19 +1,40 @@
 "use client";
-import {useRef,useState,type FormEvent} from 'react';
+import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {JOB_TAGS} from '@gaming/shared';
-import {DEFAULT_SELECTION,STICKY_CENTS,BUNDLE_LADDER,quoteListing,formatUsd,type ListingSelection} from '../../lib/billing/listing-catalog';
+import {DEFAULT_SELECTION,STICKY_CENTS,BUNDLE_LADDER,quoteListing,parseSelection,formatUsd,type ListingSelection} from '../../lib/billing/listing-catalog';
 export function ListingForm({kind='job',creditId,creditSelection}:{kind?:'job'|'bundle';creditId?:string;creditSelection?:ListingSelection}) {
  const [selection,setSelection]=useState<ListingSelection>(creditSelection??{...DEFAULT_SELECTION,quantity:kind==='bundle'?24:1,autoRenew:kind==='job'});
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[logoUrl,setLogoUrl]=useState(''),[external,setExternal]=useState(false);
  const submission=useRef<string|null>(null);const quote=quoteListing(selection);
+ const formRef=useRef<HTMLFormElement>(null),draftKey='nodework:listing:'+kind+(creditId?':'+creditId:'');
+ const restoredApplyUrl=useRef('');
+ const [loginUrl,setLoginUrl]=useState('/employer/login?next='+encodeURIComponent(kind==='bundle'?'/post-web3-job/bundle':'/post-web3-job'));
+ useEffect(()=>{try{
+  const saved=JSON.parse(sessionStorage.getItem(draftKey)||'null');
+  if(!saved||Date.now()-saved.at>86400000||!Array.isArray(saved.fields))return;
+  if(!creditId)setSelection(parseSelection(saved.selection,kind));
+  restoredApplyUrl.current=saved.fields.find((entry:string[])=>entry[0]==='applyUrl')?.[1]??'';
+  setExternal(saved.external===true);setLogoUrl(typeof saved.logoUrl==='string'?saved.logoUrl:'');
+  submission.current=typeof saved.id==='string'?saved.id:null;
+  for(const element of Array.from(formRef.current?.elements??[])){
+   if(element instanceof HTMLInputElement&&element.type!=='file'&&element.type!=='radio'&&element.type!=='checkbox'||element instanceof HTMLTextAreaElement){
+    const value=saved.fields.find((entry:string[])=>entry[0]===element.name)?.[1];if(typeof value==='string')element.value=value;
+   }else if(element instanceof HTMLSelectElement&&element.name){
+    const values=saved.fields.filter((entry:string[])=>entry[0]===element.name).map((entry:string[])=>entry[1]);
+    for(const option of Array.from(element.options))option.selected=values.includes(option.value);
+   }
+  }
+ }catch{sessionStorage.removeItem(draftKey);}},[draftKey,kind,creditId]);
+ function rememberDraft(){try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify({id:submission.current,at:Date.now(),fields:[...new FormData(formRef.current)].filter(([,value])=>typeof value==='string'),selection,logoUrl,external}));}catch{}}
  function choose(patch:Partial<ListingSelection>){setSelection({...selection,...patch});submission.current=null;}
- async function upload(file:File|undefined){if(!file)return;setBusy(true);setError('');try{const body=new FormData();body.set('file',file);const r=await fetch('/api/employer/logo',{method:'POST',body});const j=await r.json() as {url?:string;error?:string};if(!r.ok||!j.url)throw new Error(j.error||'Logo upload failed. Sign in and try again.');setLogoUrl(j.url);}catch(e){setError(e instanceof Error?e.message:'Upload failed');}finally{setBusy(false);}}
+ async function upload(file:File|undefined){if(!file)return;setBusy(true);setError('');try{const body=new FormData();body.set('logo',file);const r=await fetch('/api/employer/logo',{method:'POST',body});const j=await r.json() as {url?:string;error?:string};if(!r.ok||!j.url)throw new Error(j.error||'Logo upload failed. Sign in and try again.');setLogoUrl(j.url);}catch(e){setError(e instanceof Error?e.message:'Upload failed');}finally{setBusy(false);}}
  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setError('');const f=new FormData(e.currentTarget);const value=(name:string)=>String(f.get(name)||'');
   const listing=kind==='bundle'?null:{title:value('title'),descriptionHtml:value('descriptionHtml'),companyName:value('companyName'),companyUrl:value('companyUrl'),location:value('location'),remote:value('remote'),applyMode:external?'external':'internal',applyUrl:value('applyUrl'),tags:f.getAll('tags'),salaryMin:value('salaryMin')?Number(value('salaryMin')):null,salaryMax:value('salaryMax')?Number(value('salaryMax')):null,logoUrl,invoiceDetails:value('invoiceDetails')};
   submission.current??=crypto.randomUUID();
-  try{const r=await fetch(creditId?'/api/employer/redeem':'/api/employer/checkout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:submission.current,kind,listing,selection,creditId})});const j=await r.json() as {url?:string;error?:string};if(!r.ok||!j.url)throw new Error(j.error||'Checkout unavailable. Please sign in and try again.');window.location.assign(j.url);}catch(e){setError(e instanceof Error?e.message:'Submission failed');setBusy(false);}
+  rememberDraft();
+  try{const r=await fetch(creditId?'/api/employer/redeem':'/api/employer/checkout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:submission.current,kind,listing,selection,creditId})});const j=await r.json() as {url?:string;error?:string;login?:string};if(j.login?.startsWith('/')&&!j.login.startsWith('//'))setLoginUrl(j.login);if(!r.ok||!j.url)throw new Error(j.error||'Checkout unavailable. Please sign in and try again.');if(creditId)sessionStorage.removeItem(draftKey);window.location.assign(j.url);}catch(e){setError(e instanceof Error?e.message:'Submission failed');setBusy(false);}
  }
- return <form className="commerce-form" onSubmit={submit} onChange={()=>{submission.current=null;}}>
+ return <form ref={formRef} className="commerce-form" onSubmit={submit} onChange={()=>{submission.current=null;}}>
  {kind==='job'?<fieldset disabled={busy}><legend>Job details</legend>
  <label>Job title<input name="title" required minLength={3} maxLength={150}/></label>
  <label>Job description<textarea name="descriptionHtml" rows={14} required minLength={80} maxLength={50000} placeholder="Responsibilities, requirements and what you offer. Basic HTML formatting is supported."/></label>
@@ -23,7 +44,7 @@ export function ListingForm({kind='job',creditId,creditSelection}:{kind?:'job'|'
  <label>Main skill and other skills (up to 12)<select name="tags" multiple required size={8}>{JOB_TAGS.map(tag=><option key={tag} value={tag}>{tag}</option>)}</select></label>
  <label className="commerce-check"><input type="radio" name="applyMode" checked={!external} onChange={()=>setExternal(false)}/>Receive applications in the employer dashboard</label>
  <label className="commerce-check"><input type="radio" name="applyMode" checked={external} onChange={()=>setExternal(true)}/>Send candidates to your application website</label>
- {external?<label>Application URL<input name="applyUrl" type="url" required/></label>:null}
+ {external?<label>Application URL<input name="applyUrl" type="url" required defaultValue={restoredApplyUrl.current}/></label>:null}
  <label>Invoice details (optional)<textarea name="invoiceDetails" rows={3} maxLength={2000}/></label>
  </fieldset>:<p>Buy credits now and publish each job when you are ready. Unused credits expire 24 months after purchase.</p>}
  {!creditId?<fieldset disabled={busy}><legend>Placement options</legend>
@@ -38,6 +59,6 @@ export function ListingForm({kind='job',creditId,creditSelection}:{kind?:'job'|'
  {kind==='job'&&selection.logo?<label>Company logo (PNG, JPEG or WebP, maximum 2 MB)<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} required={!logoUrl} onChange={e=>void upload(e.target.files?.[0])}/>{logoUrl?<span>Logo uploaded</span>:null}</label>:null}
  <div className="panel"><p>Base listing: $299 per post · Active for 30 days</p>{quote.percent?<p>Bundle discount: {quote.percent}% ({formatUsd(quote.discountCents)})</p>:null}<strong>{creditId?'Use 1 purchased credit':`Total: ${formatUsd(quote.totalCents)}`}</strong><p>{creditId?'No additional payment.':'Any applicable taxes and coupon discounts are shown at checkout.'}</p>
  <button className="button button--primary" type="submit" disabled={busy}>{busy?'Please wait…':creditId?'Publish job':'Continue to payment'}</button></div>
- {error?<p role="alert">{error} <a href="/login?next=/post-web3-job">Sign in</a></p>:null}
+ {error?<p role="alert">{error} <a href={loginUrl} onClick={rememberDraft}>Sign in or complete your employer account</a></p>:null}
  </form>;
 }

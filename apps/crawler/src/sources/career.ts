@@ -1,13 +1,10 @@
-import type { JobDraft, JobSource, QueueMessage } from "@gaming/shared";
+import {createSiteReader,type JobDraft,type JobSource,type QueueMessage} from "@gaming/shared";
 
-import { fetchPublicText } from "../http/public-fetch";
 import { fetchGreenhouseBoard } from "./greenhouse";
 import { parseJobPostingJsonLd } from "./jsonld";
 import { fetchLeverPostings } from "./lever";
 import { fetchAshbyPostings } from './ashby';
-
-const PRODUCT_USER_AGENT =
-  "StudioDirectBot/1.0 (+https://studio-direct.example/bot; jobs@studio-direct.example)";
+import {RateLimitedError,parseRetryAfter} from '../http/public-fetch';
 
 export interface CareerCompany {
   id: string;
@@ -73,11 +70,11 @@ export class CareerJobSource implements JobSource {
       throw new Error(`Company has no career URL: ${company.id}`);
     }
 
-    const response = await fetchPublicText(
-      company.career_url,
-      this.fetchImpl,
-      PRODUCT_USER_AGENT,
-    );
+    const response = await createSiteReader(async(input,init)=>{
+      const result=await this.fetchImpl(input,init);
+      if(result.status===403||result.status===429)throw new RateLimitedError(result.status,parseRetryAfter(result.headers.get('Retry-After')));
+      return result;
+    }).read(company.career_url);
 
     if (response.status < 200 || response.status >= 300) {
       throw new Error(

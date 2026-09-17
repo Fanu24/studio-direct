@@ -1,4 +1,7 @@
 export const PACKAGE_NAME = "@gaming/shared";
+export {coinMarketCapSeeds,defiLlamaSeeds,cryptoPortfolioSeeds,discoverCompany,createSiteReader,publicHttps,robotsAllowed,atsBoard,boardMatchesCompany,extractLinks} from './source-discovery.ts';
+export type {SourceSeed,SourceCandidate} from './source-discovery.ts';
+export {CURATED_WEB3_COMPANIES} from './web3-companies.ts';
 
 export {
   HUB_ROLE_SLUGS,
@@ -128,5 +131,3 @@ export type {
   DigestRecipient,
   DigestRecipientRow,
 } from "./digest.ts";
-
-
