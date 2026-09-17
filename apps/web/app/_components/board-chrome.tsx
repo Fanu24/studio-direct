@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 
 import { SearchIcon } from "./icons";
+import {SearchInput} from './search-input';
 
 export const BROWSE_REGIONS = [
   { slug: "asia", label: "Asia" },
@@ -133,18 +134,14 @@ export function BoardSearch({
       <label className="field">
         <span className="visually-hidden">Search</span>
         <SearchIcon className="search-bar__icon" size={18} />
-        <input
-          defaultValue={defaultQuery}
-          name="q"
-          placeholder="Search"
-          type="search"
-        />
+        <SearchInput defaultQuery={defaultQuery} remoteActive={remoteActive}/>
       </label>
+      {remoteActive?<input type="hidden" name="remote" value="1"/>:null}
       <button className="visually-hidden" type="submit">
         Search
       </button>
       <Link
-        aria-pressed={remoteActive}
+        aria-checked={remoteActive}
         className={`remote-toggle${remoteActive ? " remote-toggle--on" : ""}`}
         href={remoteHref}
         role="switch"

@@ -1,3 +1,4 @@
+import {getCloudflareContext} from '@opennextjs/cloudflare';
 import type { Metadata } from "next";
 
 import { CheckIcon } from "../_components/icons";
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 const ACCOUNT_PERKS = [
   "A profile and PDF CV you fill in once",
   "Saved account settings",
-  "Employer posting later, when billing is live",
+  "Saved jobs, job alerts and employer tools",
 ];
 
 export default async function LoginPage({
@@ -27,7 +28,10 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; intent?: string; next?: string; sent?: string }>;
 }) {
   const { error, intent, next, sent } = await searchParams;
-  const siteKey = process.env.TURNSTILE_SITE_KEY ?? "";
+  const {env}=await getCloudflareContext({async:true});
+  const config=env as {TURNSTILE_SITE_KEY?:string;GOOGLE_CLIENT_ID?:string;GOOGLE_CLIENT_SECRET?:string;LOCAL_MAIL?:string;SITE_URL?:string};
+  const siteKey = config.TURNSTILE_SITE_KEY ?? "";
+  const localTesting=process.env.NODE_ENV==='development'&&config.LOCAL_MAIL==='true'&&siteKey==='1x00000000000000000000AA'&&['http://localhost:3000','http://127.0.0.1:3000'].includes(config.SITE_URL||'');
   const callbackURL = safeNextPath(next) ?? "/";
   const newUserCallbackURL = onboardingLocation(next);
   const startingFresh = intent === "start";
@@ -41,7 +45,7 @@ export default async function LoginPage({
           <p className="lead">
             {startingFresh
               ? "Create your account in one step. Send a magic link or continue with Google, no separate signup form."
-              : "Send a magic link to your email, or continue with Google."}
+              : "Send a magic link to your email to sign in."}
           </p>
           <p>
             You can send another magic link from this page if the email does not arrive.
@@ -70,7 +74,7 @@ export default async function LoginPage({
               {error}
             </p>
           ) : null}
-          <LoginForm callbackURL={callbackURL} newUserCallbackURL={newUserCallbackURL} siteKey={siteKey}>
+          <LoginForm localTesting={localTesting} callbackURL={callbackURL} newUserCallbackURL={newUserCallbackURL} siteKey={siteKey}>
             <div className="field">
               <label className="field__label" htmlFor="login-email">Email</label>
               <input
@@ -87,12 +91,10 @@ export default async function LoginPage({
               Send magic link
             </button>
           </LoginForm>
-          <p className="auth-or">
-            <span>or</span>
-          </p>
-          <GoogleSignInButton callbackURL={callbackURL} newUserCallbackURL={newUserCallbackURL}>
+          {config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET ? <p className="auth-or"><span>or</span></p> : null}
+          {config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET ? <GoogleSignInButton callbackURL={callbackURL} newUserCallbackURL={newUserCallbackURL}>
             Continue with Google
-          </GoogleSignInButton>
+          </GoogleSignInButton> : null}
           <p className="auth-fine">
             New here? Your account is created the first time you sign in. We then ask for
             a display name and a target role.

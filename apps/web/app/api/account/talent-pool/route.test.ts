@@ -77,6 +77,7 @@ function optInRequest(value?: string) {
   if (value !== undefined) form.set("talent_pool_opt_in", value);
   return new Request("http://localhost/api/account/talent-pool", {
     method: "POST",
+      headers: {origin:"http://localhost"},
     body: form,
   });
 }

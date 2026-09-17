@@ -158,7 +158,7 @@ describe("the remote switch", () => {
       (el) => typeof el.props.className === "string" &&
         el.props.className.includes("remote-toggle"),
     );
-    expect(off?.props["aria-pressed"]).toBe(false);
+    expect(off?.props["aria-checked"]).toBe(false);
     expect(off?.props.role).toBe("switch");
     expect(String(off?.props.className)).not.toContain("remote-toggle--on");
 
@@ -166,7 +166,7 @@ describe("the remote switch", () => {
       (el) => typeof el.props.className === "string" &&
         el.props.className.includes("remote-toggle"),
     );
-    expect(on?.props["aria-pressed"]).toBe(true);
+    expect(on?.props["aria-checked"]).toBe(true);
     expect(String(on?.props.className)).toContain("remote-toggle--on");
   });
 });

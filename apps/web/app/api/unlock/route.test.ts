@@ -178,6 +178,7 @@ describe("POST /api/unlock quota", () => {
         PRIMARY KEY (user_id, skill)
       );
       CREATE TABLE jobs (
+ listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
         id TEXT PRIMARY KEY,
         apply_url TEXT NOT NULL,
         listed INTEGER NOT NULL DEFAULT 1

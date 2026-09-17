@@ -26,6 +26,7 @@ export type JobDraft = {
 };
 
 export type QueueMessage =
+  | {kind:'alert';alertId:string}
   | { kind: "career"; companyId: string }
   | { kind: "linkedin"; query: string }
   | { kind: "indeed"; query: string }
@@ -39,6 +40,7 @@ export function isQueueMessage(value: unknown): value is QueueMessage {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
   if (v.type !== undefined) return false;
+  if(v.kind==='alert')return typeof v.alertId==='string'&&v.alertId.length>0;
   if (v.kind === "career") return typeof v.companyId === "string";
   if (v.kind === "linkedin" || v.kind === "indeed") return typeof v.query === "string";
   if (v.kind === "web3_api") {

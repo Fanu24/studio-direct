@@ -4,6 +4,7 @@ import { fetchPublicText } from "../http/public-fetch";
 import { fetchGreenhouseBoard } from "./greenhouse";
 import { parseJobPostingJsonLd } from "./jsonld";
 import { fetchLeverPostings } from "./lever";
+import { fetchAshbyPostings } from './ashby';
 
 const PRODUCT_USER_AGENT =
   "StudioDirectBot/1.0 (+https://studio-direct.example/bot; jobs@studio-direct.example)";
@@ -60,6 +61,10 @@ export class CareerJobSource implements JobSource {
       );
     }
 
+    if(company.ats_type==='ashby'){
+      if(!company.ats_slug)throw new Error(`Ashby company has no ATS slug: ${company.id}`);
+      return fetchAshbyPostings(company.ats_slug,company.name,this.fetchImpl);
+    }
     if (company.ats_type !== null) {
       throw new Error(`Unsupported career ATS type: ${company.ats_type}`);
     }
@@ -80,10 +85,13 @@ export class CareerJobSource implements JobSource {
       );
     }
 
-    return parseJobPostingJsonLd(
+    const drafts = parseJobPostingJsonLd(
       response.body,
       company.name,
       company.career_url,
     );
+    // An empty HTML extraction can mean a JS page or changed markup, not zero vacancies.
+    if(!drafts.length)throw new Error('No JobPosting data found; retain existing listings for review');
+    return drafts;
   }
 }

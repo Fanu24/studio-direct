@@ -4,11 +4,21 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "setup:local": "node scripts/setup-local.mjs",
+    "dev": "pnpm --filter @gaming/web dev",
+    "dev:crawler": "node scripts/local-crawler.mjs",
+    "config:check": "node scripts/check-config.mjs",
+    "test:portable": "node scripts/test-portable.mjs",
+    "sources:discover": "node scripts/discover-sources.mjs",
+    "sources:import": "node scripts/import-sources.mjs"
   },
   "pnpm": {
     "overrides": {
       "sharp": "link:./packages/sharp-workers-stub"
     }
+  },
+  "engines": {
+    "node": ">=22.18"
   }
 }

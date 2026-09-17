@@ -48,7 +48,7 @@ describe("crawler scheduled handler", () => {
     vi.restoreAllMocks();
   });
 
-  it("records an API sweep enqueue without HTTP", async () => {
+  it("enqueues configured career sources without a competitor API token", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const controller = createScheduledController({
       cron: "0 */6 * * *",
@@ -63,7 +63,7 @@ describe("crawler scheduled handler", () => {
       "SELECT source, ok, stats_json FROM crawl_runs",
     ).first();
     expect(row).toEqual({
-      source: "web3_career_api",
+      source: "scheduler",
       ok: 1,
       stats_json: expect.stringContaining("enqueuedApi"),
     });

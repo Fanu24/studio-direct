@@ -205,6 +205,7 @@ describe("unlock does not opt into the talent pool", () => {
     sqlite.exec(`
       ${schema(`
         CREATE TABLE jobs (
+ listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
           id TEXT PRIMARY KEY,
           apply_url TEXT NOT NULL,
           listed INTEGER NOT NULL DEFAULT 1

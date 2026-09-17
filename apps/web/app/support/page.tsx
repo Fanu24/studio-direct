@@ -1,0 +1,5 @@
+import {redirect} from 'next/navigation';
+import {platform,currentUser} from '../../lib/platform';
+export const dynamic='force-dynamic';
+export const metadata={title:'Support',robots:{index:false,follow:false}};
+export default async function SupportPage(){const env=await platform(),user=await currentUser(env);if(!user)redirect('/login?next=/support');const tickets=await env.DB.prepare('SELECT subject,message,status,created_at,reply FROM support_requests WHERE user_id=? ORDER BY created_at DESC LIMIT 50').bind(user.id).all<{subject:string;message:string;status:string;created_at:string;reply:string|null}>();return <main className="container container--content"><h1>Contact support</h1><form className="commerce-form" method="post" action="/api/support"><label>Subject<input name="subject" required maxLength={160}/></label><label>Message<textarea name="message" required rows={8} maxLength={10000}/></label><button type="submit">Send support request</button></form><h2>Your requests</h2>{tickets.results.map((t,i)=><article key={i} className="panel"><h3>{t.subject}</h3><p>{t.message}</p><p>{t.reply}</p><p>{t.status} Â· {t.created_at.slice(0,10)}</p></article>)}</main>;}

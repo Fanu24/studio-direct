@@ -4,8 +4,11 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const appDirectory = dirname(fileURLToPath(import.meta.url));
+process.env.XDG_CONFIG_HOME ||= join(appDirectory, '../../.wrangler/config');
+process.env.WRANGLER_LOG_PATH ||= join(appDirectory, '../../.wrangler/logs');
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NEXT_BUILD_DIR || ".next",
   outputFileTracingRoot: join(appDirectory, "../.."),
   /**
    * The Workers runtime cannot execute native `.node` binaries, and Next's image
@@ -55,4 +58,5 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 
-initOpenNextCloudflareForDev();
+// getPlatformProxy takes the versioned directory; Wrangler CLI adds v3 itself.
+initOpenNextCloudflareForDev({persist: {path: join(appDirectory, "../../.wrangler/state/v3")}});

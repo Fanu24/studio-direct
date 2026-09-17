@@ -4,7 +4,10 @@
   "account_id": "ff222c50c538a09ccd8d08f7d47e82e8",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-09-02",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
   "workers_dev": true,
   "preview_urls": true,
   "assets": {
@@ -37,16 +40,8 @@
     "TURNSTILE_SITE_KEY": "",
     "EMAIL_FROM": "noreply@studio-direct.example",
     "STRIPE_ENABLED": "false",
-    "SITE_URL": "https://gaming-web.xavier-ff2.workers.dev"
-  },
-  "secrets": {
-    "required": [
-      "BETTER_AUTH_SECRET",
-      "GOOGLE_CLIENT_ID",
-      "GOOGLE_CLIENT_SECRET",
-      "TURNSTILE_SECRET_KEY",
-      "STRIPE_SECRET_KEY",
-      "STRIPE_WEBHOOK_SECRET"
-    ]
+    "SITE_URL": "http://localhost:3000",
+    "EMAIL_ENABLED": "false",
+    "ADMIN_EMAILS": ""
   }
 }

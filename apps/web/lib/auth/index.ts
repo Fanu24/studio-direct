@@ -45,6 +45,8 @@ export type AuthEnv = {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   EMAIL_FROM: string;
+  EMAIL_ENABLED?: string;
+  LOCAL_MAIL?: string;
   BETTER_AUTH_URL?: string;
   SITE_URL?: string;
 };
@@ -109,12 +111,7 @@ export function createAuth(env: AuthEnv) {
         updatedAt: snakeCaseFields.updatedAt,
       },
     },
-    socialProviders: {
-      google: {
-        clientId: env.GOOGLE_CLIENT_ID,
-        clientSecret: env.GOOGLE_CLIENT_SECRET,
-      },
-    },
+    socialProviders: env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? {google: {clientId: env.GOOGLE_CLIENT_ID,clientSecret: env.GOOGLE_CLIENT_SECRET}} : {},
     databaseHooks: {
       user: {
         create: {
@@ -141,6 +138,13 @@ export function createAuth(env: AuthEnv) {
     plugins: [
       magicLink({
         sendMagicLink: async ({ email, url }) => {
+          // Explicitly local only. Production never logs login tokens.
+          if (env.LOCAL_MAIL === 'true' && process.env.NODE_ENV === 'development'
+            && baseURL && ['localhost','127.0.0.1'].includes(new URL(baseURL).hostname)) {
+            console.info(`[LOCAL EMAIL] ${email}: ${url}`);
+            return;
+          }
+          if (env.EMAIL_ENABLED !== 'true') throw new Error('Email delivery is not configured');
           await sendMagicLinkEmail({
             email: env.EMAIL,
             to: email,

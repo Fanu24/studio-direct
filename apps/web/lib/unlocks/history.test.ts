@@ -58,6 +58,7 @@ describe("unlock history", () => {
         name TEXT NOT NULL
       );
       CREATE TABLE jobs (
+ listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
         id TEXT PRIMARY KEY,
         company_id TEXT NOT NULL,
         slug TEXT NOT NULL,

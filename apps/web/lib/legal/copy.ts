@@ -2,7 +2,7 @@ import { PLAN_COPY } from "../billing/plans";
 import { LINKEDIN_EXCLUSIVITY_TOOLTIP } from "../copy";
 
 export const LEGAL_ENTITY_PLACEHOLDER =
-  "Legal entity name to be confirmed before launch. This site is a pre-launch product and is not yet operated by an incorporated company.";
+  "Operator identity, business address and contact details must be configured before launch.";
 
 export const TERMS_COPY = {
   title: "Terms of Service",
@@ -20,9 +20,9 @@ export const PRIVACY_COPY = {
   title: "Privacy Policy",
   legalEntity: LEGAL_ENTITY_PLACEHOLDER,
   jobProductPurpose:
-    "Purpose 1 — job-board product: we use your account, profile, unlocks, CV, and billing data to operate Nodework as a job board (sign-in, search, apply links, quota, and paid plans).",
+    "Purpose 1 — job-board product: we use your account, profile, saved jobs, alerts, CV, applications and billing data to operate Nodework. Job search and applications are free. Employers, advertisers and verified recruiters can purchase services.",
   recruiterOptInPurpose:
-    "Purpose 2 — recruiter talent pool: sharing your profile with verified companies and recruiters is a separate purpose. It is opt-in and off by default. Applying for a job does not opt you in.",
+    "Purpose 2 — recruiter talent pool: sharing your profile with verified companies and recruiters is a separate purpose. It is opt-in and off by default. Applying for a job does not opt you in. Public profile visibility is a separate choice. Recruiter contact and CV access stops when you revoke talent-pool consent.",
 } as const;
 
 export const PRICING_COPY = {

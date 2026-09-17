@@ -20,6 +20,7 @@ import "./styles/nodework.css";
 import "./styles/board.css";
 import "./styles/learn.css";
 import "./styles/marketing.css";
+import "./styles/commerce.css";
 import "./styles/salary.css";
 import "./faq/faq.css";
 import "./hire/hire.css";

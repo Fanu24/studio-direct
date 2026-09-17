@@ -95,7 +95,7 @@ export default async function HomePage({
   const db = (env as CloudflareEnv & { DB: JobsDatabase }).DB;
   const tenantId = await requireTenantId(db);
   const [listed, companyCount] = await Promise.all([
-    listJobs(db, tenantId, { pageSize: 20, page }),
+    listJobs(db, tenantId, { pageSize: 15, page }),
     countHiringCompanies(db, tenantId),
   ]);
   const jobDetails = await getJobsForListItems(db, tenantId, listed.jobs);

@@ -9,6 +9,7 @@ import {
 } from "../../../lib/jobs/apply";
 import type { JobsDatabase } from "../../../lib/jobs/queries";
 import { requireTenantId } from "../../../lib/tenant";
+import { sameOrigin } from '../../../lib/platform';
 
 type ApplyRouteDatabase = JobsDatabase & ApplyDatabase;
 
@@ -17,7 +18,9 @@ function field(form: FormData, name: string) {
 }
 
 export async function POST(request: Request) {
+  if(!sameOrigin(request))return new Response('Forbidden',{status:403});
   const form = await request.formData();
+  if(form.get('share_application')!=='1')return new Response('Confirm sharing your application with the employer',{status:400});
   const next = safeNextPath(field(form, "next"));
   const { env } = await getCloudflareContext({ async: true });
   const db = (env as CloudflareEnv & { DB: ApplyRouteDatabase }).DB;

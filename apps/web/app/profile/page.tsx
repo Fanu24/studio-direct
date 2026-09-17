@@ -1,4 +1,4 @@
-import { HUB_ROLE_SLUGS, hubSlugLabel, TENANT_NAME } from "@gaming/shared";
+import { JOB_TAGS, tagLabel, TENANT_NAME } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -248,12 +248,12 @@ export default async function ProfilePage() {
           <h2 id="skills">Skills</h2>
           <p className="count">{selected.size} selected</p>
         </div>
-        <p>Pick at least three. These are the same roles and engines as the job hubs.</p>
+        <p>Pick at least three. These are the skills and roles used in the job search.</p>
         <form action={submitSkills} className="acct-form">
           <fieldset className="acct-fieldset">
             <legend className="visually-hidden">Skills</legend>
             <div className="acct-chips">
-              {HUB_ROLE_SLUGS.map((slug) => (
+              {JOB_TAGS.map((slug) => (
                 <label className="check acct-chip" key={slug}>
                   <input
                     defaultChecked={selected.has(slug)}
@@ -261,7 +261,7 @@ export default async function ProfilePage() {
                     type="checkbox"
                     value={slug}
                   />
-                  {hubSlugLabel(slug)}
+                  {tagLabel(slug)}
                 </label>
               ))}
             </div>

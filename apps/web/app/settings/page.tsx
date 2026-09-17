@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { TENANT_NAME } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
@@ -124,26 +125,7 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      <div className="acct-soon">
-        <section aria-labelledby="digest-title" className="panel acct-soon__panel">
-          <h3 id="digest-title">
-            Email digest <span className="tag">Paid plan, not live yet</span>
-          </h3>
-          <p>
-            A short email when the index finds new roles that are not on LinkedIn.
-            Digest settings will appear here once billing is live.
-          </p>
-        </section>
-        <section aria-labelledby="alerts-title" className="panel acct-soon__panel">
-          <h3 id="alerts-title">
-            Job alerts <span className="tag">Not available yet</span>
-          </h3>
-          <p>
-            Alerts for new roles that match your target role. Alert settings will
-            appear here when alerts launch.
-          </p>
-        </section>
-      </div>
+      <section className="panel"><h2>Job alerts</h2><p>Choose a skill, search term or remote preference for new job emails.</p><Link href="/alerts">Manage job alerts</Link></section>
     </AccountShell>
   );
 }

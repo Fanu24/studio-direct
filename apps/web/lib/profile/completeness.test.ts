@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { HUB_ROLE_SLUGS } from "@gaming/shared";
+import { JOB_TAGS } from "@gaming/shared";
 
 import {
   addExperienceEntry,
@@ -265,13 +265,13 @@ describe("loadProfileCompleteness", () => {
       .run("exp-1", "user-1", "Moonshot", "Gameplay Engineer");
     sqlite
       .prepare("INSERT INTO profile_skills (user_id, skill) VALUES (?, ?)")
-      .run("user-1", "unity");
+      .run("user-1", "solidity");
     sqlite
       .prepare("INSERT INTO profile_skills (user_id, skill) VALUES (?, ?)")
-      .run("user-1", "unreal");
+      .run("user-1", "rust");
     sqlite
       .prepare("INSERT INTO profile_skills (user_id, skill) VALUES (?, ?)")
-      .run("user-1", "godot");
+      .run("user-1", "blockchain");
 
     await expect(loadProfileCompleteness(createD1(sqlite), "user-1")).resolves.toBe(100);
   });
@@ -337,13 +337,13 @@ describe("profile experience and skills", () => {
     await expect(loadProfileCompleteness(db, "user-1")).resolves.toBe(40);
   });
 
-  it("stores only SEO hub skill slugs and scores 20 at three skills", async () => {
+  it("stores only recognized Web3 skill slugs and scores 20 at three skills", async () => {
     const db = createD1(sqlite);
     await saveProfileSkills(db, "user-1", [
-      "unity",
-      "unreal",
+      "solidity",
+      "rust",
       "not-a-hub",
-      "godot",
+      "blockchain",
     ]);
 
     const skills = sqlite
@@ -353,8 +353,8 @@ describe("profile experience and skills", () => {
       .prepare("SELECT completeness FROM profiles WHERE user_id = ?")
       .get("user-1") as { completeness: number };
 
-    expect(skills.map((row) => row.skill)).toEqual(["godot", "unity", "unreal"]);
-    expect(HUB_ROLE_SLUGS).toEqual(expect.arrayContaining(["godot", "unity", "unreal"]));
+    expect(skills.map((row) => row.skill)).toEqual(["blockchain", "rust", "solidity"]);
+    expect(JOB_TAGS).toEqual(expect.arrayContaining(["blockchain", "rust", "solidity"]));
     expect(stored.completeness).toBe(40);
   });
 

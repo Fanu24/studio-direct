@@ -74,12 +74,10 @@ export default async function OnboardingPage({
             </li>
           </ol>
           <div>
-            <span className="kicker">One step before you unlock</span>
+            <span className="kicker">Your candidate profile</span>
             <h1 id="onboarding-title">Finish your profile</h1>
             <p>
-              Add your display name, target role, and remote preference before you
-              unlock an application link. Experience, skills and a CV can wait until
-              later.
+              Add your display name, target role and remote preference. You can add experience, skills and a CV from your profile.
             </p>
           </div>
           <form action={submitOnboarding} className="auth-form">
@@ -101,7 +99,7 @@ export default async function OnboardingPage({
                 className="field__input"
                 id="onboarding-target-role"
                 name="target_role"
-                placeholder="Gameplay programmer, technical artist, producer"
+                placeholder="Solidity engineer, product designer, community manager"
                 required
                 type="text"
               />

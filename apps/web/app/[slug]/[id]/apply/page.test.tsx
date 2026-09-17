@@ -1,3 +1,4 @@
+vi.mock('../../../../lib/jobs/application-destination',()=>({applicationDestination:vi.fn(async()=>({mode:'internal'}))}));
 import React, { type ReactElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -95,12 +96,12 @@ describe("On-site apply page", () => {
     expect(text(page)).not.toContain(applyUrl);
   });
 
-  it("does not claim the studio receives the profile", async () => {
+  it("explains delivery to the employer and separates talent-pool consent", async () => {
     const { default: ApplyPage } = await import("./page");
     const content = text(await ApplyPage({ params, searchParams }));
 
-    expect(content).toContain("We do not forward profiles to companies");
-    expect(content).toContain("off by default");
+    expect(content).toContain("The employer can review your application in their dashboard");
+    expect(content).toContain("separate, optional choice");
     expect(content).not.toMatch(/sen[dt] (?:your|the) (?:profile|application) to/i);
   });
 

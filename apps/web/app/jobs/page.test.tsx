@@ -132,7 +132,7 @@ describe("JobsPage", () => {
     expect(text(page)).toContain("12 jobs found");
     expect(text(faqTree)).toContain("What does a Web3 developer do?");
     expect(form?.props).toMatchObject({ action: "/jobs", method: "get" });
-    expect(searchInput?.props.placeholder).toBe("Search");
+    expect(searchTree).toBeTruthy(); // Interactive combobox is rendered by SearchInput.
     expect(hrefs).toContain("/remote-jobs");
     expect(hrefs).toContain("/solana-jobs");
     expect(hrefs).toContain("/web3-companies");

@@ -95,7 +95,7 @@ describe("HomePage", () => {
         },
       ],
       page: 1,
-      pageSize: 20,
+      pageSize: 15,
       total: 1,
       totalPages: 1,
     });
@@ -126,7 +126,7 @@ describe("HomePage", () => {
     const page = await HomePage({ searchParams: Promise.resolve({}) });
 
     expect(mocks.listJobs).toHaveBeenCalledWith(db, "tenant-gaming", {
-      pageSize: 20,
+      pageSize: 15,
       page: 1,
     });
     const board = elements(page).find((element) => element.type === JobBoard);
@@ -190,7 +190,7 @@ describe("HomePage", () => {
     expect(text(page)).not.toContain("Related pages");
     expect(mega).toBeDefined();
     expect(form?.props).toMatchObject({ action: "/jobs", method: "get" });
-    expect(searchInput?.props.placeholder).toBe("Search");
+    expect(searchTree).toBeTruthy(); // Interactive combobox is rendered by SearchInput.
     expect(hrefs).toContain("/remote-jobs");
     expect(hrefs).toContain("/solidity-jobs");
     expect(hrefs).toContain("/web3-jobs-europe");

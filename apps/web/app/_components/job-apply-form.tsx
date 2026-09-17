@@ -9,8 +9,7 @@ export function JobApplyForm({ jobId, next, sent, error }: ApplyFormProps) {
   if (sent) {
     return (
       <p className="apply-form__ok" role="status">
-        Application received. We stored it against this listing on Nodework and did not
-        hand your profile to the company.
+        Application received. The employer can now review it in their dashboard.
       </p>
     );
   }
@@ -74,6 +73,7 @@ export function JobApplyForm({ jobId, next, sent, error }: ApplyFormProps) {
         </label>
         <textarea className="field__input" id="apply-note" name="note" rows={5} />
       </div>
+      <label><input name="share_application" type="checkbox" value="1" required/> I agree to share this application and my contact details with the employer for this role.</label>
       <button className="button button--primary button--block" type="submit">
         Submit application
       </button>

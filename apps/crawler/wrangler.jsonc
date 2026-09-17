@@ -4,9 +4,13 @@
   "account_id": "ff222c50c538a09ccd8d08f7d47e82e8",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-02",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "triggers": {
-    "crons": ["0 */6 * * *"]
+    "crons": [
+      "0 */6 * * *"
+    ]
   },
   "d1_databases": [
     {
@@ -33,11 +37,11 @@
       "name": "EMAIL"
     }
   ],
-  "secrets": {
-    "required": ["WEB3_CAREER_API_TOKEN"]
-  },
   "vars": {
-    "EMAIL_FROM": "noreply@studio-direct.example"
+    "EMAIL_FROM": "noreply@studio-direct.example",
+    "EMAIL_ENABLED": "false",
+    "ADMIN_EMAILS": "",
+    "SITE_URL": "http://localhost:3000"
   },
   "queues": {
     "producers": [

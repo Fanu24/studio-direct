@@ -127,6 +127,7 @@ describe("unlockJob", () => {
     sqlite = new DatabaseSync(":memory:");
     sqlite.exec(`
       CREATE TABLE jobs (
+ listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
         id TEXT PRIMARY KEY,
         apply_url TEXT NOT NULL,
         listed INTEGER NOT NULL DEFAULT 1

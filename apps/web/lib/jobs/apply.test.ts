@@ -25,10 +25,13 @@ function createDb(): { sqlite: MemoryDatabase; db: ApplyDatabase } {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec(`
     CREATE TABLE jobs (
+ listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
       id TEXT PRIMARY KEY,
       tenant_id TEXT NOT NULL,
       listed INTEGER NOT NULL
     );
+    CREATE TABLE employer_listings(job_id TEXT,apply_mode TEXT,closed_at TEXT,expires_at TEXT);
+    INSERT INTO employer_listings VALUES('job-1','internal',NULL,'2099-01-01');
     CREATE TABLE job_applications (
       id TEXT PRIMARY KEY,
       tenant_id TEXT NOT NULL,

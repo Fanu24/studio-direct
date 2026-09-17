@@ -1,133 +1,58 @@
-name: Deploy web to Cloudflare
-
-# Why this exists: `opennextjs-cloudflare build` cannot be run on Windows. It bakes
-# absolute Windows paths and backslash separators into the worker bundle - a local
-# build produced 3442 occurrences of `C:\Users\...\Saas JOBS` - and the resulting
-# worker fails at runtime in the POSIX-like Workers environment with
-# `Dynamic require of "/.next/server/middleware-manifest.json" is not supported`,
-# returning 500 on every route. The build has to happen on Linux, which is what
-# this workflow is for.
+name: Deploy configured platform to Cloudflare
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "apps/web/**"
-      - "packages/**"
-      - "pnpm-lock.yaml"
-      - "package.json"
-      - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
-# Never let two deploys race: a slower older run must not overwrite a newer one.
 concurrency:
-  group: deploy-web
+  group: deploy-platform
   cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+    environment: production
+    timeout-minutes: 35
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      SITE_URL: ${{ vars.SITE_URL }}
+      ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
+      EMAIL_FROM: ${{ vars.EMAIL_FROM }}
+      EMAIL_ENABLED: ${{ vars.EMAIL_ENABLED }}
+      TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+      STRIPE_ENABLED: ${{ vars.STRIPE_ENABLED }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      WEB3_CAREER_API_TOKEN: ${{ secrets.WEB3_CAREER_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
-        # Version comes from the `packageManager` field in the root package.json.
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test
-
-      - name: Create the schema the prerender reads
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Validate and configure production variables
+        run: node scripts/configure-deployment.mjs
+      - name: Prepare isolated database for build
         working-directory: apps/web
-        run: pnpm exec wrangler d1 migrations apply gaming-jobs --local
-        # `.wrangler/` is gitignored, so the local D1 the prerender is handed here
-        # is not an empty database - it is no database at all, with no tables in
-        # it. Every prerendered page that reads the catalog dies on
-        # "D1_ERROR: no such table: tenants", and Next exits the build on the
-        # first one (`/hire`). Applying the migrations gives those pages a real,
-        # empty schema; 0004 also seeds the nodework tenant row, without which
-        # `requireTenantId` throws instead.
-
-      - name: Build the Cloudflare worker
+        run: pnpm exec wrangler d1 migrations apply gaming-jobs --local --persist-to ../../.wrangler/state
+      - name: Build on Linux
         working-directory: apps/web
         run: pnpm cf:build
-        # Note on prerendering: the 122 prerendered pages are therefore built
-        # against a migrated but empty database, and each renders the honest
-        # empty state it was designed and tested for. They carry
-        # `revalidate = 300`, so each one refills from the real D1 on first
-        # request and then revalidates on its own. If empty-on-first-hit ever
-        # becomes unacceptable, the fix is to give the build remote bindings,
-        # not to commit database state.
-
-      - name: Deploy
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: apps/web
-          command: deploy
-          # account_id is already set in apps/web/wrangler.jsonc, so it needs no secret.
-
-      - name: Verify the deployment actually serves traffic
-        # A green deploy step only means the upload succeeded. The Windows build
-        # failure above uploaded perfectly and then returned 500 on every route, so
-        # this job does not report success until the live site answers.
+      - name: Apply production schema before deploying new routes
+        working-directory: apps/web
+        run: pnpm exec wrangler d1 migrations apply gaming-jobs --remote
+      - name: Deploy workers
         run: |
-          set -euo pipefail
-          base="https://gaming-web.xavier-ff2.workers.dev"
-          sleep 10
-          failed=0
-          for path in / /jobs /web3-companies; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$base$path" || echo 000)
-            echo "$path -> $code"
-            if [ "$code" != "200" ]; then failed=1; fi
-          done
-
-          # A company detail page is the only route that reads the new column, and it is
-          # the one CI used to miss: the directory above it does not select description,
-          # so a missing migration shows up here and nowhere else. The slug is taken from
-          # the live directory rather than hardcoded - a delisted company must not be able
-          # to fail a deploy. Matching on href="..." (not a bare path regex) matters: the
-          # directory's HTML also contains /web3-companies/<hash>.js chunk references that
-          # a bare [a-z0-9-]+ path match picks up as a false "slug" and 404s on - this bit
-          # a first draft of this check. /tag and /top-growing are real routes under this
-          # prefix, not companies, so they're excluded too.
-          # `|| true` on the substitution matters under `set -e` + `pipefail`: when the
-          # directory has no company links, the first grep finds nothing and exits 1,
-          # and pipefail propagates that as the pipeline's status even though head/sed
-          # (last in the pipe) exit 0 - without `|| true` that would kill the script
-          # right here with a bare non-zero exit, before the empty-slug check below
-          # ever runs, i.e. exactly the silent-pass-turned-opaque-failure this is
-          # guarding against. `|| true` lets an empty result reach the check with our
-          # own error message instead.
-          slug=$(curl -s --max-time 60 "$base/web3-companies" \
-            | grep -oE 'href="/web3-companies/[a-z0-9-]+"' \
-            | grep -v '/web3-companies/tag"' \
-            | grep -v '/web3-companies/top-growing"' \
-            | head -1 \
-            | sed -E 's/href="(.*)"/\1/') || true
-          if [ -z "$slug" ]; then
-            echo "::error::No company slug found on $base/web3-companies - the directory rendered no companies (or its markup changed under this check)."
-            failed=1
-          else
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$base$slug" || echo 000)
-            echo "$slug -> $code"
-            if [ "$code" != "200" ]; then failed=1; fi
-          fi
-
-          if [ "$failed" -ne 0 ]; then
-            echo "::error::The worker deployed but is not serving 200. Roll back with: wrangler rollback"
-            exit 1
-          fi
-          echo "Live site verified at $base"
+          pnpm --filter @gaming/crawler exec wrangler deploy
+          pnpm --filter @gaming/web exec wrangler deploy
+      - name: Synchronize credentials without printing them
+        run: node scripts/install-worker-secrets.mjs
+      - name: Verify public routes
+        run: node scripts/smoke.mjs

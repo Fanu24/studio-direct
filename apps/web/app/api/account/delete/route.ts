@@ -1,3 +1,5 @@
+import {sameOrigin,type Database} from '../../../../lib/platform';
+import {prepareCommerceDeletion} from '../../../../lib/billing/reversals';
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 import { createAuth, type AuthEnv } from "../../../../lib/auth/index";
@@ -8,7 +10,8 @@ import {
 } from "../../../../lib/profile/delete-account";
 
 type DeleteRouteEnv = AuthEnv & {
-  DB: AccountDeleteDatabase;
+  DB: AccountDeleteDatabase & Database;
+  STRIPE_SECRET_KEY?:string;
   FILES: AccountFiles;
 };
 
@@ -40,6 +43,7 @@ async function confirmationPhrase(request: Request): Promise<string | null> {
 }
 
 export async function POST(request: Request) {
+  if(!sameOrigin(request))return Response.json({code:'invalid_origin'},{status:403});
   const env = await deleteEnv();
   const session = await createAuth(env).api.getSession({
     headers: request.headers,
@@ -53,6 +57,7 @@ export async function POST(request: Request) {
     return Response.json({ code: "confirmation_required" }, { status: 400 });
   }
 
+  try {await prepareCommerceDeletion(env.DB,userId,env.STRIPE_SECRET_KEY);}catch{return Response.json({code:'billing_cancellation_failed',message:'Recurring billing could not be cancelled. Your account has been retained.'},{status:503});}
   await deleteAccount({
     userId,
     db: env.DB,
