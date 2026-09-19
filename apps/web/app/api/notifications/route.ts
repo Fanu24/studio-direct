@@ -1,0 +1,2 @@
+import {platform,currentUser,sameOrigin} from '../../../lib/platform';
+export async function POST(request:Request){if(!sameOrigin(request))return new Response('Forbidden',{status:403});const env=await platform(),user=await currentUser(env,request);if(!user)return new Response('Sign in',{status:401});const form=await request.formData();await env.DB.prepare('UPDATE notification_outbox SET read_at=? WHERE id=? AND user_id=?').bind(new Date().toISOString(),String(form.get('id')),user.id).run();return Response.redirect(new URL('/notifications',request.url),303);}

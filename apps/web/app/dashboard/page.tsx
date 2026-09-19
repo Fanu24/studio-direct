@@ -13,6 +13,7 @@ export default async function DashboardPage(){
   env.DB.prepare('SELECT COUNT(*) n FROM saved_jobs WHERE user_id=?').bind(user.id).first<number>('n'),
   env.DB.prepare('SELECT COUNT(*) n FROM job_alerts WHERE user_id=? AND enabled=1').bind(user.id).first<number>('n')]);
  return <AccountShell active="dashboard" title={profile?.display_name?`Hi ${profile.display_name}`:'Your dashboard'} lead="Your profile, saved jobs and job alerts.">
+ <p><Link href="/applications">Your applications</Link> · <Link href="/notifications">Notifications</Link></p>
  <section className="dash-tiles" aria-label="Account summary">
  <article className="panel dash-tile"><h2>Profile</h2><p>{complete}% complete</p><Link href="/profile">Edit profile and CV</Link><p><Link href="/profile/visibility">Choose who can see your profile</Link></p></article>
  <article className="panel dash-tile"><h2>Saved jobs</h2><p>{saved??0} saved</p><Link href="/saved-jobs">View saved jobs</Link></article>

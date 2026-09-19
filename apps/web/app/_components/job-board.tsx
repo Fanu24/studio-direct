@@ -13,6 +13,7 @@ import {
 import { sanitizeJobDescriptionHtml } from "../../lib/jobs/sanitize-description";
 import { formatPosted, remoteLabel } from "./job-card";
 import {SaveJob} from './save-job';
+import {NetworkAd} from './network-ad';
 import {SponsorBanner} from './sponsor-banner';
 
 function companyMark(name: string) {
@@ -139,6 +140,7 @@ export function JobBoard({
     <div className="board m-reveal" data-reveal>
       <section aria-label="Job listings" className="board__list">
         <SponsorBanner slot={1}/>
+        <NetworkAd/>
         <table
           className={`board-table${
             rankOffset !== undefined

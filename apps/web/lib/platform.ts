@@ -11,7 +11,7 @@ export interface Statement {
 export interface Database { prepare(sql:string):Statement; batch(statements:Statement[]):Promise<unknown[]>; }
 export type PlatformEnv = Omit<AuthEnv,'DB'> & {
   DB:Database; STRIPE_ENABLED?:string; STRIPE_SECRET_KEY?:string; STRIPE_WEBHOOK_SECRET?:string;
-  FILES:{put(key:string,value:ArrayBuffer,options?:unknown):Promise<unknown>;get(key:string):Promise<{body:ReadableStream;httpMetadata?:{contentType?:string}}|null>};
+  FILES:{put(key:string,value:ArrayBuffer,options?:unknown):Promise<unknown>;get(key:string):Promise<{body:ReadableStream;httpMetadata?:{contentType?:string}}|null>;delete?(key:string):Promise<unknown>};
   ADMIN_EMAILS?:string;
 };
 export async function platform() {const {env}=await getCloudflareContext({async:true});return env as unknown as PlatformEnv;}

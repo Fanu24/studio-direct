@@ -2,10 +2,10 @@
 export const BASE_CENTS = 29900;
 export const STICKY_CENTS = { 0: 0, 1: 4900, 3: 9900, 7: 14900, 14: 19900, 30: 29900 } as const;
 export const HIGHLIGHT_CENTS = { none: 0, standard: 9900, custom: 14900 } as const;
-// Discrete quantity ladder recorded in the reference audit; never interpolate percentages.
+// All slider values verified in the live reference configurator on 2026-09-19.
 export const BUNDLE_LADDER = [[2,20],[4,29],[6,30],[8,31],[10,32],[12,33],[14,34],[16,35],
-  [18,36],[20,37],[22,38],[24,39],[26,40],[28,41],[30,42],[31,43],[32,44],[33,45],
-  [34,46],[35,47],[36,48],[37,49],[38,50],[39,51],[40,55]] as const;
+  [18,36],[20,37],[22,38],[24,39],[26,40],[28,41],[30,42],[32,43],[34,44],[36,45],
+  [38,46],[40,47],[42,48],[44,49],[46,50],[48,51],[50,55]] as const;
 export type ListingSelection = {
   stickyDays: keyof typeof STICKY_CENTS;
   highlight: keyof typeof HIGHLIGHT_CENTS;
@@ -29,7 +29,7 @@ export function parseSelection(raw: unknown, kind: 'job' | 'bundle'): ListingSel
   }
   if (typeof r.color !== 'string' || !/^#[0-9a-f]{6}$/i.test(r.color)) throw new Error('Invalid highlight color');
   const quantity = kind === 'job' ? 1 : r.quantity;
-  if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1 || quantity > 40
+  if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1 || quantity > 50
     || (kind === 'bundle' && !BUNDLE_LADDER.some(([n])=>n===quantity))) throw new Error('Invalid bundle quantity');
   return {...r, quantity, autoRenew: kind === 'job' && r.autoRenew} as ListingSelection;
 }

@@ -1,4 +1,4 @@
-import {createSiteReader,type JobDraft,type JobSource,type QueueMessage} from "@gaming/shared";
+import {createSiteReader,extractLinks,type JobDraft,type JobSource,type QueueMessage} from "@gaming/shared";
 
 import { fetchGreenhouseBoard } from "./greenhouse";
 import { parseJobPostingJsonLd } from "./jsonld";
@@ -70,11 +70,12 @@ export class CareerJobSource implements JobSource {
       throw new Error(`Company has no career URL: ${company.id}`);
     }
 
-    const response = await createSiteReader(async(input,init)=>{
+    const reader = createSiteReader(async(input,init)=>{
       const result=await this.fetchImpl(input,init);
       if(result.status===403||result.status===429)throw new RateLimitedError(result.status,parseRetryAfter(result.headers.get('Retry-After')));
       return result;
-    }).read(company.career_url);
+    });
+    const response = await reader.read(company.career_url);
 
     if (response.status < 200 || response.status >= 300) {
       throw new Error(
@@ -85,10 +86,25 @@ export class CareerJobSource implements JobSource {
     const drafts = parseJobPostingJsonLd(
       response.body,
       company.name,
-      company.career_url,
+      response.url,
     );
+    if(!drafts.length){
+      const root=new URL(response.url);
+      const links=extractLinks(response.body,response.url).filter(link=>{
+        const url=new URL(link.url);
+        return url.origin===root.origin&&url.href!==root.href&&/(?:careers?|jobs?|positions?|openings?|vacancies)\/.+/i.test(url.pathname)&&!/(?:login|privacy|terms|subscribe|search)/i.test(url.pathname);
+      });
+      // A partial snapshot must never close vacancies not reached by this crawl.
+      if(links.length>25)throw new Error('Career index exceeds 25 detail pages; configure a dedicated adapter');
+      for(const link of links){
+        const page=await reader.read(link.url);
+        const parsed=parseJobPostingJsonLd(page.body,company.name,page.url);
+        if(!parsed.length)throw new Error('Career detail lacks JobPosting data; retain existing listings for review');
+        drafts.push(...parsed);
+      }
+    }
     // An empty HTML extraction can mean a JS page or changed markup, not zero vacancies.
     if(!drafts.length)throw new Error('No JobPosting data found; retain existing listings for review');
-    return drafts;
+    return [...new Map(drafts.map(draft=>[draft.applyUrl,draft])).values()];
   }
 }

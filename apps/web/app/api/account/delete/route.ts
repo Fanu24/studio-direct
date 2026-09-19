@@ -58,6 +58,9 @@ export async function POST(request: Request) {
   }
 
   try {await prepareCommerceDeletion(env.DB,userId,env.STRIPE_SECRET_KEY);}catch{return Response.json({code:'billing_cancellation_failed',message:'Recurring billing could not be cancelled. Your account has been retained.'},{status:503});}
+  const applications=await (env.DB as Database).prepare('SELECT cv_r2_key FROM job_applications WHERE user_id=?').bind(userId).all<{cv_r2_key:string|null}>();
+  for(const application of applications.results)if(application.cv_r2_key)await env.FILES.delete(application.cv_r2_key);
+  await (env.DB as Database).prepare('DELETE FROM job_applications WHERE user_id=?').bind(userId).run();
   await deleteAccount({
     userId,
     db: env.DB,

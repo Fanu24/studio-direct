@@ -50,6 +50,7 @@ function createD1(database: MemoryDatabase, log?: string[]) {
           if (!row) return null;
           return column ? (row[column] ?? null) : (row as T);
         },
+        async all<T>() { return {results:database.prepare(query).all(...bindings) as T[]}; },
         async run() {
           const match = query.match(/^\s*DELETE\s+FROM\s+(\w+)/i);
           if (log && match) log.push(`sql:${match[1]}`);
@@ -99,6 +100,7 @@ describe("POST /api/account/delete", () => {
         email TEXT NOT NULL,
         created_at TEXT NOT NULL
       );
+      CREATE TABLE job_applications(id TEXT PRIMARY KEY,user_id TEXT,cv_r2_key TEXT);
       CREATE TABLE profiles (
         user_id TEXT PRIMARY KEY NOT NULL REFERENCES users (id),
         completeness INTEGER NOT NULL DEFAULT 0,
@@ -208,6 +210,7 @@ describe("POST /api/account/delete", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("http://localhost/");
     expect(log).toEqual([
+      "sql:job_applications",
       "r2:cv/user-1/current.pdf",
       "sql:experience_entries",
       "sql:profile_skills",

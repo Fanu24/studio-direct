@@ -1,3 +1,4 @@
+import {ListingExtras} from "../../_components/listing-extras";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -130,6 +131,7 @@ export default async function JobPage({ params }: { params: JobParams }) {
       />
 
       {JobDetailBody({ job, sections })}
+      <ListingExtras jobId={job.id}/>
       <RelatedBrowseLinks tag={sections.primaryTag ?? undefined} />
     </main>
   );

@@ -1,4 +1,4 @@
-import { slugTitle, normalizeCompanyName } from '@gaming/shared';
+import { listingPeriodStatements, slugTitle, normalizeCompanyName } from '@gaming/shared';
 import type { Database, Statement } from '../platform';
 import type { ListingInput } from './listing-input';
 import { quoteListing, type ListingSelection } from './listing-catalog';
@@ -48,6 +48,8 @@ function listingStatements(db:Database,order:EmployerOrder,jobId:string,input:Li
         options.highlight==='custom'?options.color:options.highlight==='standard'?'#830846':null,
         options.logo?input.logoUrl:null,options.support?1:0,addDays(now,30),jobId),
   ];
+  statements.push(db.prepare(`INSERT OR IGNORE INTO listing_details(job_id,input_json,updated_at) SELECT ?,?,? WHERE EXISTS(SELECT 1 FROM jobs WHERE id=?)`)
+    .bind(jobId,JSON.stringify(input),at,jobId));
   for(const tag of input.tags){
     statements.push(db.prepare('INSERT OR IGNORE INTO tags(slug,label) VALUES(?,?)').bind(tag,tag.replaceAll('-',' ')));
     statements.push(db.prepare(`INSERT OR IGNORE INTO job_tags(job_id,tag_slug)
@@ -84,6 +86,7 @@ export async function fulfillEmployerOrder(db:Database,session:PaidSession,event
     .bind(paymentIntent,now.toISOString(),session.id,session.customer||null,session.subscription||null,paymentIntent,order.id));
   statements.push(db.prepare(`INSERT OR IGNORE INTO billing_events(id,order_id,type,processed_at) VALUES(?,?,'checkout.paid',?)`)
     .bind(eventId,order.id,now.toISOString()));
+  statements.push(...listingPeriodStatements(db,now));
   await db.batch(statements);
   return (await orderById(db,order.id))?.status==='paid';
 }

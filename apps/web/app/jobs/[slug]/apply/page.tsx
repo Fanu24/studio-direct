@@ -12,6 +12,7 @@ import {
   type JobsDatabase,
 } from "../../../../lib/jobs/queries";
 import { requireTenantId } from "../../../../lib/tenant";
+import {currentUser, type PlatformEnv} from '../../../../lib/platform';
 
 import { applicationDestination } from '../../../../lib/jobs/application-destination';
 export const dynamic = 'force-dynamic';
@@ -63,6 +64,8 @@ export default async function LegacyApplyPage({
   if(destination.mode==='external')redirect(destination.url);
   const search = await searchParams;
   const next = jobApplyHref(job);
+  const user=await currentUser(env as unknown as PlatformEnv);
+  if(!user)redirect('/login?next='+encodeURIComponent(next));
 
   return (
     <main className="surface surface--data board-main apply-main">
@@ -83,6 +86,8 @@ export default async function LegacyApplyPage({
         </p>
       </header>
       <JobApplyForm
+        email={user.email}
+        name={user.name}
         error={search.error === "1"}
         jobId={job.id}
         next={next}

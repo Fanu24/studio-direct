@@ -1,6 +1,6 @@
 /// <reference path="../worker-configuration.d.ts" />
 
-import { isQueueMessage, type QueueMessage } from "@gaming/shared";
+import { reconcileListingPeriods, deliverNotifications, isQueueMessage, type QueueMessage } from "@gaming/shared";
 
 import { handleCareerMessage } from "./consumers/career";
 import { handleIndeedMessage } from "./consumers/indeed";
@@ -133,6 +133,9 @@ export default {
   },
 
   async scheduled(_controller, env) {
+    await reconcileListingPeriods(env.DB);
+    await deliverNotifications(env);
+    if(_controller.cron==="*/5 * * * *")return;
     const now = new Date();
     const nowIso = now.toISOString();
     const stats = await enqueueCronWork(env);

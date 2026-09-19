@@ -1,3 +1,4 @@
+import {reconcileListingPeriods} from '@gaming/shared';
 import type {Database} from '../platform';
 
 /** Called after a signed event or authenticated Stripe lookup confirms a full refund. */
@@ -6,7 +7,7 @@ export async function reversePayment(db:Database,paymentIntent:string,eventId:st
   // Fulfilment checks this record in the same transaction that publishes access.
   await db.prepare('INSERT OR IGNORE INTO payment_reversals(payment_intent_id,event_id,reversed_at) VALUES(?,?,?)')
     .bind(paymentIntent,eventId,now.toISOString()).run();
-  const employer=await db.prepare('SELECT id FROM employer_orders WHERE stripe_payment_intent_id=?').bind(paymentIntent).first<{id:string}>();
+  const employer=await db.prepare('SELECT id FROM employer_orders WHERE stripe_payment_intent_id=? AND stripe_subscription_id IS NULL').bind(paymentIntent).first<{id:string}>();
   if(employer) await db.batch([
     db.prepare("UPDATE employer_orders SET status='refunded' WHERE id=? AND status IN('paid','pending')").bind(employer.id),
     db.prepare('UPDATE jobs SET listed=0 WHERE id IN(SELECT job_id FROM employer_listings WHERE order_id=?)').bind(employer.id),
@@ -19,6 +20,7 @@ export async function reversePayment(db:Database,paymentIntent:string,eventId:st
     db.prepare('UPDATE sponsor_slots SET order_id=NULL WHERE order_id=?').bind(market.id),
     db.prepare("INSERT OR IGNORE INTO marketplace_events(id,order_id,type,created_at) VALUES(?,?,'payment.reversed',?)").bind(eventId,market.id,now.toISOString()),
   ]);
+  await reconcileListingPeriods(db,now);
 }
 
 /** Cancel remote renewals before erasing the local account that manages them. */
