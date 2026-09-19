@@ -15,7 +15,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/faq" },
 };
 
-export const revalidate = 300;
+// Read live D1 data at request time; builds must not depend on a local database.
+export const dynamic = "force-dynamic";
 
 function faqAnchor(question: string) {
   return question

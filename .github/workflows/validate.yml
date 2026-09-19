@@ -19,5 +19,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test:portable
-      - run: pnpm setup:local
       - run: pnpm --filter @gaming/web build
+      - run: pnpm setup:local

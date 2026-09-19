@@ -1,5 +1,6 @@
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,37 +27,17 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   experimental: {
-    /**
-     * Static generation must run in a single worker, or the build fails.
-     *
-     * Next spawns one prerender worker per CPU (16 on this machine). Each is a
-     * separate process, so each one's `getCloudflareContext` call falls through to
-     * `getPlatformProxy()`, which starts its OWN miniflare instance - and every one
-     * of them opens the same local D1 SQLite file under `.wrangler/state`. The
-     * resulting cross-process lock contention makes workerd's D1 return an internal
-     * error, surfacing as:
-     *
-     *   Error: D1_ERROR: Failed to parse body as JSON, got: Error: internal error
-     *
-     * It aborted the build at a different `/learn-web3/[category]` page every run,
-     * which is what a lock race looks like. With one worker there is one miniflare
-     * instance and the build completes 122/122. The cost is a slower, serialized
-     * static generation - worth it for a build that finishes.
-     */
+    // Keep build worker memory bounded on developer machines and CI.
     cpus: 1,
-    /*
-     * `experimental.viewTransition` was enabled here so that same-document
-     * <Link> navigation could run the CSS page transitions, and then removed:
-     * QA measured it inert in all three engines. The flag turns on React's
-     * ViewTransition component, which needs React's experimental channel, and
-     * this project pins stable React 19. Navigation itself is unaffected.
-     *
-     * Re-enabling it means moving React to the experimental channel first.
-     */
   },
 };
 
-export default nextConfig;
-
-// getPlatformProxy takes the versioned directory; Wrangler CLI adds v3 itself.
-initOpenNextCloudflareForDev({persist: {path: join(appDirectory, "../../.wrangler/state/v3")}});
+export default async function config(phase: string) {
+  // Only the dev server needs a local binding proxy. Production requests receive
+  // their bindings from the Worker; build-time pages do not query D1.
+  if (phase === PHASE_DEVELOPMENT_SERVER) {
+    // getPlatformProxy takes the versioned directory; Wrangler CLI adds v3 itself.
+    await initOpenNextCloudflareForDev({persist: {path: join(appDirectory, "../../.wrangler/state/v3")}});
+  }
+  return nextConfig;
+}

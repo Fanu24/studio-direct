@@ -35,7 +35,8 @@ import {
 } from "../../lib/jobs/queries";
 import { requireTenantId } from "../../lib/tenant";
 
-export const revalidate = 300;
+// Read live D1 data at request time; builds must not depend on a local database.
+export const dynamic = "force-dynamic";
 
 const PATH = "/web3-salaries";
 const DEV_ROLE_SET = new Set<string>(DEVELOPER_SALARY_ROLES);

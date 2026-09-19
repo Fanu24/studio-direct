@@ -52,7 +52,8 @@ import {
 import { requireTenantId } from "../../../lib/tenant";
 import { applicantsSentence, applicationVolume } from "../queries";
 
-export const revalidate = 300;
+// Read live D1 data at request time; builds must not depend on a local database.
+export const dynamic = "force-dynamic";
 
 type SalaryParams = Promise<{ slug: string }>;
 
