@@ -2,6 +2,8 @@
 
 Ambiente: localhost, D1/R2/Queues locali, Google OAuth in modalità Testing e Stripe sandbox. Nessun deploy Cloudflare, pagamento reale o email consegnata a destinatari esterni. Gli annunci `[SANDBOX QA]` sono dati fittizi e non rappresentano offerte di lavoro.
 
+Aggiornamento successivo: [collaudo del 19 settembre](2026-09-19-payment-recovery.md), con rimborsi, coupon, rifiuto pagamento e fix CI. I risultati seguenti descrivono lo stato del 17 settembre.
+
 ## Accessi e dashboard
 
 - Magic link candidato: account fittizio, link dal log locale, onboarding e dashboard verificati nel browser.

@@ -1,6 +1,6 @@
 # Stato della parità funzionale
 
-17 settembre 2026. Il progetto non è ancora certificabile come equivalente al 100% a Web3.career. Google OAuth e Stripe sandbox sono ora collegati e collaudati; accessi candidati/aziende e discovery massiva sono descritti nel [resoconto QA](qa/2026-09-17-auth-payments-discovery.md).
+19 settembre 2026. Il progetto non è ancora certificabile come equivalente al 100% a Web3.career. Google OAuth e Stripe sandbox sono ora collegati e collaudati; accessi candidati/aziende e discovery massiva sono descritti nel [resoconto QA](qa/2026-09-17-auth-payments-discovery.md). Il [collaudo aggiuntivo](qa/2026-09-19-payment-recovery.md) verifica rimborsi, coupon, carta rifiutata e correzioni di riconciliazione.
 
 ## Cosa è stato riutilizzato e corretto
 
@@ -13,10 +13,10 @@ Riutilizzati Next.js, OpenNext, Cloudflare D1/R2/Queues, autenticazione, sanitiz
 | Ricerca e risultati | Suggerimenti skill/aziende, filtro remoto, 15 risultati, annunci diretti e importati, preferiti, dettaglio, pin e highlight con scadenza | Verifica completa di tutte le combinazioni del search center e della conservazione dei filtri |
 | Annunci a pagamento | Configuratore, prezzo server, checkout sandbox verificato, webhook firmato, pubblicazione dopo pagamento, 30 giorni, candidatura interna/esterna, recupero bozza | Editor ricco, campi benefit/social/skill principale, modifica e ripubblicazione completa |
 | Upsell | Supporto premium, logo R2, pin, highlight e colore, rinnovo, Customer Portal | Prezzi intermedi dei bundle da verificare sul configuratore; distribuzione esterna/social non integrata |
-| Bundle | Acquisto sandbox e consumo credito verificati; proprietà, scadenza a 24 mesi e idempotenza | Ciclo di rimborso completo |
+| Bundle | Acquisto, consumo e rimborso completo sandbox verificati; proprietà, scadenza a 24 mesi e idempotenza | Politica dei rimborsi parziali |
 | Candidature | Form interno con consenso e dashboard datore; inoltro alle pagine ATS esterne | Allegato CV per singola candidatura, notifiche al datore e gestione avanzata delle candidature |
 | Profili e recruiter | Profilo/CV, skill Web3, visibilità pubblica separata dal consenso recruiter, verifica aziende, prezzo configurabile, accesso pagato con scadenza, download CV privato e audit | Ricerca avanzata, esportazioni commerciali e funzioni dietro login del concorrente da verificare |
-| Sponsor | Quattro slot, prenotazione esclusiva, Stripe sandbox verificato, banner nelle liste, dashboard impression/click | Recupero prenotazioni abbandonate; le metriche non sono utenti unici certificati |
+| Sponsor | Quattro slot, prenotazione esclusiva, pagamento e rimborso sandbox, banner, dashboard impression/click, recupero prenotazioni pendenti | Recupero limitato e attivato dalle richieste; metriche non certificate come utenti unici |
 | CPM/CPC | Requisito registrato separatamente dagli sponsor diretti | Adapter del network pubblicitario, consenso del provider e configurazione ads.txt ancora da implementare |
 | Alert | Creazione/rimozione personale, filtro, consenso, coda giornaliera, link di disiscrizione | Email reali disabilitate; collaudo consegna e retry con provider |
 | Aggregazione | Greenhouse, Lever, Ashby e JSON-LD; 53 portali verificati e 577 annunci importati, deduplica e scadenza | Altri adattatori Careers e controllo editoriale dei dati |
@@ -39,16 +39,16 @@ Per la ricerca sono stati osservati anche [Solidity](https://web3.career/solidit
 
 ## Verifiche
 
-- Migrazioni fino a `0016` su D1 locale: riuscite. Nessun database remoto modificato.
+- Migrazioni fino a `0017` su D1 locale: riuscite. Nessun database remoto modificato.
 - Typecheck dei workspace: riuscito.
 - Build Next.js: riuscita. Questo è il build dell'applicazione, non una certificazione del bundle OpenNext su Workers.
-- Suite Node: 537 test web, 156 shared, 18 database e 100 crawler/configurazione, per 811 test riusciti. Coprono anche tenant OAuth, separazione ingressi, proprietà ordini, discovery e code paginate, oltre ai controlli commerciali della prima consegna.
-- Workers: 12 asserzioni passate; il runtime Windows ha emesso avvisi filesystem e un errore interno di chiusura. Serve ripetizione pulita nella CI Linux prima del lancio.
+- Suite Node: 559 test web, 156 shared, 18 database e 100 crawler/configurazione, per 833 test riusciti. Coprono anche tenant OAuth, separazione ingressi, proprietà ordini, discovery e code paginate, oltre ai controlli commerciali della prima consegna.
+- Workers: 12 asserzioni passate. CI Linux del fix build completata; Windows continua a emettere avvisi filesystem. Verificare anche la CI sull’ultimo commit della PR.
 - Browser: magic link candidato/datore, Google candidato/datore, onboarding distinti, pubblicazione annunci, bundle e credito, sponsor, recruiter, logo, bozza checkout e Customer Portal verificati.
-- Cinque pagamenti Stripe sandbox completati con webhook e attivazione dei servizi; annullamento rinnovo verificato. Nessun incasso reale.
+- Sei pagamenti Stripe sandbox completati con webhook e attivazione dei servizi, incluso coupon; annullamento rinnovo, carta rifiutata e quattro rimborsi completi verificati. Nessun incasso reale.
 - Crawler reale con code Miniflare: 53 fonti completate, 577 annunci Careers importati, zero errori al termine. La scansione più ampia mantiene visibili fonti bloccate o non supportate.
 - Email reali e deployment Cloudflare non eseguiti. Il cron configurato non è ancora operativo online.
 
 ## Lavoro successivo già identificato
 
-Prima di un lancio commerciale servono gli interventi nella colonna dei limiti, in particolare riconciliazione dei webhook fuori ordine, prenotazioni sponsor abbandonate, fatture/rimborsi ricorrenti, completamento ATS e configuratore, rete CPM/CPC, audit SEO e verifica delle funzioni riservate del concorrente. Il solo collegamento delle credenziali non chiude questi punti. La guida distingue la configurazione dai lavori di codice ancora necessari.
+Prima di un lancio commerciale servono gli interventi nella colonna dei limiti, in particolare fatture/rimborsi ricorrenti e riconciliazione operativa oltre i limiti del recupero automatico, completamento ATS e configuratore, rete CPM/CPC, audit SEO e verifica delle funzioni riservate del concorrente. Il solo collegamento delle credenziali non chiude questi punti. La guida distingue la configurazione dai lavori di codice ancora necessari.

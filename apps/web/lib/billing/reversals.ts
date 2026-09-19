@@ -1,7 +1,11 @@
 import type {Database} from '../platform';
 
-/** Only signed Stripe events reach here. Partial refunds leave entitlements unchanged. */
+/** Called after a signed event or authenticated Stripe lookup confirms a full refund. */
 export async function reversePayment(db:Database,paymentIntent:string,eventId:string,now=new Date()) {
+  // Save the refund first, including when its order is not associated yet.
+  // Fulfilment checks this record in the same transaction that publishes access.
+  await db.prepare('INSERT OR IGNORE INTO payment_reversals(payment_intent_id,event_id,reversed_at) VALUES(?,?,?)')
+    .bind(paymentIntent,eventId,now.toISOString()).run();
   const employer=await db.prepare('SELECT id FROM employer_orders WHERE stripe_payment_intent_id=?').bind(paymentIntent).first<{id:string}>();
   if(employer) await db.batch([
     db.prepare("UPDATE employer_orders SET status='refunded' WHERE id=? AND status IN('paid','pending')").bind(employer.id),
