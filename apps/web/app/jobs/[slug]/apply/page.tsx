@@ -89,6 +89,7 @@ export default async function LegacyApplyPage({
         email={user.email}
         name={user.name}
         error={search.error === "1"}
+        withdrawn={search.error === "withdrawn"}
         jobId={job.id}
         next={next}
         sent={search.sent === "1"}

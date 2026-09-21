@@ -8,7 +8,7 @@ import { HomeMegaLinks } from "./_components/home-mega";
 import { JobBoard } from "./_components/job-board";
 import { TagChips } from "./_components/job-row";
 import { JsonLd, absoluteUrl } from "./_components/json-ld";
-import { LINKEDIN_EXCLUSIVITY_TOOLTIP, homepageSummary } from "../lib/copy";
+import { homepageSummary } from "../lib/copy";
 import { buildJobPostingJsonLd } from "../lib/jobs/jsonld";
 import {
   countHiringCompanies,
@@ -156,7 +156,6 @@ export default async function HomePage({
                 It sits under the board rather than over it: it explains a badge
                 in the rows, and above them it was 51px between the search and
                 the first job. */}
-            <p className="small muted">{LINKEDIN_EXCLUSIVITY_TOOLTIP}</p>
           </div>
         </section>
 

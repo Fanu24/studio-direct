@@ -402,7 +402,7 @@ export async function listSitemapEntries(
 
   const salaries = await db
     .prepare(
-      `SELECT slug FROM salary_rollups WHERE job_count_30d >= 5 ORDER BY slug`,
+      `SELECT DISTINCT slug FROM salary_rollups WHERE job_count_30d >= 5 AND dimension IN ('role','country','region','city','seniority') ORDER BY slug`,
     )
     .all<{ slug: string }>();
 

@@ -686,6 +686,7 @@ describe("listJobs", () => {
       INSERT INTO job_benefits VALUES ('thin-tag', 'pto');
       INSERT INTO salary_rollups VALUES
         ('role', 'solidity-developer', 120000, 80000, 180000, 5, '2026-09-01'),
+        ('company', 'alpha', 120000, 80000, 180000, 6, '2026-09-01'),
         ('role', 'thin-role', 90000, 70000, 110000, 4, '2026-09-01');
     `);
 

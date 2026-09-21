@@ -1,6 +1,6 @@
 # Ambiente locale e collegamento dei servizi
 
-Aggiornato il 17 settembre 2026. Google OAuth in modalità Testing e Stripe sandbox sono stati collegati e collaudati in locale. Nessun deploy, addebito reale o invio di email reali è stato eseguito. Risultati e limiti: [resoconto QA](qa/2026-09-17-auth-payments-discovery.md).
+Aggiornato il 21 settembre 2026. Google OAuth in modalità Testing e Stripe sandbox sono stati collegati e collaudati in locale. Nessun deploy, addebito reale o invio di email reali è stato eseguito. Risultati e limiti: [resoconto QA](qa/2026-09-17-auth-payments-discovery.md).
 
 ## Avvio
 
@@ -30,7 +30,7 @@ Il crawler locale si avvia in un secondo terminale:
 pnpm dev:crawler
 ```
 
-Sito, migrazioni e crawler condividono `.wrangler/state`. Su Windows fermare il sito durante un'importazione massiva: due processi Miniflare sullo stesso D1 possono produrre lock. Per attivare manualmente il ciclo locale visitare `http://localhost:8787/__scheduled`. Il cron è configurato ogni sei ore e rinnova il catalogo al massimo una volta al giorno; diventa operativo online dopo il deploy. Le email degli alert sono disattivate finché `EMAIL_ENABLED` non viene configurato su entrambi i worker.
+Sito, migrazioni e crawler condividono `.wrangler/state`. Su Windows fermare il sito durante un'importazione massiva: due processi Miniflare sullo stesso D1 possono produrre lock. Per attivare manualmente il ciclo locale visitare `http://localhost:8787/__scheduled`. Il crawl è configurato ogni sei ore e rinnova il catalogo al massimo una volta al giorno; notifiche e riconciliazione dei periodi vengono eseguite ogni cinque minuti; diventa operativo online dopo il deploy. Le email degli alert sono disattivate finché `EMAIL_ENABLED` non viene configurato su entrambi i worker.
 
 ## Controlli disponibili
 
@@ -48,7 +48,7 @@ La build dell'applicazione si verifica con `pnpm --filter @gaming/web build`. Il
 
 ## Fonti aziendali
 
-Da `/admin` si può aggiungere una pagina Careers o un board Greenhouse, Lever o Ashby. Il crawler importa le offerte, mantiene le fonti e aggiorna la disponibilità. Le pagine generiche devono esporre dati `JobPosting` JSON-LD; pagine solo JavaScript richiedono un adattatore specifico. Un'estrazione HTML vuota viene segnalata invece di cancellare le offerte esistenti.
+Da `/admin` si può aggiungere una pagina Careers o un board Greenhouse, Lever o Ashby. Il crawler importa le offerte, mantiene le fonti e aggiorna la disponibilità. Le pagine generiche devono esporre dati `JobPosting` JSON-LD nell’indice oppure in non più di 25 dettagli dello stesso sito; pagine solo JavaScript richiedono un adattatore specifico. Un'estrazione HTML vuota viene segnalata invece di cancellare le offerte esistenti.
 
 Il percorso predefinito raccoglie DefiLlama, portfolio a16z crypto e aziende curate senza richiedere CoinMarketCap:
 
@@ -95,9 +95,9 @@ La discovery automatica del worker, controllata da `SOURCE_DISCOVERY_ENABLED`, a
 | Stripe | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`; inizialmente sandbox; `STRIPE_ENABLED=true` solo dopo collaudo |
 | Recruiter | Prezzo per 30 giorni e verifica delle aziende da `/admin`; il prezzo parte non configurato |
 | Crawler | Verificare code `crawl-career`, `crawl-career-failed`, `crawl-linkedin`, `crawl-indeed`; `SOURCE_DISCOVERY_ENABLED=true`; token Web3.career solo se usato |
-| Rete pubblicitaria | Provider CPM/CPC da scegliere e integrare; gli spazi sponsor diretti sono un flusso distinto |
+| Rete pubblicitaria | Adapter AdSense disponibile: configurare da `/admin/advertising` publisher, unità e script Google CMP; approvazione e collaudo sul dominio reale necessari. Default off |
 
-Le risorse nei file Wrangler provengono dal prototipo: non ne è stata verificata l'esistenza remota. Verificare account e dati prima del deploy e creare anche la coda di errori `crawl-career-failed` (la workflow non la crea). Migrazioni locali applicate fino a `0017`: account aziendali, registro discovery e registro rimborsi. Applicare `0017` prima di distribuire il codice che legge `payment_reversals`. `0014` ricostruisce quattro tabelle commerciali per conservare ordini anonimizzati dopo la cancellazione di un account; è stata verificata su SQLite e D1 locale.
+Le risorse nei file Wrangler provengono dal prototipo: non ne è stata verificata l'esistenza remota. Verificare account e dati prima del deploy e creare anche la coda di errori `crawl-career-failed` (la workflow non la crea). Migrazioni locali applicate fino a `0021`: comprendono dettagli annunci, candidature/CV/outbox, consensi export e shortlist, periodi fatture, rinnovi e moderazione. Applicarle tutte prima di distribuire il nuovo codice. `0014` ricostruisce quattro tabelle commerciali per conservare ordini anonimizzati dopo la cancellazione di un account; è stata verificata su SQLite e D1 locale.
 
 La workflow GitHub `Deploy configured platform to Cloudflare` è manuale. Prima del suo utilizzo configurare l'ambiente GitHub `production`, le variabili e i secret elencati nella workflow, creare/verificare i binding e il mittente email. La workflow esegue controlli, configura le variabili pubbliche, costruisce su Linux, applica le migrazioni remote, carica i worker e i secret, poi verifica le pagine pubbliche. Non è stata eseguita in questa sessione. La migrazione deve precedere il codice che usa le nuove tabelle; il ripristino del solo worker non annulla le migrazioni.
 
@@ -115,8 +115,20 @@ pnpm stripe:listen
 
 È possibile indicare l'eseguibile tramite `STRIPE_CLI`. Lo script rifiuta chiavi live, inoltra i webhook a localhost e salva il signing secret nel file locale senza stamparlo. Riavviare `pnpm dev` dopo l'avvio del listener. Tenere attivo il listener durante le prove; non occorre registrare un URL localhost nella dashboard Stripe.
 
-Endpoint webhook: `/api/stripe/webhook`. Eventi gestiti per i nuovi ordini: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired`, `invoice.paid`, `charge.refunded`. Configurare anche il Customer Portal per la gestione delle sottoscrizioni. Nessuna chiave Stripe è inclusa nei file consegnati.
+Endpoint webhook: `/api/stripe/webhook`. Eventi gestiti per i nuovi ordini: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired`, `invoice.paid`, `invoice.upcoming`, `invoice.payment_failed`, `charge.refunded`, `customer.subscription.updated`, `customer.subscription.deleted`. Configurare anche il Customer Portal per la gestione delle sottoscrizioni. Nessuna chiave Stripe è inclusa nei file consegnati.
 
-Verificati in sandbox: annuncio singolo, annuncio con rinnovo, bundle e consumo credito, sponsor e recruiter, upload logo, recupero bozza, Customer Portal e annullamento del rinnovo. Il collaudo aggiuntivo del 19 settembre verifica coupon, pagamento rifiutato e rimborso completo di annuncio singolo, bundle, sponsor e recruiter. Restano rinnovo effettivo e scadenza del ciclo ricorrente. I prezzi vengono calcolati dal server; l'URL di successo non pubblica da solo un annuncio. Il registro rimborsi impedisce la riattivazione da checkout fuori ordine per i pagamenti una tantum. `/ads` e il checkout attivano il recupero limitato delle prenotazioni sponsor pendenti; nessun cron separato esegue tale recupero. Restano da completare la riconciliazione delle fatture e i rimborsi delle rate ricorrenti prima di attivare incassi reali. Dettagli e limiti nel [report del 19 settembre](qa/2026-09-19-payment-recovery.md).
+Verificati in sandbox: annuncio singolo, annuncio con rinnovo, bundle e consumo credito, sponsor e recruiter, upload logo, recupero bozza, Customer Portal e annullamento del rinnovo. Il collaudo aggiuntivo del 19 settembre verifica coupon, pagamento rifiutato e rimborso completo di annuncio singolo, bundle, sponsor e recruiter. Rinnovo effettivo, rimborsi delle rate e scadenza sono stati verificati anche tramite Stripe Test Clock e database isolato. I prezzi vengono calcolati dal server; l'URL di successo non pubblica da solo un annuncio. Il registro rimborsi impedisce la riattivazione da checkout fuori ordine per i pagamenti una tantum. `/ads` e il checkout attivano il recupero limitato delle prenotazioni sponsor pendenti; nessun cron separato esegue tale recupero. La riconciliazione delle fatture e i rimborsi delle rate sono implementati; `/admin/operations` offre riconciliazione manuale e controlli operativi. Verificare questi flussi anche sul deployment prima di attivare incassi reali. Dettagli e limiti nel [report del 19 settembre](qa/2026-09-19-payment-recovery.md).
 
 Riferimenti tecnici: [Turnstile testing](https://developers.cloudflare.com/turnstile/troubleshooting/testing/), [email Workers](https://developers.cloudflare.com/email-service/api/send-emails/workers-api/), [Stripe subscriptions](https://docs.stripe.com/billing/subscriptions/webhooks), [CoinMarketCap API](https://coinmarketcap.com/api/documentation/pro-api-reference/cryptocurrency), [Ashby public postings](https://developers.ashbyhq.com/docs/public-job-posting-api).
+
+
+## Funzioni operative aggiunte
+
+- `/applications`: storico candidato, PDF privati e ritiro. `/employer/applications`: filtri, stato e note interne.
+- `/notifications`: avvisi interni. Il worker consegna le email dall’outbox con lease e retry quando il binding email è attivo.
+- `/employer/jobs/[id]/edit`: modifica i contenuti senza estendere il periodo acquistato. La dashboard apre anche la ripubblicazione come nuovo acquisto.
+- `/recruiter`: accesso e CSV paginato, solo dopo verifica e pagamento. `/recruiter/shortlist`: candidati salvati e note. Consenso export distinto dal talent pool in `/profile/visibility`.
+- `/admin/operations`: riconciliazione pagamenti, moderazione, recupero sponsor e retry notifiche. Il ruolo admin è richiesto anche dalle API.
+- `/admin/advertising`: rete CPM/CPC; mantenere off finché publisher, dominio e CMP non sono pronti. `/ads.txt` riflette la configurazione. Test di consensi simulati non sostituiscono il collaudo con il provider.
+
+Resoconto aggiornato: [collaudo del 21 settembre](qa/2026-09-21-functional-workflows.md). La CI Linux costruisce anche il bundle OpenNext; passare la build non significa che siano già verificate risorse e binding remoti.

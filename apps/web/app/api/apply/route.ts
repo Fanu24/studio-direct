@@ -9,5 +9,5 @@ export async function POST(request:Request){
  if(!user)return Response.redirect(new URL('/login?next='+encodeURIComponent(next),request.url),303);
  if(form.get('share_application')!=='1')return new Response('Confirm sharing your application with the employer',{status:400});
  try{await submitCandidateApplication(env,user,await requireTenantId(env.DB),form);return Response.redirect(new URL(next+'?sent=1',request.url),303);}
- catch{return Response.redirect(new URL(next+'?error=1',request.url),303);}
+ catch(error){const reason=error instanceof Error&&error.message.startsWith('You withdrew this application')?'withdrawn':'1';return Response.redirect(new URL(next+'?error='+reason,request.url),303);}
 }

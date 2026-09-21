@@ -448,8 +448,8 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
         <div className="panel panel--accent salary-cta">
           <h2>{hireHeading(parsed, label)}</h2>
           <p>
-            Nodework is a public job catalog, not a recruiting product. Post the role and it
-            joins this page automatically once it is live.
+            Post a role to reach Web3 candidates. Published matching roles appear on this page,
+            and verified recruiters can browse candidates who choose to share their profiles.
           </p>
           <div className="cluster salary-cta__actions">
             <Link className="button button--primary" href="/post-web3-job">
@@ -457,7 +457,7 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
             </Link>
             {hireHref ? (
               <Link className="button button--secondary" href={hireHref}>
-                See who is hiring {label}
+                Find {label} candidates
               </Link>
             ) : null}
           </div>

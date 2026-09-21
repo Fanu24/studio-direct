@@ -39,6 +39,8 @@ it('stores one application and private CV, using verified identity instead of su
  await expect(updateApplication(state.db,'stranger',rows[0].id,'hired','')).rejects.toThrow();
  await updateApplication(state.db,'employer',rows[0].id,'shortlisted','Private note');expect(state.sql.prepare('SELECT status FROM job_applications').get().status).toBe('shortlisted');
  state.sql.exec("UPDATE job_applications SET status='withdrawn'");expect(await applicationFile(state.db,'employer',rows[0].id)).toBeNull();
+ await expect(submitCandidateApplication(env,candidate,'tenant:gaming',form())).rejects.toThrow('You withdrew this application');
+ expect(files.put).toHaveBeenCalledTimes(1);
  await expect(updateApplication(state.db,'employer',rows[0].id,'hired','')).rejects.toThrow();
 });
 it('rejects disguised documents and applications to closed jobs before storing files',async()=>{

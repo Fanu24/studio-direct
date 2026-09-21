@@ -3,11 +3,13 @@ type ApplyFormProps = {
   next: string;
   sent?: boolean;
   error?: boolean;
+  withdrawn?: boolean;
   email: string;
   name?: string;
 };
 
-export function JobApplyForm({ jobId, next, sent, error, email, name }: ApplyFormProps) {
+export function JobApplyForm({ jobId, next, sent, error, withdrawn, email, name }: ApplyFormProps) {
+  if (withdrawn) return <p role="status">You withdrew this application. It has not been submitted again. <a href="/applications">View your applications</a></p>;
   if (sent) {
     return (
       <p className="apply-form__ok" role="status">

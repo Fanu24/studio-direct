@@ -7,7 +7,9 @@ export async function submitCandidateApplication(env:Pick<PlatformEnv,'DB'|'FILE
  if(raw.honeypot)return;
  if(raw.name.length<2)throw new Error('Enter your name');
  if(raw.profileUrl){const url=new URL(raw.profileUrl);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw new Error('Invalid profile URL');}
- const existing=await env.DB.prepare('SELECT id FROM job_applications WHERE job_id=? AND email=?').bind(raw.jobId,user.email.toLowerCase()).first();if(existing)return;
+ const existing=await env.DB.prepare('SELECT id,status FROM job_applications WHERE job_id=? AND email=?').bind(raw.jobId,user.email.toLowerCase()).first<{id:string;status:string}>();
+ if(existing?.status==='withdrawn')throw new Error('You withdrew this application. It has not been submitted again.');
+ if(existing)return;
  const job=await env.DB.prepare(`SELECT j.title,l.user_id FROM jobs j JOIN employer_listings l ON l.job_id=j.id WHERE j.id=? AND j.tenant_id=? AND j.listed=1 AND l.apply_mode='internal' AND l.closed_at IS NULL AND l.expires_at>?`).bind(raw.jobId,tenantId,new Date().toISOString()).first<{title:string;user_id:string}>();
  if(!job)throw new Error('This job is no longer accepting applications');
  const id=crypto.randomUUID(),now=new Date().toISOString();let key:string|null=null;
@@ -26,7 +28,12 @@ export async function submitCandidateApplication(env:Pick<PlatformEnv,'DB'|'FILE
     SELECT ?,?,?, 'application_received',?,?, '/employer/applications',? WHERE EXISTS(SELECT 1 FROM job_applications WHERE id=?)`)
     .bind('application:'+id,job.user_id,id,'New application: '+job.title,'A candidate applied to your job. Sign in to review their application and CV.',now,id),
   ]);
-  if(!await env.DB.prepare('SELECT id FROM job_applications WHERE id=?').bind(id).first()){if(key)await env.FILES.delete?.(key);const duplicate=await env.DB.prepare('SELECT id FROM job_applications WHERE job_id=? AND email=?').bind(raw.jobId,user.email.toLowerCase()).first();if(!duplicate)throw new Error('This job is no longer accepting applications');}
+  if(!await env.DB.prepare('SELECT id FROM job_applications WHERE id=?').bind(id).first()){
+   if(key){await env.FILES.delete?.(key);key=null;}
+   const duplicate=await env.DB.prepare('SELECT id,status FROM job_applications WHERE job_id=? AND email=?').bind(raw.jobId,user.email.toLowerCase()).first<{id:string;status:string}>();
+   if(duplicate?.status==='withdrawn')throw new Error('You withdrew this application. It has not been submitted again.');
+   if(!duplicate)throw new Error('This job is no longer accepting applications');
+  }
  }catch(error){if(key)await env.FILES.delete?.(key);throw error;}
 }
 export async function applicationFile(db:Database,userId:string,id:string){

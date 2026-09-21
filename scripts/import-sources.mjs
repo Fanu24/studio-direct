@@ -3,7 +3,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {normalizeCompanyName} from '../packages/shared/src/normalize.ts';
-import {atsBoard,boardMatchesCompany,publicHttps} from '../packages/shared/src/source-discovery.ts';
+import {atsBoard,boardMatchesCompany,publicHttps,discoverCompany} from '../packages/shared/src/source-discovery.ts';
 import {randomUUID} from 'node:crypto';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),file=process.argv[2];
@@ -16,7 +16,13 @@ const allowedOrigins=['curated','defillama','a16z_crypto','coinmarketcap'];
 for(const s of sources){
  if(!s.id||!s.name||!allowedOrigins.includes(s.origin))throw Error('Invalid source identity');
  if(s.website)publicHttps(s.website);
- let board=null,validation=null;
+ let board=null,validation=null,genericVerified=false;
+ if(activate&&s.status==='jsonld_found'&&s.approved!==true){
+  const checked=await discoverCompany(s);
+  genericVerified=checked.status==='jsonld_found';
+  s.status=checked.status;s.career_url=checked.career_url;s.error=checked.error;s.checked_at=checked.checked_at;
+  report.push({id:s.id,name:s.name,kind:'jsonld',ok:genericVerified,error:checked.error});
+ }
  if(s.approved===true||(activate&&s.status==='ats_found')){
   board=atsBoard(s.career_url);
   if(board&&s.approved!==true&&!boardMatchesCompany(s,board.ats_slug)){
@@ -38,7 +44,7 @@ for(const s of sources){
   }
  }
  statements.push(`INSERT INTO source_catalog(id,origin,name,website,market_rank,career_url,ats_type,ats_slug,status,checked_at,error,updated_at) VALUES(${[s.id,s.origin,s.name,s.website,s.rank,s.career_url,s.ats_type,s.ats_slug,s.status||'pending',s.checked_at,s.error,now].map(quote).join(',')}) ON CONFLICT(id) DO UPDATE SET name=excluded.name,website=excluded.website,market_rank=excluded.market_rank,career_url=excluded.career_url,ats_type=excluded.ats_type,ats_slug=excluded.ats_slug,status=excluded.status,checked_at=excluded.checked_at,error=excluded.error,active=1,updated_at=excluded.updated_at;`);
- if((board&&validation?.ok)||(!board&&s.approved===true)){
+ if((board&&validation?.ok)||genericVerified||(!board&&s.approved===true)){
   const career=publicHttps(board?.career_url??s.career_url).href,domain=publicHttps(s.website).hostname.replace(/^www\./,''),norm=normalizeCompanyName(s.name);
   const identity=`tenant_id=(SELECT id FROM tenants WHERE slug='nodework') AND (REPLACE(domain,'www.','')=${quote(domain)} OR name_norm=${quote(norm)}${board?` OR (ats_type=${quote(board.ats_type)} AND ats_slug=${quote(board.ats_slug)})`:''})`;
   statements.push(`INSERT INTO companies(id,tenant_id,name,name_norm,domain,career_url,ats_type,ats_slug,created_at) SELECT ${quote('discovered:'+randomUUID())},id,${quote(s.name)},${quote(norm)},${quote(domain)},${quote(career)},${quote(board?.ats_type)},${quote(board?.ats_slug)},${quote(now)} FROM tenants WHERE slug='nodework' AND NOT EXISTS(SELECT 1 FROM companies WHERE ${identity});`);
