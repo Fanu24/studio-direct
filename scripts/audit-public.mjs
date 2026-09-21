@@ -12,7 +12,7 @@ async function sitemap(path){
  if(!html.includes(expected))throw Error('Invalid sitemap '+url.pathname);
  for(const match of html.matchAll(/<loc>([^<]+)<\/loc>/g)){
   if(!/^https?:\/\//.test(match[1]))throw Error('Sitemap URLs must be absolute');
-  const target=local(match[1]);if(target.pathname.endsWith('.xml'))await sitemap(target);else pages.add(target.href);
+  const target=local(match[1]);if(target.pathname.endsWith('.xml'))await sitemap(target);else {if(pages.has(target.href))throw Error('Duplicate sitemap URL: '+target.pathname);pages.add(target.href);}
  }
 }
 await sitemap('/sitemap.xml');

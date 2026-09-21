@@ -192,6 +192,7 @@ describe("sitemap", () => {
       ...sitemapPathsForKind("learn", entries),
     ];
 
+    expect(new Set(paths).size).toBe(paths.length);
     expect(paths.every((path) => !isExcludedSitemapPath(path))).toBe(true);
     expect(paths).not.toContain("/login");
     expect(paths).not.toContain("/talent");

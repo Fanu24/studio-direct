@@ -72,7 +72,6 @@ export const STATIC_PATHS = [
   "/most-popular-non-tech-jobs",
   "/most-popular-designers-jobs",
   "/web3-companies/top-growing",
-  "/web3-salaries",
   "/web3-salaries/solana-vs-ethereum",
   "/web3-non-tech-salaries",
   "/web3-cities",

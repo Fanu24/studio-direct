@@ -32,7 +32,7 @@ Verificata nel runtime locale Workers la lettura delle sei nuove fonti JSON-LD. 
 
 - Suite locale finale: **872 tests Node** (160 shared, 18 database, 587 web, 107 crawler) e **12 tests Workers** passati. Un test Stripe opt-in escluso dalla suite ordinaria, già eseguito con Test Clock il 19 settembre. Typecheck workspace passato.
 - Audit HTTP di **1.024 pagine** e nove file sitemap (indice più otto figli): nessun errore di risposta/contenuto/JSON-LD. L'audit ha rilevato alias canonical e noindex impropri nelle sitemap: corretti generazione canonica e soglie per le combinazioni remote e gli hub. Il login aziendale aggiunto al controllo resta correttamente noindex e fuori dalle sitemap.
-- Il ricontrollo HTTP mirato dopo queste correzioni è registrato nel checkpoint finale locale. Il comando `pnpm audit:public` ora considera errore anche canonical alternativi, noindex in sitemap e URL non assoluti.
+- Ricontrollate 88 pagine interessate: canonical e noindex corretti. Eliminato anche un doppione del riepilogo salari tra sitemap statiche e salari, con controllo di unicità aggiunto alla suite e allo script. La struttura finale viene verificata sui nove file XML. Il comando `pnpm audit:public` ora considera errore anche canonical alternativi, noindex in sitemap e URL non assoluti.
 - La CI Linux verifica typecheck, suite, build OpenNext per Cloudflare e setup/migrazioni da ambiente pulito. La CI del commit precedente `5d90e12` è passata; consultare i [controlli della PR](https://github.com/Fanu24/studio-direct/pull/2/checks) per la revisione corrente. Questo collegamento evita di confondere un risultato precedente con il codice aggiornato.
 
 ## Collegamento futuro, fuori dal collaudo locale
