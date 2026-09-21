@@ -18,9 +18,12 @@ const form=()=>{const f=new FormData();f.set('jobId',jobId);f.set('name','Candid
 it('edits owned content and skills without extending expiry or changing slug and paid placement',async()=>{
  const before=state.sql.prepare('SELECT slug,expires_at,featured_until FROM jobs WHERE id=?').get(jobId);
  await expect(editListing(state.db,'stranger',jobId,input())).rejects.toThrow('not found');
- await editListing(state.db,'employer',jobId,{...input(),title:'Updated title',tags:['rust'],primarySkill:'rust',benefits:['Learning budget']});
+ await editListing(state.db,'employer',jobId,{...input(),title:'Updated title',tags:['rust'],primarySkill:'rust',benefits:['Learning budget'],location:'New York, United States'});
  expect(state.sql.prepare('SELECT slug,expires_at,featured_until FROM jobs WHERE id=?').get(jobId)).toEqual(before);
- expect((await ownedListing(state.db,'employer',jobId))?.input).toMatchObject({title:'Updated title',tags:['rust'],benefits:['Learning budget']});
+ expect((await ownedListing(state.db,'employer',jobId))?.input).toMatchObject({title:'Updated title',tags:['rust'],benefits:['Learning budget'],location:'New York, United States'});
+ expect(state.sql.prepare('SELECT benefit_slug FROM job_benefits WHERE job_id=?').get(jobId).benefit_slug).toBe('learning-budget');
+ expect(state.sql.prepare('SELECT location_slug FROM job_locations WHERE job_id=? ORDER BY location_slug').all(jobId).map((r:any)=>r.location_slug)).toEqual(['new-york','north-america','united-states']);
+ expect(state.sql.prepare('SELECT tag_slug FROM job_tags WHERE job_id=? ORDER BY tag_slug').all(jobId).map((r:any)=>r.tag_slug)).toEqual(['learning-budget','rust']);
 });
 it('sanitizes content, requires an explicit valid main skill and validates company social links',()=>{
  expect(parseListing({...input(),descriptionHtml:'<script>alert(1)</script>'+input().descriptionHtml},'qa@example.test').descriptionHtml).not.toContain('<script>');

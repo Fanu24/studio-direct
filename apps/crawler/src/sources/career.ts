@@ -1,4 +1,4 @@
-import {createSiteReader,extractLinks,type JobDraft,type JobSource,type QueueMessage} from "@gaming/shared";
+import {createSiteReader,careerDetailLinks,type JobDraft,type JobSource,type QueueMessage} from "@gaming/shared";
 
 import { fetchGreenhouseBoard } from "./greenhouse";
 import { parseJobPostingJsonLd } from "./jsonld";
@@ -89,11 +89,7 @@ export class CareerJobSource implements JobSource {
       response.url,
     );
     if(!drafts.length){
-      const root=new URL(response.url);
-      const links=extractLinks(response.body,response.url).filter(link=>{
-        const url=new URL(link.url);
-        return url.origin===root.origin&&url.href!==root.href&&/(?:careers?|jobs?|positions?|openings?|vacancies)\/.+/i.test(url.pathname)&&!/(?:login|privacy|terms|subscribe|search)/i.test(url.pathname);
-      });
+      const links=careerDetailLinks(response.body,response.url);
       // A partial snapshot must never close vacancies not reached by this crawl.
       if(links.length>25)throw new Error('Career index exceeds 25 detail pages; configure a dedicated adapter');
       for(const link of links){

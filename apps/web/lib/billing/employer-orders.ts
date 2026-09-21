@@ -1,3 +1,5 @@
+import {listingFacets} from './listing-facets';
+import {listingTags} from './listing-benefits';
 import { listingPeriodStatements, slugTitle, normalizeCompanyName } from '@gaming/shared';
 import type { Database, Statement } from '../platform';
 import type { ListingInput } from './listing-input';
@@ -50,11 +52,12 @@ function listingStatements(db:Database,order:EmployerOrder,jobId:string,input:Li
   ];
   statements.push(db.prepare(`INSERT OR IGNORE INTO listing_details(job_id,input_json,updated_at) SELECT ?,?,? WHERE EXISTS(SELECT 1 FROM jobs WHERE id=?)`)
     .bind(jobId,JSON.stringify(input),at,jobId));
-  for(const tag of input.tags){
+  for(const tag of listingTags(input)){
     statements.push(db.prepare('INSERT OR IGNORE INTO tags(slug,label) VALUES(?,?)').bind(tag,tag.replaceAll('-',' ')));
     statements.push(db.prepare(`INSERT OR IGNORE INTO job_tags(job_id,tag_slug)
       SELECT ?,? WHERE EXISTS(SELECT 1 FROM jobs WHERE id=?)`).bind(jobId,tag,jobId));
   }
+  statements.push(...listingFacets(db,jobId,input));
   return statements;
 }
 export type PaidSession={id:string;payment_status:string;status?:string;currency:string;amount_subtotal:number;

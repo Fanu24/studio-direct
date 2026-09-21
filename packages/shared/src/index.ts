@@ -133,3 +133,6 @@ export type {
 } from "./digest.ts";
 export {deliverNotifications} from './notifications.ts';
 export {listingPeriodStatements,reconcileListingPeriods} from './listing-periods.ts';
+
+export {resolveJobLocations} from './job-locations.ts';
+export {careerDetailLinks} from './source-discovery.ts';

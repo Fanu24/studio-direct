@@ -1,1 +1,3 @@
 export const LISTING_BENEFITS = ['4 Day Work Week','401(k) plan','Async','Company retreats','Coworking budget','Dental insurance','Distributed team','Equity compensation','FSA','Free gym membership','HSA','Home office budget','Learning budget','Medical insurance','Mental wellness budget','No politics at work','No whiteboard interview','PTO','Pay in Bitcoin','Pay in crypto','Pension matching','Profit sharing','Pseudonymous','Unlimited vacation','Vision insurance','We hire old (and young)'] as const;
+
+export function listingTags(input:{tags:string[];benefits?:string[]}){return [...new Set([...input.tags,...(input.benefits??[]).map(b=>b==='401(k) plan'?'401k':b.toLowerCase().replace(/[()]/g,'').replace(/\s+/g,'-'))])];}

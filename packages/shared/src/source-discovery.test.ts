@@ -39,3 +39,9 @@ describe('career discovery',()=>{
   expect(seeds.map(s=>s.name)).toEqual(['A','B']);expect(seeds[0]).not.toHaveProperty('rank');
  });
 });
+
+it('activates a Careers index whose individual vacancies contain structured job data',async()=>{
+ const pages:Record<string,string>={'/robots.txt':'','/':'<a href="/careers">Careers</a>','/careers':'<a href="/jobs/engineer">Engineer</a>','/jobs/engineer':'<script type="application/ld+json">{"@type":"JobPosting","title":"Engineer"}</script>'};
+ const fetcher=async(url:any)=>new Response(pages[new URL(String(url)).pathname]??'',{status:200});
+ expect(await discoverCompany({id:'company',name:'Company',origin:'curated',website:'https://company.com'},fetcher)).toMatchObject({status:'jsonld_found',career_url:'https://company.com/careers'});
+});

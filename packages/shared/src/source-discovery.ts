@@ -52,6 +52,10 @@ export function atsBoard(value:string):{career_url:string;ats_type:string;ats_sl
   const host=type==='greenhouse'?'https://job-boards.greenhouse.io':u.origin;
   return {ats_type:type,ats_slug:slug,career_url:host+'/'+slug};
 }
+export function careerDetailLinks(html:string,base:string){
+ const root=new URL(base);
+ return extractLinks(html,base).filter(link=>{const url=new URL(link.url);return url.origin===root.origin&&url.href!==root.href&&/(?:careers?|jobs?|positions?|openings?|vacancies)\/.+/i.test(url.pathname)&&!/(?:login|privacy|terms|subscribe|search)/i.test(url.pathname);});
+}
 /** Portfolio sites can link to other employers. An ATS link alone is not proof of company identity. */
 export function boardMatchesCompany(seed:SourceSeed,slug:string):boolean {
   const compact=(s:string)=>s.toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -102,6 +106,11 @@ export function createSiteReader(fetcher:typeof fetch=fetch) {
 export async function discoverCompany(seed:SourceSeed,fetcher:typeof fetch=fetch):Promise<SourceCandidate> {
   const result:SourceCandidate={...seed,status:'no_career_link',checked_at:new Date().toISOString()};
   const reader=createSiteReader(fetcher);
+  async function hasStructuredDetails(html:string,url:string){
+    const links=careerDetailLinks(html,url);if(!links.length||links.length>25)return false;
+    for(const link of links.slice(0,2)){try{const page=await reader.read(link.url);if(/"@type"\s*:\s*(?:"JobPosting"|\[[^\]]*"JobPosting")/i.test(page.body))return true;}catch{}}
+    return false;
+  }
   const foundBoard=(board:NonNullable<ReturnType<typeof atsBoard>>):SourceCandidate=>({...result,...board,
     status:boardMatchesCompany(seed,board.ats_slug)?'ats_found':'needs_review',
     ...(!boardMatchesCompany(seed,board.ats_slug)?{error:'ATS identity differs from catalog company; review before activation'}:{})});
@@ -113,6 +122,7 @@ export async function discoverCompany(seed:SourceSeed,fetcher:typeof fetch=fetch
     const boards=links.map(l=>atsBoard(l.url)).filter((b):b is NonNullable<typeof b>=>!!b);
     let board:ReturnType<typeof atsBoard>|undefined=boards.find(b=>boardMatchesCompany(seed,b.ats_slug));if(board)return foundBoard(board);
     if(/"@type"\s*:\s*(?:"JobPosting"|\[[^\]]*"JobPosting")/i.test(home.body))return {...result,career_url:home.url,status:'jsonld_found'};
+    if(seed.career_url&&await hasStructuredDetails(home.body,home.url))return {...result,career_url:home.url,status:'jsonld_found'};
     const careerPattern=/careers?|vacanc|join[- /]?us|join our team|work with us|(?:^|\/)jobs(?:[/?#-]|$)/i;
     const candidates=links.filter(l=>careerPattern.test(new URL(l.url).pathname+' '+l.label)).slice(0,4);
     let fallback:SourceCandidate|undefined;
@@ -122,6 +132,7 @@ export async function discoverCompany(seed:SourceSeed,fetcher:typeof fetch=fetch
         board=atsBoard(page.url)||extractLinks(page.body,page.url).map(l=>atsBoard(l.url)).find(Boolean);
         if(board)return foundBoard(board);
         if(/"@type"\s*:\s*(?:"JobPosting"|\[[^\]]*"JobPosting")/i.test(page.body))return {...result,career_url:page.url,status:'jsonld_found'};
+        if(await hasStructuredDetails(page.body,page.url))return {...result,career_url:page.url,status:'jsonld_found'};
         fallback={...result,career_url:page.url,status:'needs_adapter'};
       }catch(e){result.error=e instanceof Error?e.message:'Fetch failed';}
     }
