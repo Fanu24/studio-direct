@@ -74,6 +74,8 @@ export async function exportAccountData(
   }
   const shortlist=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind('recruiter_shortlist').first();
   if(shortlist)owned_records.recruiter_shortlist=await allRows(db,'SELECT * FROM recruiter_shortlist WHERE recruiter_id=?',userId);
+  const keys=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind('jobs_api_keys').first();
+  if(keys)owned_records.jobs_api_keys=await allRows(db,'SELECT id,prefix,website,created_at,revoked_at,last_used_at FROM jobs_api_keys WHERE user_id=?',userId);
   return {
     owned_records,
     user,

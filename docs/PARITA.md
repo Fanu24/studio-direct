@@ -20,7 +20,8 @@ Il codice è sul branch `feat/auth-payments-source-discovery`, [PR #2](https://g
 | Discovery | DefiLlama, portfolio a16z crypto e aziende curate; 1.192 voci/1.175 siti analizzati; 53 board verificati, 577 lavori importati | Non tutti i siti sono monitorabili: 118 richiedevano adattatori, 12 associazioni revisione; nuova scansione completa non eseguita il 21 |
 | SEO | Pagine lavori, skill, località, benefit, aziende, salari e listicle; otto sitemap; corretto inserimento improprio delle aziende nella sitemap salari | Audit integrale contenuti, canonical e indicizzazione ancora aperto |
 | Amministrazione | Recruiter, prezzo, fonti, supporto, moderazione, riconciliazione, retry email, recupero sponsor | Collaudo UI delle nuove operazioni con account amministratore |
-| Ambiente | D1 locale fino a 0021, R2 locale, code, cron discovery giornaliero/crawl 6 ore, operazioni ogni 5 minuti, CI con OpenNext | Dominio, risorse Cloudflare remote, email e deploy rinviati dal proprietario |
+| API offerte | JSON/RSS, chiavi revocabili memorizzate come hash, filtri e descrizioni, paginazione, 60 richieste/minuto per chiave; test HTTP locale riuscito | Endpoint del proprio catalogo; schema JSON documentato, non compatibilità byte-per-byte con il concorrente |
+| Ambiente | D1 locale fino a 0022, R2 locale, code, cron discovery giornaliero/crawl 6 ore, operazioni ogni 5 minuti, CI con OpenNext | Dominio, risorse Cloudflare remote, email e deploy rinviati dal proprietario |
 
 ## Prezzi del riferimento
 
@@ -33,7 +34,7 @@ Nella [pubblicità](https://web3.career/ads): quattro posizioni $4.999/$3.999/$2
 ## Evidenze del collaudo
 
 - Suite completa locale: 858 test Node (160 shared, 18 database, 577 web, 103 crawler) e 12 Workers passati; un test Stripe opt-in saltato dalla suite ordinaria. I test mirati delle correzioni successive sono passati.
-- Typecheck workspace passato. CI Linux su `2c29dd7` completata con successo, inclusa build OpenNext Cloudflare. Il risultato dei commit successivi va controllato sulla PR.
+- Typecheck workspace passato. CI Linux su `bc8f55e` completata con successo, inclusa build OpenNext Cloudflare. Il risultato dei commit successivi va controllato sulla PR.
 - Test locale HTTP/browser: modifica annuncio e form repost, filtri località/benefit, login candidato, invio PDF, proprietà CV, gestione datore, ritiro, assenza di note private dall'account candidato.
 - Ulteriore acquisto recruiter Stripe sandbox da $199: export, shortlist e revoca di ciascun consenso verificati; rimborso completo seguito da revoca dell'export verificato.
 - Test con Stripe Test Clock eseguito il 19 settembre: fattura iniziale e rinnovo reali, rimborsi vecchio/corrente, cancellazione/scadenza su database isolato. L'associazione Checkout in quel test è una fixture; i Checkout browser sono prove distinte.

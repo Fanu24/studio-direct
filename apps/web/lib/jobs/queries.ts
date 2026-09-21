@@ -27,6 +27,8 @@ export interface JobListFilters {
   seniority?: string;
   source?: string;
   hasSalary?: boolean;
+  salaryMin?: number;
+  salaryMax?: number;
   orderBy?: "posted" | "salary";
   /** With `tag`, also match titles that contain the tag stem (salary role pages). */
   orTitle?: boolean;
@@ -576,6 +578,12 @@ function buildJobsWhere(
 
   if (filters.hasSalary) {
     conditions.push("j.salary_min IS NOT NULL AND j.salary_max IS NOT NULL");
+  }
+  if (Number.isFinite(filters.salaryMin)) {
+    conditions.push('j.salary_max >= ?');whereBindings.push(filters.salaryMin!);
+  }
+  if (Number.isFinite(filters.salaryMax)) {
+    conditions.push('j.salary_min <= ?');whereBindings.push(filters.salaryMax!);
   }
 
   const fromSql = `

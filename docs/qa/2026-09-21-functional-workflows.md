@@ -35,3 +35,13 @@ Suite completa: 858 Node e 12 Workers passati; typecheck passato. CI `3561292090
 Non collaudati qui: nuovo client Google, invio email reale, account publisher/CMP reale, moderazione e riconciliazione dalla UI admin (account QA non amministratore), Cloudflare remoto. Questi limiti non sono nascosti dietro il numero di test. Bozze privacy aggiornate al comportamento di export, candidature e ads; identità dell'operatore e documentazione commerciale finale restano da configurare.
 
 Le prove HTTP riutilizzabili, i log, il database e le credenziali restano nel workspace locale e fuori dal repository. Non pubblicare log di sviluppo: contengono magic link di test.
+
+
+## Completamento API dopo il controllo delle pagine del prototipo
+
+La pagina API annunciava soltanto un servizio futuro. Ora sono implementati endpoint JSON/RSS e gestione chiavi. Migrazione 0022 applicata a D1 locale.
+
+- Test SQLite: hash e lista senza segreti, massimo cinque chiavi, limite atomico con 65 richieste concorrenti (60 ammesse), reset della finestra, revoca proprietario, cancellazione account con invalidazione chiavi.
+- Test del feed: esclusione annunci nascosti/scaduti, filtri sede e stipendio, paginazione, descrizione opzionale, escaping RSS.
+- Test HTTP su Next/D1: generazione con email verificata, JSON filtrato, RSS, limite invalido 400, assenza di token 401, revoca da altro account inefficace, account export senza hash/token, chiave revocata 401. Chiave sintetica revocata al termine.
+- Sette test mirati API/documentazione passati; typecheck passato. La verifica completa finale è affidata anche alla CI dell’ultimo commit.

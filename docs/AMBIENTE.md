@@ -97,7 +97,7 @@ La discovery automatica del worker, controllata da `SOURCE_DISCOVERY_ENABLED`, a
 | Crawler | Verificare code `crawl-career`, `crawl-career-failed`, `crawl-linkedin`, `crawl-indeed`; `SOURCE_DISCOVERY_ENABLED=true`; token Web3.career solo se usato |
 | Rete pubblicitaria | Adapter AdSense disponibile: configurare da `/admin/advertising` publisher, unità e script Google CMP; approvazione e collaudo sul dominio reale necessari. Default off |
 
-Le risorse nei file Wrangler provengono dal prototipo: non ne è stata verificata l'esistenza remota. Verificare account e dati prima del deploy e creare anche la coda di errori `crawl-career-failed` (la workflow non la crea). Migrazioni locali applicate fino a `0021`: comprendono dettagli annunci, candidature/CV/outbox, consensi export e shortlist, periodi fatture, rinnovi e moderazione. Applicarle tutte prima di distribuire il nuovo codice. `0014` ricostruisce quattro tabelle commerciali per conservare ordini anonimizzati dopo la cancellazione di un account; è stata verificata su SQLite e D1 locale.
+Le risorse nei file Wrangler provengono dal prototipo: non ne è stata verificata l'esistenza remota. Verificare account e dati prima del deploy e creare anche la coda di errori `crawl-career-failed` (la workflow non la crea). Migrazioni locali applicate fino a `0022`: comprendono dettagli annunci, candidature/CV/outbox, consensi export e shortlist, periodi fatture, rinnovi, moderazione e chiavi API. Applicarle tutte prima di distribuire il nuovo codice. `0014` ricostruisce quattro tabelle commerciali per conservare ordini anonimizzati dopo la cancellazione di un account; è stata verificata su SQLite e D1 locale.
 
 La workflow GitHub `Deploy configured platform to Cloudflare` è manuale. Prima del suo utilizzo configurare l'ambiente GitHub `production`, le variabili e i secret elencati nella workflow, creare/verificare i binding e il mittente email. La workflow esegue controlli, configura le variabili pubbliche, costruisce su Linux, applica le migrazioni remote, carica i worker e i secret, poi verifica le pagine pubbliche. Non è stata eseguita in questa sessione. La migrazione deve precedere il codice che usa le nuove tabelle; il ripristino del solo worker non annulla le migrazioni.
 
@@ -132,3 +132,12 @@ Riferimenti tecnici: [Turnstile testing](https://developers.cloudflare.com/turns
 - `/admin/advertising`: rete CPM/CPC; mantenere off finché publisher, dominio e CMP non sono pronti. `/ads.txt` riflette la configurazione. Test di consensi simulati non sostituiscono il collaudo con il provider.
 
 Resoconto aggiornato: [collaudo del 21 settembre](qa/2026-09-21-functional-workflows.md). La CI Linux costruisce anche il bundle OpenNext; passare la build non significa che siano già verificate risorse e binding remoti.
+
+
+## API del catalogo
+
+`/web3-jobs-api` documenta il servizio; `/api-access` permette a un account verificato di generare fino a cinque chiavi attive e revocarle. Sono salvati solo hash SHA-256, prefisso e metadati. Le chiavi vengono eliminate con l’account; l’export personale non include hash o token.
+
+`GET /api/v1` e `/api/v1/jobs` restituiscono JSON; `/api/v1.xml` restituisce RSS. Usare `Authorization: Bearer ...`; il parametro `token` è disponibile per feed reader ma l’URL va mantenuto privato. Filtri: tag, country/location, remote, q, seniority, salary_min/max, page, limit/page_size (1–100), show_description. Limite atomico: 60 richieste al minuto per chiave, 429 e Retry-After se superato. Il servizio espone solo annunci pubblici e attivi. Non espone profili o CV.
+
+Il riferimento pubblico supporta API gratuite JSON/RSS con token, filtri e descrizioni: [documentazione ufficiale](https://docs.bondex.app/api-reference/web3-career-jobs-api/api-overview). Nodework documenta il proprio schema JSON e i propri limiti.
