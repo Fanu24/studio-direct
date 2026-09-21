@@ -60,7 +60,7 @@ mkdirSync(resolve(root,'.wrangler'),{recursive:true});
 const sql=resolve(root,'.wrangler/source-import.sql');writeFileSync(sql,statements.join('\n'));
 writeFileSync(resolve(root,'.wrangler/source-verification.json'),JSON.stringify(report,null,2));
 const remote=process.argv.includes('--remote');
-const args=['d1','execute','gaming-jobs',remote?'--remote':'--local','--file',sql];if(!remote)args.push('--persist-to',resolve(root,'.wrangler/state'));
+const args=['d1','execute','DB',remote?'--remote':'--local','--file',sql];if(!remote)args.push('--persist-to',resolve(root,'.wrangler/state'));
 const result=spawnSync(process.execPath,[resolve(root,'apps/crawler/node_modules/wrangler/bin/wrangler.js'),...args],{cwd:resolve(root,'apps/crawler'),stdio:'inherit',env:{...process.env,XDG_CONFIG_HOME:resolve(root,'.wrangler/config'),WRANGLER_LOG_PATH:resolve(root,'.wrangler/logs')}});
 console.log(JSON.stringify({catalog:sources.length,uniqueBoards:verified.size,verified:[...verified.values()].filter(v=>v.ok).length,failed:[...verified.values()].filter(v=>!v.ok).length}));
 process.exitCode=result.status||0;

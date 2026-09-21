@@ -27,7 +27,7 @@ const crawler = resolve(root, 'apps/crawler/.dev.vars');
 if (!existsSync(crawler)) writeFileSync(crawler, 'SITE_URL=http://localhost:3000\nEMAIL_ENABLED=false\nWEB3_CAREER_API_TOKEN=\n', { mode: 0o600 });
 const result = spawnSync(process.execPath, [
   resolve(root, 'apps/web/node_modules/wrangler/bin/wrangler.js'),
-  'd1', 'migrations', 'apply', 'gaming-jobs', '--local', '--persist-to', state,
+  'd1', 'migrations', 'apply', 'DB', '--local', '--persist-to', state,
 ], { cwd: resolve(root, 'apps/web'), stdio: 'inherit', env: { ...process.env,
   XDG_CONFIG_HOME: resolve(root, '.wrangler/config'), WRANGLER_LOG_PATH: resolve(root, '.wrangler/logs') } });
 if (result.status !== 0) process.exit(result.status || 1);

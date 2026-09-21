@@ -9,6 +9,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -20,4 +22,12 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test:portable
       - run: pnpm --filter @gaming/web cf:build
+      - name: Package the tested Cloudflare worker
+        run: tar -czf nodework-worker.tgz -C apps/web .open-next
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nodework-worker-${{ github.event.pull_request.head.sha || github.sha }}
+          path: nodework-worker.tgz
+          retention-days: 7
+          if-no-files-found: error
       - run: pnpm setup:local
