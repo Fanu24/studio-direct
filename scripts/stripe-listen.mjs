@@ -8,7 +8,7 @@ if(!key||!/^([sr]k)_test_/.test(key))throw Error('Configure a Stripe test secret
 const cli=process.env.STRIPE_CLI||'stripe';
 mkdirSync(resolve(root,'.wrangler/config'),{recursive:true});
 const child=spawn(cli,['listen','--forward-to','http://localhost:3000/api/stripe/webhook',
-  '--events','checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired,invoice.paid,charge.refunded,customer.subscription.deleted'],{
+  '--events','checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired,invoice.paid,invoice.upcoming,invoice.payment_failed,charge.refunded,customer.subscription.updated,customer.subscription.deleted'],{
   cwd:root,windowsHide:true,env:{...process.env,STRIPE_API_KEY:key,STRIPE_DEVICE_NAME:'studio-direct-local-tests',XDG_CONFIG_HOME:resolve(root,'.wrangler/config')},
 });
 let pending='';

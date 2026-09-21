@@ -33,6 +33,10 @@ describe('employer commerce',()=>{
     expect(quoteListing(DEFAULT_SELECTION).totalCents).toBe(69500);
     expect(quoteListing({...DEFAULT_SELECTION,quantity:2}).totalCents).toBe(111200);
     expect(quoteListing({...DEFAULT_SELECTION,quantity:24}).totalCents).toBe(1017500);
+    expect(quoteListing(parseSelection({...DEFAULT_SELECTION,quantity:32},'bundle')).totalCents).toBe(1267700);
+    expect(quoteListing(parseSelection({...DEFAULT_SELECTION,quantity:40},'bundle')).totalCents).toBe(1473400);
+    expect(quoteListing(parseSelection({...DEFAULT_SELECTION,quantity:50},'bundle')).totalCents).toBe(1563800);
+    expect(()=>parseSelection({...DEFAULT_SELECTION,quantity:31},'bundle')).toThrow();
     expect(()=>parseSelection({...DEFAULT_SELECTION,stickyDays:2},'job')).toThrow();
     expect(()=>parseSelection({...DEFAULT_SELECTION,quantity:3},'bundle')).toThrow();
   });

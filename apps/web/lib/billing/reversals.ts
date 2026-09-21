@@ -32,6 +32,7 @@ export async function prepareCommerceDeletion(db:Database,userId:string,secret?:
     if(!result.ok){const body=await result.json() as {error?:{code?:string}};if(body.error?.code!=='resource_missing')throw new Error('Subscription cancellation failed; account retained');}
   }
   await db.batch([
+    db.prepare('DELETE FROM listing_details WHERE job_id IN(SELECT job_id FROM employer_listings WHERE user_id=?)').bind(userId),
     db.prepare('UPDATE jobs SET listed=0 WHERE id IN(SELECT job_id FROM employer_listings WHERE user_id=?)').bind(userId),
     db.prepare("UPDATE employer_listings SET closed_at=?,contact_email='',logo_url=NULL WHERE user_id=?").bind(new Date().toISOString(),userId),
     db.prepare("UPDATE employer_orders SET payload_json='{}',status=CASE WHEN status='pending' THEN 'cancelled' ELSE status END WHERE user_id=?").bind(userId),

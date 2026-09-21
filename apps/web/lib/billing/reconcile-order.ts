@@ -1,5 +1,5 @@
 import type {Database} from '../platform';
-import {stripeRead,resolveInvoice,recordPaidInvoice} from './invoices';
+import {stripeRead,resolveInvoice,recordPaidInvoice,recordSubscriptionState} from './invoices';
 import {fulfillEmployerOrder} from './employer-orders';
 import {fulfillMarketOrder,expireMarketCheckout} from './marketplace';
 import {reversePayment} from './reversals';
@@ -22,5 +22,9 @@ export async function reconcileOrder(db:Database,secret:string,id:string,after='
  if(employer)await fulfillEmployerOrder(db,session,'reconcile:'+session.id);
  else if(session.status==='expired')await expireMarketCheckout(db,session.id,'reconcile:'+session.id);
  else await fulfillMarketOrder(db,session,'reconcile:'+session.id);
+ if(employer&&session.subscription){
+  const subscription=await stripeRead(secret,'subscriptions/'+encodeURIComponent(session.subscription),fetcher);
+  await recordSubscriptionState(db,subscription,Math.floor(Date.now()/1000));
+ }
  return {next,status:session.status};
 }
