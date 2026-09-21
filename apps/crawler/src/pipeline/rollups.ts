@@ -109,17 +109,18 @@ export async function rebuildSalaryRollups(
         GROUP_CONCAT(t.tag_slug, ' ') AS tags,
         GROUP_CONCAT(jl.location_slug, ' ') AS locations
       FROM jobs j
-      LEFT JOIN companies c ON c.id = j.company_id
+      JOIN companies c ON c.id = j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       LEFT JOIN job_tags t ON t.job_id = j.id
       LEFT JOIN job_locations jl ON jl.job_id = j.id
-      WHERE j.listed = 1
+      WHERE j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday(?))
         AND j.salary_min IS NOT NULL
         AND j.salary_max IS NOT NULL
       GROUP BY j.id`,
     )
+    .bind(nowIso)
     .all<SalaryRow>();
 
-  await db.prepare(`DELETE FROM salary_rollups`).run();
+  const statements = [db.prepare(`DELETE FROM salary_rollups`)];
   let written = 0;
 
   const write = async (
@@ -129,7 +130,7 @@ export async function rebuildSalaryRollups(
   ) => {
     const rollup = buildRollupRow(dimension, slug, rows);
     if (!rollup) return;
-    await db
+    statements.push(db
       .prepare(
         `INSERT INTO salary_rollups
           (dimension, slug, avg, min, max, job_count_30d, computed_at)
@@ -143,8 +144,7 @@ export async function rebuildSalaryRollups(
         rollup.max,
         rollup.jobCount30d,
         nowIso,
-      )
-      .run();
+      ));
     written += 1;
   };
 
@@ -196,5 +196,6 @@ export async function rebuildSalaryRollups(
     );
   }
 
+  await db.batch(statements);
   return written;
 }

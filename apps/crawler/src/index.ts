@@ -46,24 +46,26 @@ export async function routeQueueBatch(
   env: Env,
   handlers: QueueHandlers = defaultQueueHandlers,
 ): Promise<void> {
+  const prefix=env.QUEUE_PREFIX||'crawl';
+  const careerQueue=prefix+'-career',linkedinQueue=prefix+'-linkedin',indeedQueue=prefix+'-indeed';
   if (
-    batch.queue !== "crawl-career" &&
-    batch.queue !== "crawl-linkedin" &&
-    batch.queue !== "crawl-indeed"
+    batch.queue !== careerQueue &&
+    batch.queue !== linkedinQueue &&
+    batch.queue !== indeedQueue
   ) {
     batch.ackAll();
     return;
   }
 
   const expectedKind =
-    batch.queue === "crawl-career"
+    batch.queue === careerQueue
       ? null
-      : batch.queue === "crawl-linkedin"
+      : batch.queue === linkedinQueue
         ? "linkedin"
         : "indeed";
   const hasMatchingMessage = batch.messages.some((message) => {
     if (!isQueueMessage(message.body)) return false;
-    if (batch.queue === "crawl-career") {
+    if (batch.queue === careerQueue) {
       return ['career','web3_api','alert','discover_catalog','discover_source'].includes(message.body.kind);
     }
     return message.body.kind === expectedKind;
@@ -80,23 +82,23 @@ export async function routeQueueBatch(
     }
 
     let result: QueueHandlerResult;
-    if(batch.queue==='crawl-career'&&message.body.kind==='discover_catalog'){
+    if(batch.queue===careerQueue&&message.body.kind==='discover_catalog'){
       result=await handleCatalog(env);
-    } else if(batch.queue==='crawl-career'&&message.body.kind==='discover_source'){
+    } else if(batch.queue===careerQueue&&message.body.kind==='discover_source'){
       result=await handleSourceDiscovery(message.body.sourceId,env);
-    } else if(batch.queue==='crawl-career'&&message.body.kind==='alert'){
+    } else if(batch.queue===careerQueue&&message.body.kind==='alert'){
       result=await handleAlert(message.body.alertId,env);
-    } else if (batch.queue === "crawl-career" && message.body.kind === "career") {
+    } else if (batch.queue === careerQueue && message.body.kind === "career") {
       result = await handlers.career(message.body, env);
-    } else if (batch.queue === "crawl-career" && message.body.kind === "web3_api") {
+    } else if (batch.queue === careerQueue && message.body.kind === "web3_api") {
       result = await handlers.web3Api(message.body, env);
     } else if (
-      batch.queue === "crawl-linkedin" &&
+      batch.queue === linkedinQueue &&
       message.body.kind === "linkedin"
     ) {
       result = await handlers.linkedin(message.body, env);
     } else if (
-      batch.queue === "crawl-indeed" &&
+      batch.queue === indeedQueue &&
       message.body.kind === "indeed"
     ) {
       result = await handlers.indeed(message.body, env);

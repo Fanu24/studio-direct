@@ -237,7 +237,7 @@ export class D1JobsRepository
          FROM jobs j
          JOIN job_sightings s ON s.job_id = j.id
          WHERE j.company_id = ?
-           AND j.listed = 1
+           AND (j.listed = 1 OR (j.moderation_hidden = 1 AND j.moderation_restore_listed = 1))
            AND s.source = 'career_page'
          GROUP BY j.id`,
       )
@@ -259,7 +259,7 @@ export class D1JobsRepository
     await this.db
       .prepare(
         `UPDATE jobs
-         SET listed = 0, updated_at = ?
+         SET listed = 0, moderation_restore_listed = 0, updated_at = ?
          WHERE id IN (${placeholders})`,
       )
       .bind(updatedAt, ...jobIds)

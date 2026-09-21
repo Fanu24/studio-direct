@@ -70,8 +70,9 @@ export class CareerJobSource implements JobSource {
       throw new Error(`Company has no career URL: ${company.id}`);
     }
 
+    const fetchImpl = this.fetchImpl;
     const reader = createSiteReader(async(input,init)=>{
-      const result=await this.fetchImpl(input,init);
+      const result=await fetchImpl(input,init);
       if(result.status===403||result.status===429)throw new RateLimitedError(result.status,parseRetryAfter(result.headers.get('Retry-After')));
       return result;
     });

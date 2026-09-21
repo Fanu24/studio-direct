@@ -10,6 +10,14 @@ const RESERVED_ORIGINS = ["https://studio-direct.example", "https://placeholder.
 
 export const PRIVATE_PATHS = [
   "/api/",
+  "/admin",
+  "/employer",
+  "/recruiter",
+  "/api-access",
+  "/applications",
+  "/notifications",
+  "/saved-jobs",
+  "/alerts",
   "/dashboard",
   "/profile",
   "/settings",

@@ -48,6 +48,14 @@ describe("buildRobots", () => {
     expect(rules[0]?.allow).toBe("/");
     expect(rules[0]?.disallow).toEqual([
       "/api/",
+      "/admin",
+      "/employer",
+      "/recruiter",
+      "/api-access",
+      "/applications",
+      "/notifications",
+      "/saved-jobs",
+      "/alerts",
       "/dashboard",
       "/profile",
       "/settings",

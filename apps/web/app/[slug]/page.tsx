@@ -1,3 +1,4 @@
+import {landingSearchState} from '../../lib/jobs/search-state';
 import {
   formatSalaryRange,
   isSalaryRole,
@@ -287,10 +288,11 @@ export default async function LandingPage({
           {result.total === 1 ? "job found" : "jobs found"}
         </p>
         <BoardSearch
+          filters={landingSearchState(landing)}
           remoteActive={remoteToggleState(landing).active}
           remoteHref={remoteToggleState(landing).href}
         />
-        <TagChips active={chipTags} remote={chipRemote} />
+        <TagChips active={chipTags} remote={chipRemote} filters={landingSearchState(landing)} />
       </header>
       <JobBoard
         emptyActions={

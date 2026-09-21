@@ -667,6 +667,7 @@ describe("listJobs", () => {
         companyId: "studio-a",
         title: `Solidity ${i}`,
         remote: "remote",
+        salaryMin: 80000, salaryMax:120000,
       });
       sqlite.exec(`
         INSERT INTO job_tags VALUES ('solidity-${i}', 'solidity');
@@ -694,7 +695,7 @@ describe("listJobs", () => {
       tagSlugs: ["solidity"],
       geoSlugs: ["berlin"],
       benefitSlugs: ["pay-in-crypto"],
-      salarySlugs: ["solidity-developer"],
+      salarySlugs: ["berlin", "solidity-developer"],
     });
   });
 });
@@ -820,7 +821,7 @@ describe("listCompanies", () => {
     ]);
   });
 
-  it("degrades avgSalary to null when salary_rollups is empty, and reads it when present", async () => {
+  it("does not display stale stored company salaries without live salary data", async () => {
     insertJob(sqlite, { id: "a1", companyId: "studio-a", title: "Artist", remote: "remote" });
     sqlite.exec(
       `INSERT INTO salary_rollups VALUES ('company', 'alpha', 150000, 120000, 180000, 1, '2026-09-01')`,
@@ -828,7 +829,7 @@ describe("listCompanies", () => {
 
     const companies = await listCompanies(db, "gaming");
 
-    expect(companies.find((c) => c.slug === "alpha")?.avgSalary).toBe(150000);
+    expect(companies.find((c) => c.slug === "alpha")?.avgSalary).toBeNull();
     expect(companies.find((c) => c.slug === "betaforge")?.avgSalary).toBeNull();
   });
 
@@ -1137,7 +1138,7 @@ describe("salary filters and stats", () => {
     expect(either.jobs.map((job) => job.id).sort()).toEqual(["tagged", "titled"]);
   });
 
-  it("prefers stored rollups over live aggregation", async () => {
+  it("ignores stale stored rollups when live vacancies change", async () => {
     insertJob(sqlite, {
       id: "live",
       companyId: "studio-a",
@@ -1155,10 +1156,10 @@ describe("salary filters and stats", () => {
     await expect(
       resolveSalaryStats(db, "gaming", "role", "solidity-developer"),
     ).resolves.toMatchObject({
-      avg: 180000,
-      min: 150000,
-      max: 210000,
-      jobCount30d: 9,
+      avg: 110000,
+      min: 100000,
+      max: 120000,
+      jobCount30d: 1,
     });
   });
 

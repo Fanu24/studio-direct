@@ -1,5 +1,6 @@
 import {
   averageSalary,
+  SALARY_ROLES,
   isCitySlug,
   isCountrySlug,
   isRegionSlug,
@@ -381,6 +382,7 @@ export async function listSitemapEntries(
       `SELECT jt.tag_slug AS slug, COUNT(*) AS total
       FROM job_tags jt
       JOIN jobs j ON j.id = jt.job_id
+      JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       JOIN tenants t ON t.id = j.tenant_id
       WHERE t.slug = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jt.tag_slug
@@ -394,6 +396,7 @@ export async function listSitemapEntries(
       `SELECT jl.location_slug AS slug, COUNT(*) AS total
       FROM job_locations jl
       JOIN jobs j ON j.id = jl.job_id
+      JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       JOIN tenants t ON t.id = j.tenant_id
       WHERE t.slug = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jl.location_slug
@@ -402,17 +405,19 @@ export async function listSitemapEntries(
     .bind(tenantSlug)
     .all<{ slug: string }>();
 
-  const salaries = await db
-    .prepare(
-      `SELECT DISTINCT slug FROM salary_rollups WHERE job_count_30d >= 5 AND dimension IN ('role','country','region','city','seniority') ORDER BY slug`,
-    )
-    .all<{ slug: string }>();
+  const tenant = await db.prepare('SELECT id FROM tenants WHERE slug=?').bind(tenantSlug).first<{id:string}>();
+  const salaryRows = tenant ? [
+    ...await listResolvedSalaryStats(db, tenant.id, 'role', SALARY_ROLES),
+    ...await listResolvedSalaryStats(db, tenant.id, 'location', geo.results.map(row=>row.slug)),
+    ...await listResolvedSalaryStats(db, tenant.id, 'seniority', SENIORITY_SLUGS),
+  ] : [];
 
   const benefits = await db
     .prepare(
       `SELECT jb.benefit_slug AS slug, COUNT(*) AS total
       FROM job_benefits jb
       JOIN jobs j ON j.id = jb.job_id
+      JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       JOIN tenants t ON t.id = j.tenant_id
       WHERE t.slug = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jb.benefit_slug
@@ -429,7 +434,7 @@ export async function listSitemapEntries(
     companySlugs: companies.results.map(({ nameNorm }) => slugTitle(nameNorm)),
     tagSlugs: tags.results.map((row) => row.slug),
     geoSlugs: geo.results.map((row) => row.slug),
-    salarySlugs: salaries.results.map((row) => row.slug),
+    salarySlugs: [...new Set(salaryRows.filter(row=>row.jobCount30d>=5).map(row=>row.slug))].sort(),
     benefitSlugs: benefits.results.map((row) => row.slug),
   };
 }
@@ -715,7 +720,8 @@ export async function listCompanies(
         c.name_norm AS nameNorm,
         c.domain AS domain,
         COUNT(j.id) AS jobCount,
-        MAX(j.posted_at) AS lastPostedAt
+        MAX(j.posted_at) AS lastPostedAt,
+        AVG((j.salary_min+j.salary_max)/2.0) AS avgSalary
       FROM companies c
       LEFT JOIN jobs j
         ON j.company_id = c.id
@@ -733,12 +739,8 @@ export async function listCompanies(
       domain: string | null;
       jobCount: number | null;
       lastPostedAt: string | null;
+      avgSalary: number | null;
     }>();
-
-  // salary_rollups is empty until the crawler's rollup job runs - this
-  // degrades every avgSalary to null rather than erroring or NaN-ing.
-  const companyRollups = await listSalaryRollups(db, "company");
-  const avgBySlug = new Map(companyRollups.map((row) => [row.slug, row.avg]));
 
   return rows.results.map((row) => {
     const slug = slugTitle(row.nameNorm);
@@ -749,7 +751,7 @@ export async function listCompanies(
       domain: row.domain ?? null,
       jobCount: Number(row.jobCount ?? 0),
       lastPostedAt: row.lastPostedAt ?? null,
-      avgSalary: avgBySlug.get(slug) ?? null,
+      avgSalary: row.avgSalary == null ? null : Math.round(row.avgSalary),
     };
   });
 }
@@ -1123,6 +1125,14 @@ async function liveAggregateLocations(
   dimension: string,
   slugs: readonly string[],
 ): Promise<Map<string, SalaryStatsRow>> {
+  // D1 limits bound parameters per statement; large location catalogs are chunked.
+  if(slugs.length>80){
+    const merged=new Map<string,SalaryStatsRow>();
+    for(let offset=0;offset<slugs.length;offset+=80){
+      for(const [key,value] of await liveAggregateLocations(db,tenantId,dimension,slugs.slice(offset,offset+80)))merged.set(key,value);
+    }
+    return merged;
+  }
   const map = new Map<string, SalaryStatsRow>();
   if (slugs.length === 0) return map;
   const placeholders = slugs.map(() => "?").join(", ");
@@ -1192,20 +1202,17 @@ function asStatsRow(row: SalaryRollupRow | SalaryStatsRow): SalaryStatsRow {
   };
 }
 
-/** Rollups first, then live aggregation for any taxonomy slug still missing. */
+/** Current visible vacancies, aggregated in one query per dimension. */
 export async function listResolvedSalaryStats(
   db: JobsDatabase,
   tenantId: string,
   dimension: string,
   slugs: readonly string[],
 ): Promise<SalaryStatsRow[]> {
-  const stored = await listSalaryRollups(db, dimension);
-  const storedBySlug = new Map(stored.map((row) => [row.slug, asStatsRow(row)]));
-  const missing = slugs.filter((slug) => !storedBySlug.has(slug));
-  const live = await liveAggregateMany(db, tenantId, dimension, missing);
-  return slugs.map(
-    (slug) => storedBySlug.get(slug) ?? live.get(slug) ?? emptySalaryStats(dimension, slug),
-  );
+  // Stored summaries can outlive expired, moderated or refunded vacancies.
+  // Public statistics always reflect the currently visible tenant catalog.
+  const live = await liveAggregateMany(db, tenantId, dimension, slugs);
+  return slugs.map(slug => live.get(slug) ?? emptySalaryStats(dimension, slug));
 }
 
 export async function resolveSalaryStats(
