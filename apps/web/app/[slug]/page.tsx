@@ -40,7 +40,7 @@ import {
 import {
   countNewJobs,
   getJobForListItem,
-  getSalaryRollup,
+  resolveSalaryStats,
   landingIndexable,
   listLandingJobs,
   type JobDetail,
@@ -144,14 +144,14 @@ const loadLanding = cache(async (segment: string, page: number) => {
   if (landing.kind === "tag" && landing.tags.length === 1) {
     const role = `${landing.tag}-developer`;
     if (isSalaryRole(role)) {
-      rollup = await getSalaryRollup(db, "role", role);
+      rollup = await resolveSalaryStats(db, tenantId, "role", role);
     }
   } else if (landing.kind === "country") {
-    rollup = await getSalaryRollup(db, "country", landing.country);
+    rollup = await resolveSalaryStats(db, tenantId, "country", landing.country);
   } else if (landing.kind === "region") {
-    rollup = await getSalaryRollup(db, "region", landing.region);
+    rollup = await resolveSalaryStats(db, tenantId, "region", landing.region);
   } else if (landing.kind === "city") {
-    rollup = await getSalaryRollup(db, "city", landing.city);
+    rollup = await resolveSalaryStats(db, tenantId, "city", landing.city);
   }
 
   // 24h drives the "(N New)" title suffix; 168h is the stats block's

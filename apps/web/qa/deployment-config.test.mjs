@@ -7,6 +7,7 @@ it('prepares both workers with the selected resources, without mutating original
  for(const app of ['web','crawler']){
   const original=JSON.parse(readFileSync(new URL(`../../${app}/wrangler.jsonc`,import.meta.url),'utf8'));
   const before=JSON.stringify(original),c=deploymentConfig(original,app,env);
+  expect(deploymentConfig(c,app,env)).toEqual(c);
   expect(JSON.stringify(original)).toBe(before);expect(c.account_id).toBe(env.CLOUDFLARE_ACCOUNT_ID);
   expect(c.d1_databases[0]).toMatchObject({database_id:env.D1_DATABASE_ID,database_name:'qa-database'});
   expect(c.r2_buckets[0].bucket_name).toBe('qa-files');

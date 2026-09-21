@@ -40,6 +40,7 @@ pnpm test
 pnpm test:portable
 pnpm test:node
 node scripts/smoke.mjs
+pnpm audit:public
 ```
 
 `test:portable` evita il bundling della configurazione Vitest e comprende Node e Workers; `test:node` esegue solo Node. Sul computer Windows il runtime Workers ha emesso avvisi filesystem ed errori interni di chiusura pur passando 12 asserzioni: usare la workflow Linux `Validate platform` per la verifica completa.
@@ -57,7 +58,7 @@ pnpm sources:discover --resume
 pnpm sources:import .wrangler/source-candidates.json --activate-discovered
 ```
 
-La scansione conserva checkpoint e provenienza. L'importatore verifica gli endpoint ATS prima dell'attivazione locale e segnala associazioni ambigue. `/admin/sources` mostra catalogo, errori e fonti attive. La prima importazione verificata ha prodotto 577 annunci da 53 board; il catalogo analizzato comprende 1.192 voci e 1.175 siti distinti.
+La scansione conserva checkpoint e provenienza. L'importatore verifica gli endpoint ATS prima dell'attivazione locale e segnala associazioni ambigue. `/admin/sources` mostra catalogo, errori e fonti attive. Il collaudo aggiornato del 21 settembre ha prodotto 689 annunci visibili da 61 fonti tutte lette con successo; il catalogo analizzato comprende 1.192 voci e 1.175 siti distinti.
 
 Per cercare fonti da un elenco di siti:
 
@@ -97,7 +98,15 @@ La discovery automatica del worker, controllata da `SOURCE_DISCOVERY_ENABLED`, a
 | Crawler | Verificare code `crawl-career`, `crawl-career-failed`, `crawl-linkedin`, `crawl-indeed`; `SOURCE_DISCOVERY_ENABLED=true`; token Web3.career solo se usato |
 | Rete pubblicitaria | Adapter AdSense disponibile: configurare da `/admin/advertising` publisher, unità e script Google CMP; approvazione e collaudo sul dominio reale necessari. Default off |
 
-Le risorse nei file Wrangler provengono dal prototipo: non ne è stata verificata l'esistenza remota. Verificare account e dati prima del deploy e creare anche la coda di errori `crawl-career-failed` (la workflow non la crea). Migrazioni locali applicate fino a `0022`: comprendono dettagli annunci, candidature/CV/outbox, consensi export e shortlist, periodi fatture, rinnovi, moderazione e chiavi API. Applicarle tutte prima di distribuire il nuovo codice. `0014` ricostruisce quattro tabelle commerciali per conservare ordini anonimizzati dopo la cancellazione di un account; è stata verificata su SQLite e D1 locale.
+Le risorse nei file Wrangler provengono dal prototipo: non ne è stata verificata l'esistenza remota. Verificare account e dati prima del deploy e creare anche la coda di errori `crawl-career-failed` (la workflow non la crea). Migrazioni locali applicate fino a `0023`: comprendono dettagli annunci, candidature/CV/outbox, consensi export e shortlist, periodi fatture, rinnovi, moderazione, ripristino sicuro degli annunci e chiavi API. Applicarle tutte prima di distribuire il nuovo codice. `0014` ricostruisce quattro tabelle commerciali per conservare ordini anonimizzati dopo la cancellazione di un account; è stata verificata su SQLite e D1 locale.
+
+La configurazione futura è descritta in `.env.example`. Oltre alle credenziali, impostare esplicitamente `CLOUDFLARE_ACCOUNT_ID`, `D1_DATABASE_ID`, `D1_DATABASE_NAME`, `R2_BUCKET_NAME`, `LOCKS_KV_ID`, `WEB_WORKER_NAME`, `CRAWLER_WORKER_NAME`, `QUEUE_PREFIX`. Il generatore sostituisce gli identificativi del prototipo, nomina coerentemente tutte le code (compresa quella di errore) ed esclude i secret dai file Wrangler. Non crea né modifica risorse remote. Eseguire prima:
+
+```sh
+node scripts/configure-deployment.mjs --check
+```
+
+Senza `--check` genera la configurazione dai valori del terminale. Il controllo rifiuta origini locali, chiavi Turnstile di test, assenza del mittente email e coppie OAuth incomplete. Stripe può restare disattivato mentre si prepara il sito. In CI usare le variabili e i secret dell'ambiente `production`, non committare file con credenziali.
 
 La workflow GitHub `Deploy configured platform to Cloudflare` è manuale. Prima del suo utilizzo configurare l'ambiente GitHub `production`, le variabili e i secret elencati nella workflow, creare/verificare i binding e il mittente email. La workflow esegue controlli, configura le variabili pubbliche, costruisce su Linux, applica le migrazioni remote, carica i worker e i secret, poi verifica le pagine pubbliche. Non è stata eseguita in questa sessione. La migrazione deve precedere il codice che usa le nuove tabelle; il ripristino del solo worker non annulla le migrazioni.
 
@@ -141,3 +150,9 @@ Resoconto aggiornato: [collaudo del 21 settembre](qa/2026-09-21-functional-workf
 `GET /api/v1` e `/api/v1/jobs` restituiscono JSON; `/api/v1.xml` restituisce RSS. Usare `Authorization: Bearer ...`; il parametro `token` è disponibile per feed reader ma l’URL va mantenuto privato. Filtri: tag, country/location, remote, q, seniority, salary_min/max, page, limit/page_size (1–100), show_description. Limite atomico: 60 richieste al minuto per chiave, 429 e Retry-After se superato. Il servizio espone solo annunci pubblici e attivi. Non espone profili o CV.
 
 Il riferimento pubblico supporta API gratuite JSON/RSS con token, filtri e descrizioni: [documentazione ufficiale](https://docs.bondex.app/api-reference/web3-career-jobs-api/api-overview). Nodework documenta il proprio schema JSON e i propri limiti.
+
+## Collaudo prima e dopo il collegamento
+
+`pnpm audit:public`, con il sito avviato, legge tutte le sitemap e controlla ogni pagina pubblicata: risposta, contenuto principale, JSON-LD, canonical e noindex. Scrive `.wrangler/public-audit.json`, escluso da Git. `SITE_URL` permette di puntare al futuro dominio. Questo audit non verifica le pagine autenticate e non sostituisce i test dei pagamenti.
+
+Il [report conclusivo](qa/2026-09-21-readiness.md) documenta la fase locale. Al collegamento futuro verificare accesso/email, callback Google, un acquisto sandbox e relativo webhook, upload/download privato e un'esecuzione del crawler. Solo dopo attivare le impostazioni commerciali. Design e personalizzazione del prodotto sono una fase separata richiesta dal proprietario.

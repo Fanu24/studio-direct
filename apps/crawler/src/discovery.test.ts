@@ -50,3 +50,24 @@ it('keeps sources usable when an external catalog is unavailable',async()=>{
  expect(sql.prepare('SELECT error FROM discovery_state').get().error).toContain('previous sources retained');
  expect(env.CRAWL_CAREER.sendBatch).toHaveBeenCalled();
 });
+
+it('quarantines a previously discovered board after identity changes, retaining independent verification',async()=>{
+ const other={...seed,id:'a16z:company.com',origin:'a16z_crypto' as const};
+ await saveCatalog(env.DB,[seed,other]);
+ const valid=async()=>new Response('<a href="https://jobs.ashbyhq.com/company">Careers</a>');
+ const mismatch=async()=>new Response('<a href="https://jobs.ashbyhq.com/other-employer">Careers</a>');
+ await handleSourceDiscovery(seed.id,env,valid);await handleSourceDiscovery(other.id,env,valid);
+ await saveCatalog(env.DB,[{...seed,website:'https://company-new.com'}]);
+ await handleSourceDiscovery(seed.id,env,mismatch);
+ expect(sql.prepare('SELECT career_url FROM companies WHERE domain=?').get('company.com').career_url).toBeTruthy();
+ await saveCatalog(env.DB,[{...other,website:'https://company-new.com'}]);
+ await handleSourceDiscovery(other.id,env,mismatch);
+ expect(sql.prepare('SELECT career_url,ats_type,ats_slug FROM companies WHERE domain=?').get('company.com'))
+   .toEqual({career_url:null,ats_type:null,ats_slug:null});
+});
+it('retains a verified career source after a temporary discovery outage',async()=>{
+ await saveCatalog(env.DB,[seed]);
+ await handleSourceDiscovery(seed.id,env,async()=>new Response('<a href="https://jobs.ashbyhq.com/company">Careers</a>'));
+ await handleSourceDiscovery(seed.id,env,async()=>new Response('',{status:503}));
+ expect(sql.prepare('SELECT career_url FROM companies WHERE domain=?').get('company.com').career_url).toBe('https://jobs.ashbyhq.com/company');
+});

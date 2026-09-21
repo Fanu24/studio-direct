@@ -13,6 +13,7 @@
     "sources:discover": "node scripts/discover-catalog.mjs",
     "sources:import": "node scripts/import-sources.mjs",
     "stripe:listen": "node scripts/stripe-listen.mjs",
+    "audit:public": "node scripts/audit-public.mjs",
     "test:node": "node scripts/test-portable.mjs --node-only"
   },
   "pnpm": {

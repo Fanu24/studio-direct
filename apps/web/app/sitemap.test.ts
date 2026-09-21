@@ -59,8 +59,27 @@ describe("sitemap", () => {
     stubEntries();
   });
 
+  it('serves an XML sitemapindex rather than treating sitemap files as web pages',async()=>{
+    const {GET}=await import('./sitemap.xml/route');
+    const response=await GET(new Request('https://jobs.example.com/sitemap.xml')),xml=await response.text();
+    expect(response.headers.get('content-type')).toContain('application/xml');
+    expect(xml).toContain('<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
+    expect(xml).toContain('<sitemap><loc>https://jobs.example.com/sitemaps/jobs.xml</loc></sitemap>');
+    expect(xml).not.toContain('<urlset');
+  });
+
+  it('uses absolute request URLs in XML when no site origin is configured', async () => {
+    vi.stubEnv('SITE_URL', '');
+    const { GET: index } = await import('./sitemap.xml/route');
+    const { GET: child } = await import('./sitemaps/[kind]/route');
+    expect(await (await index(new Request('http://localhost:3000/sitemap.xml'))).text())
+      .toContain('<loc>http://localhost:3000/sitemaps/jobs.xml</loc>');
+    expect(await (await child(new Request('http://localhost:3000/sitemaps/static.xml'), {params: Promise.resolve({kind:'static.xml'})})).text())
+      .toContain('<loc>http://localhost:3000/jobs</loc>');
+  });
+
   it("exposes a sitemap index of typed child sitemaps", async () => {
-    const { default: sitemap, SITEMAP_INDEX_PATHS } = await import("./sitemap");
+    const { default: sitemap, SITEMAP_INDEX_PATHS } = await import("./_sitemap");
     const entries = await sitemap();
     const paths = entries.map(({ url }) => new URL(url).pathname);
 
@@ -88,7 +107,7 @@ describe("sitemap", () => {
   });
 
   it("lists intern, hire, learn, and ranking hubs on the static child sitemap", async () => {
-    const { STATIC_PATHS, sitemapPathsForKind } = await import("./sitemap");
+    const { STATIC_PATHS, sitemapPathsForKind } = await import("./_sitemap");
 
     expect(STATIC_PATHS).toContain("/intern-jobs");
     expect(STATIC_PATHS).toContain("/entry-level-jobs");
@@ -113,12 +132,12 @@ describe("sitemap", () => {
     expect(STATIC_PATHS).toContain("/web3-non-tech-salaries");
     expect(STATIC_PATHS).toContain("/faq");
     expect(STATIC_PATHS).toContain("/what-is-web3");
-    expect(sitemapPathsForKind("static", emptyEntries())).toEqual([...STATIC_PATHS]);
+    expect(sitemapPathsForKind("static", emptyEntries())).toEqual(STATIC_PATHS.filter(path=>!["/intern-jobs","/entry-level-jobs"].includes(path)));
     expect(STATIC_PATHS.every((path) => !isExcludedSitemapPath(path))).toBe(true);
   });
 
   it("lists the canonical /web3-companies and never the /companies paths that 308-redirect to it", async () => {
-    const { STATIC_PATHS, sitemapPathsForKind } = await import("./sitemap");
+    const { STATIC_PATHS, sitemapPathsForKind } = await import("./_sitemap");
 
     expect(STATIC_PATHS).toContain("/web3-companies");
     expect(STATIC_PATHS).not.toContain("/companies");
@@ -130,7 +149,7 @@ describe("sitemap", () => {
   });
 
   it("never lists a ranking path that 308-redirects to another spelling", async () => {
-    const { STATIC_PATHS } = await import("./sitemap");
+    const { STATIC_PATHS } = await import("./_sitemap");
 
     // Every one of these is a permanentRedirect stub kept for old inbound links.
     // A sitemap entry pointing at a redirect wastes crawl budget on every recrawl.
@@ -149,12 +168,13 @@ describe("sitemap", () => {
 
   it("never puts user, talent, login, or profile URLs in any child sitemap", async () => {
     const { SITEMAP_INDEX_PATHS, STATIC_PATHS, sitemapPathsForKind } = await import(
-      "./sitemap"
+      "./_sitemap"
     );
     const entries = {
       jobs: [{ slug: "solidity-dev-acme", externalId: "42" }],
       companySlugs: ["acme"],
       tagSlugs: ["solidity", "intern", "entry-level"],
+      remoteTagSlugs: ["solidity", "intern"],
       geoSlugs: ["berlin"],
       salarySlugs: ["solidity-developer"],
       benefitSlugs: ["pay-in-crypto"],
@@ -184,10 +204,11 @@ describe("sitemap", () => {
   });
 
   it("includes hire skill URLs for tags that already meet sitemap coverage", async () => {
-    const { sitemapPathsForKind } = await import("./sitemap");
+    const { sitemapPathsForKind } = await import("./_sitemap");
     const paths = sitemapPathsForKind("hire", {
       ...emptyEntries(),
       tagSlugs: ["solidity", "intern"],
+      remoteTagSlugs: ["solidity", "intern"],
     });
 
     expect(paths).toEqual(["/hire/solidity", "/hire/intern"]);
@@ -195,7 +216,7 @@ describe("sitemap", () => {
   });
 
   it("lists every learn category on the learn child sitemap", async () => {
-    const { sitemapPathsForKind } = await import("./sitemap");
+    const { sitemapPathsForKind } = await import("./_sitemap");
     const paths = sitemapPathsForKind("learn", emptyEntries());
 
     expect(paths).toEqual(LEARN_CATEGORIES.map((slug) => `/learn-web3/${slug}`));
@@ -205,23 +226,32 @@ describe("sitemap", () => {
   });
 
   it("includes remote tag URLs and benefit landings that are not already tags", async () => {
-    const { sitemapPathsForKind } = await import("./sitemap");
+    const { sitemapPathsForKind } = await import("./_sitemap");
     const paths = sitemapPathsForKind("tags", {
       ...emptyEntries(),
       tagSlugs: ["solidity", "intern"],
+      remoteTagSlugs: ["solidity", "intern"],
       benefitSlugs: ["pay-in-crypto", "solidity"],
     });
 
     expect(paths).toContain("/solidity-jobs");
-    expect(paths).toContain("/remote-solidity-jobs");
-    expect(paths).toContain("/remote-intern-jobs");
+    expect(paths).toContain("/remote+solidity-jobs");
+    expect(paths).toContain("/intern+remote-jobs");
     expect(paths).toContain("/pay-in-crypto-jobs");
     expect(paths).not.toContain("/intern-jobs");
     expect(paths.filter((path) => path === "/solidity-jobs")).toHaveLength(1);
   });
 
+  it('omits remote slices and static job hubs with insufficient results', async () => {
+    const {sitemapPathsForKind} = await import('./_sitemap');
+    const entries={...emptyEntries(), tagSlugs:['solidity','intern']};
+    expect(sitemapPathsForKind('tags',entries)).toEqual(['/solidity-jobs']);
+    expect(sitemapPathsForKind('static',entries)).toContain('/intern-jobs');
+    expect(sitemapPathsForKind('static',entries)).not.toContain('/entry-level-jobs');
+  });
+
   it("uses the injected SITE_URL origin for every sitemap URL", async () => {
-    const { default: sitemap } = await import("./sitemap");
+    const { default: sitemap } = await import("./_sitemap");
     const entries = await sitemap();
 
     expect(entries.map(({ url }) => url)).toEqual([
@@ -242,7 +272,7 @@ describe("sitemap", () => {
   it("degrades to relative child sitemap paths, without throwing, when SITE_URL is missing", async () => {
     vi.unstubAllEnvs();
     delete process.env.SITE_URL;
-    const { default: sitemap, SITEMAP_INDEX_PATHS } = await import("./sitemap");
+    const { default: sitemap, SITEMAP_INDEX_PATHS } = await import("./_sitemap");
 
     const entries = await sitemap();
 
@@ -251,7 +281,7 @@ describe("sitemap", () => {
 
   it("degrades to relative child sitemap paths, without throwing, when SITE_URL is blank", async () => {
     vi.stubEnv("SITE_URL", "   ");
-    const { default: sitemap } = await import("./sitemap");
+    const { default: sitemap } = await import("./_sitemap");
 
     const entries = await sitemap();
     expect(entries.every(({ url }) => url.startsWith("/sitemaps/"))).toBe(true);
@@ -261,7 +291,7 @@ describe("sitemap", () => {
     // studio-direct.example is the real scaffolding placeholder (crawler UA, digest.ts,
     // wrangler.jsonc, seed data); placeholder.example is the generic one. Both must be
     // refused so a live sitemap never advertises either.
-    const { default: sitemap } = await import("./sitemap");
+    const { default: sitemap } = await import("./_sitemap");
 
     vi.stubEnv("SITE_URL", "https://studio-direct.example");
     const studioDirectEntries = await sitemap();
@@ -279,7 +309,7 @@ describe("sitemap", () => {
   });
 
   it("splits a child sitemap into multiple files once it exceeds the 50,000 URL limit", async () => {
-    const { sitemapChildPaths, SITEMAP_URL_LIMIT } = await import("./sitemap");
+    const { sitemapChildPaths, SITEMAP_URL_LIMIT } = await import("./_sitemap");
 
     expect(sitemapChildPaths("jobs", 0)).toEqual(["/sitemaps/jobs.xml"]);
     expect(sitemapChildPaths("jobs", SITEMAP_URL_LIMIT)).toEqual(["/sitemaps/jobs.xml"]);
@@ -295,7 +325,7 @@ describe("sitemap", () => {
   });
 
   it("points the index at every paginated file, and no file lists more than 50,000 URLs", async () => {
-    const { default: sitemap, SITEMAP_URL_LIMIT } = await import("./sitemap");
+    const { default: sitemap, SITEMAP_URL_LIMIT } = await import("./_sitemap");
     const jobs = Array.from({ length: SITEMAP_URL_LIMIT + 5 }, (_, index) => ({
       slug: `job-${index}`,
       externalId: null,
@@ -316,6 +346,7 @@ function emptyEntries() {
     jobs: [],
     companySlugs: [],
     tagSlugs: [],
+    remoteTagSlugs: [],
     geoSlugs: [],
     salarySlugs: [],
     benefitSlugs: [],

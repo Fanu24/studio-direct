@@ -76,6 +76,13 @@ export async function handleSourceDiscovery(sourceId:string,env:Env,fetcher:type
   }
   await env.DB.prepare(`UPDATE source_catalog SET career_url=?,ats_type=?,ats_slug=?,status=?,company_id=COALESCE(?,company_id),
     checked_at=?,error=? WHERE id=?`).bind(result.career_url??null,result.ats_type??null,result.ats_slug??null,result.status,companyId,result.checked_at,result.error??null,row.id).run();
+  // Quarantine an automatically discovered board after a confirmed identity mismatch.
+  // A network failure alone must not disable a previously verified source. Another
+  // catalog feed may independently verify the same company, so retain that board.
+  if(result.status==='needs_review')await env.DB.prepare(`UPDATE companies SET career_url=NULL,ats_type=NULL,ats_slug=NULL
+    WHERE id LIKE 'discovered:%' AND id=(SELECT company_id FROM source_catalog WHERE id=?)
+    AND NOT EXISTS(SELECT 1 FROM source_catalog s WHERE s.company_id=companies.id AND s.active=1 AND s.status IN('ats_found','jsonld_found'))`)
+    .bind(row.id).run();
   if(companyId)await env.CRAWL_CAREER.send({kind:'career',companyId});
   return {action:'ack'} as const;
 }

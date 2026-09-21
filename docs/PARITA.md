@@ -1,27 +1,27 @@
-# Stato della parità funzionale
+# Stato funzionale e preparazione online
 
-Aggiornato il 21 settembre 2026. Il progetto è funzionante nell'ambiente locale per i flussi collaudati sotto. Non è ancora certificabile come equivalente al 100% a Web3.career: restano verifica delle funzioni riservate del riferimento, copertura Careers aggiuntiva e servizi di produzione. La grafica finale resta fuori da questa fase.
+Aggiornato il 21 settembre 2026. Questa fase prepara il prodotto al futuro collegamento dei servizi. Grafica, offerta distintiva, dominio e configurazione commerciale sono rinviati dal proprietario. Il prototipo non è il riferimento delle scelte funzionali.
 
-Il codice è sul branch `feat/auth-payments-source-discovery`, [PR #2](https://github.com/Fanu24/studio-direct/pull/2). Pubblicare il branch non distribuisce il sito. Il prototipo è una base tecnica: ricerca e candidature sono gratuite, senza i vecchi abbonamenti candidati o quote di sblocco.
+Codice sul branch `feat/auth-payments-source-discovery`, [PR #2](https://github.com/Fanu24/studio-direct/pull/2). Nessun merge o deploy. Ricerca e candidature gratuite, senza i vecchi abbonamenti candidati o quote di sblocco.
 
-| Area | Implementato e verificato | Limite aperto |
+| Area | Implementato e collaudato | Collegamento o limite successivo |
 |---|---|---|
-| Accesso | Magic link e Google OAuth sandbox; ingressi, onboarding e dashboard candidati/aziende distinti | Mittente email reale e OAuth sul dominio finale |
-| Ricerca | Suggerimenti skill/aziende, remoto, 15 risultati, dettaglio, preferiti, pin/highlight, filtri benefit e città/paese/continente | Audit completo delle combinazioni del search center rispetto al riferimento |
-| Annunci | Editor formattato, skill principale, benefit, link X, upload logo, checkout server, pubblicazione dopo webhook, modifica e form ripubblicazione | Distribuzione esterna/social; test di un nuovo pagamento partendo dal form di ripubblicazione |
-| Prezzi e bundle | Upsell, coupon, scala bundle 2–50 osservata sul riferimento, acquisto/consumo crediti, scadenza 24 mesi, rimborso completo | Politica commerciale dei rimborsi parziali da definire |
-| Rinnovi | Periodi fatture, fattura prima/dopo Checkout, rimborsi vecchio/corrente, annullamento e scadenza, riconciliazione ordine/subscription | Consegna webhook e riconciliazione su Cloudflare distribuito |
-| Candidature | Email autenticata, PDF privato, dashboard, filtri/stato/note datore, ritiro con rimozione CV, notifiche e retry | Invio email reale; il ritiro non richiama file già scaricati |
-| Recruiter | Accesso verificato a pagamento, filtri, CV/contact autorizzati, shortlist e note, export CSV paginato con audit e doppio consenso | Prezzo e funzioni riservate del concorrente non verificati; $199 usato solo nel test |
-| Sponsor | Quattro slot esclusivi, pagamento, banner, impression/click, rimborso, recupero prenotazioni e strumenti admin | Metriche non certificate come utenti unici |
-| CPM/CPC | Adapter AdSense disattivato per default, admin, ads.txt, CMP Google, TCF/GPC e opt-out US | Publisher, approvazione dominio, CMP reale e ricavi non collaudati |
-| Alert | Filtri, consenso, coda giornaliera, disiscrizione, outbox e retry | Provider email reale |
-| Aggregazione | Greenhouse, Lever, Ashby, JSON-LD di indice e dettagli; snapshot incompleti conservano i lavori esistenti | Portali proprietari/JavaScript richiedono adattatori aggiuntivi |
-| Discovery | DefiLlama, portfolio a16z crypto e aziende curate; 1.192 voci/1.175 siti analizzati; 53 board verificati, 577 lavori importati | Non tutti i siti sono monitorabili: 118 richiedevano adattatori, 12 associazioni revisione; nuova scansione completa non eseguita il 21 |
-| SEO | Pagine lavori, skill, località, benefit, aziende, salari e listicle; otto sitemap; corretto inserimento improprio delle aziende nella sitemap salari | Audit integrale contenuti, canonical e indicizzazione ancora aperto |
-| Amministrazione | Recruiter, prezzo, fonti, supporto, moderazione, riconciliazione, retry email, recupero sponsor | Collaudo UI delle nuove operazioni con account amministratore |
-| API offerte | JSON/RSS, chiavi revocabili memorizzate come hash, filtri e descrizioni, paginazione, 60 richieste/minuto per chiave; test HTTP locale riuscito | Endpoint del proprio catalogo; schema JSON documentato, non compatibilità byte-per-byte con il concorrente |
-| Ambiente | D1 locale fino a 0022, R2 locale, code, cron discovery giornaliero/crawl 6 ore, operazioni ogni 5 minuti, CI con OpenNext | Dominio, risorse Cloudflare remote, email e deploy rinviati dal proprietario |
+| Accesso | Magic link, Google sandbox; ingressi, onboarding e dashboard distinti candidato/azienda | Mittente reale e callback OAuth sul dominio definitivo |
+| Ricerca | Testo, suggerimenti skill/azienda, remoto, sede, benefit, salario, filtri combinati conservati, dettaglio e preferiti | Design successivo; nessuna certificazione delle funzioni private del concorrente |
+| Annunci | Editor, skill, benefit, X, logo, checkout, pubblicazione da webhook, modifica, nuovo pagamento dal form ripubblicazione | Distribuzione social/esterna richiede canali del nuovo business |
+| Prezzi e bundle | Upsell, coupon, quantità 2–50, pagamento e consumo crediti, validità 24 mesi, rimborso completo | Politica commerciale dei rimborsi parziali da definire |
+| Rinnovi | Fatture, ordine eventi invertito, rinnovi e rimborsi delle rate, annullamento/scadenza, riconciliazione | Ripetere una prova di consegna webhook sul dominio online |
+| Candidature | PDF privato, accessi proprietari, gestione datore, note private, ritiro/eliminazione PDF, notifiche/outbox/retry | Provider email reale; impossibile richiamare copie già scaricate |
+| Recruiter | Verifica azienda, acquisto, filtri, CV/contact autorizzati, shortlist/note, CSV paginato con audit e doppio consenso | Prezzo proprio da impostare; $199 era soltanto sandbox |
+| Sponsor | Quattro slot, pagamento, banner, impression/click, rimborso e recupero prenotazioni | Metriche non certificate come utenti unici |
+| CPM/CPC | AdSense disattivato per default, pannello admin, ads.txt, CMP Google, TCF/GPC e opt-out US | Publisher, CMP, approvazione dominio e ricavi reali |
+| Alert | Filtri, consenso, coda giornaliera, disiscrizione, outbox/retry | Email reale |
+| Aggregazione | Greenhouse, Lever, Ashby, JSON-LD indice/dettagli; deduplica, scadenza e gestione errori/snapshot incompleti | Siti bloccati o proprietari richiedono adattatori/accordi aggiuntivi |
+| Catalogo | 1.192 provenienze/1.175 siti; 61 fonti attive tutte lette con successo, 689 offerte importate visibili | Catalogo di ricerca non equivale a 1.175 siti monitorati; dettaglio stati nel report QA |
+| SEO | Pagine lavori, skill, sedi, benefit, aziende, salari/listicle; indice e 8 sitemap; statistiche sulle offerte visibili | Contenuto editoriale e design potranno essere personalizzati |
+| Amministrazione | Moderazione resistente al ricrawl, riconciliazione, recruiter/prezzi, fonti, ticket prioritari e risposta, retry email | Il supporto premium richiede un operatore |
+| API offerte | JSON/RSS, gestione chiavi UI/HTTP, hash, revoca, filtri, paginazione, 60 richieste/minuto | API del proprio catalogo; non compatibilità byte-per-byte con quella del concorrente |
+| Ambiente | D1 fino a 0023, R2, code, cron giornaliero discovery/crawl 6 ore; controllo e generazione configurazione; build OpenNext | Risorse Cloudflare, dominio, mittente e secret di produzione |
 
 ## Prezzi del riferimento
 
@@ -31,14 +31,8 @@ Nel [bundle](https://web3.career/post-web3-job/bundle) sono stati controllati tu
 
 Nella [pubblicità](https://web3.career/ads): quattro posizioni $4.999/$3.999/$2.999/$1.999 per mese. Lo stato degli slot occupati del concorrente non è stato copiato. Per il [catalogo candidati](https://web3.career/hire) il prezzo riservato non è stato verificato: il progetto richiede di configurare un prezzo proprio.
 
-## Evidenze del collaudo
+## Evidenze
 
-- Suite completa locale: 858 test Node (160 shared, 18 database, 577 web, 103 crawler) e 12 Workers passati; un test Stripe opt-in saltato dalla suite ordinaria. I test mirati delle correzioni successive sono passati.
-- Typecheck workspace passato. CI Linux su `bc8f55e` completata con successo, inclusa build OpenNext Cloudflare. Il risultato dei commit successivi va controllato sulla PR.
-- Test locale HTTP/browser: modifica annuncio e form repost, filtri località/benefit, login candidato, invio PDF, proprietà CV, gestione datore, ritiro, assenza di note private dall'account candidato.
-- Ulteriore acquisto recruiter Stripe sandbox da $199: export, shortlist e revoca di ciascun consenso verificati; rimborso completo seguito da revoca dell'export verificato.
-- Test con Stripe Test Clock eseguito il 19 settembre: fattura iniziale e rinnovo reali, rimborsi vecchio/corrente, cancellazione/scadenza su database isolato. L'associazione Checkout in quel test è una fixture; i Checkout browser sono prove distinte.
-- Smoke HTTP del 21: 20 pagine pubbliche, otto sitemap, sitemap principale e robots.txt passati. Non equivale a audit SEO integrale.
-- Cron configurati ma non ancora attivi online. Nessun deploy, pagamento reale o invio email reale.
+Il [report di preparazione online](qa/2026-09-21-readiness.md) contiene i risultati finali, le correzioni e i confini del collaudo. I [test del 17](qa/2026-09-17-auth-payments-discovery.md), [pagamenti del 19](qa/2026-09-19-payment-recovery.md) e [flussi del 21](qa/2026-09-21-functional-workflows.md) restano evidenze storiche; i conteggi e le attività aperte di quei checkpoint sono superati dal report finale.
 
-Resoconti: [accessi e discovery](qa/2026-09-17-auth-payments-discovery.md), [recupero pagamenti](qa/2026-09-19-payment-recovery.md), [flussi del 21 settembre](qa/2026-09-21-functional-workflows.md).
+Non si dichiara equivalenza assoluta al 100% con le funzioni riservate e gli accordi commerciali di Web3.career. Una prova sul dominio vero resterà necessaria dopo il collegamento dei servizi, prima di accettare pagamenti reali. Nessuna attivazione online è stata effettuata.

@@ -1,3 +1,5 @@
+> Checkpoint storico. Conteggi e attività aperte sono aggiornati nel [report di preparazione online](2026-09-21-readiness.md).
+
 # Collaudo funzionale — 21 settembre 2026
 
 Ambiente: Next.js localhost:3000, D1/R2 locali, Stripe sandbox con listener webhook. Google OAuth già collaudato il 17; non ripetuto in questa sessione. Account sintetici `candidate-qa@example.test`, `employer-qa@example.test`, `outsider-qa@example.test`. Nessun CV o dato reale usato nei nuovi test.

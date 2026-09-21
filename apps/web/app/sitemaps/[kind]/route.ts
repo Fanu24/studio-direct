@@ -9,7 +9,7 @@ import {
   sitemapPathsForKind,
   toSitemapUrl,
   type SitemapKind,
-} from "../../sitemap";
+} from "../../_sitemap";
 
 function xmlEscape(value: string) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -41,7 +41,7 @@ export async function GET(
   }
   const { kind, page } = parsed;
 
-  const origin = resolveSitemapOrigin();
+  const origin = resolveSitemapOrigin() ?? new URL(_request.url).origin;
   const { env } = await getCloudflareContext({ async: true });
   const db = (env as CloudflareEnv & { DB: JobsDatabase }).DB;
   const entries = await listSitemapEntries(db, TENANT_SLUG);

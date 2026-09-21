@@ -1,4 +1,4 @@
-import { TENANT_SLUG } from "@gaming/shared";
+import { TENANT_SLUG, landingPath } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { MetadataRoute } from "next";
 
@@ -116,7 +116,7 @@ export function toSitemapUrl(path: string, origin: string | null): string {
 export function sitemapPathsForKind(kind: SitemapKind, entries: SitemapEntries): string[] {
   switch (kind) {
     case "static":
-      return [...STATIC_PATHS];
+      return STATIC_PATHS.filter(path => !["/intern-jobs", "/entry-level-jobs"].includes(path) || entries.tagSlugs.includes(path.slice(1, -5)));
     case "jobs":
       return entries.jobs.map((job) => jobPublicHref(job));
     case "tags": {
@@ -126,7 +126,10 @@ export function sitemapPathsForKind(kind: SitemapKind, entries: SitemapEntries):
         if (!STATIC_TAG_HUBS.has(slug)) {
           paths.push(`/${slug}-jobs`);
         }
-        paths.push(`/remote-${slug}-jobs`);
+
+      }
+      for (const slug of entries.remoteTagSlugs) {
+        paths.push(landingPath({kind: "remote-tag", tag: slug, tags: [slug]}));
       }
       for (const slug of entries.benefitSlugs) {
         if (tagSet.has(slug) || STATIC_TAG_HUBS.has(slug)) continue;

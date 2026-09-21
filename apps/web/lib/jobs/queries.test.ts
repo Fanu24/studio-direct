@@ -696,7 +696,10 @@ describe("listJobs", () => {
       geoSlugs: ["berlin"],
       benefitSlugs: ["pay-in-crypto"],
       salarySlugs: ["berlin", "solidity-developer"],
+      remoteTagSlugs: ["solidity"],
     });
+    sqlite.exec("UPDATE jobs SET remote='onsite' WHERE id='solidity-0'");
+    await expect(listSitemapEntries(db, "gaming")).resolves.toMatchObject({tagSlugs:["solidity"],remoteTagSlugs:[]});
   });
 });
 

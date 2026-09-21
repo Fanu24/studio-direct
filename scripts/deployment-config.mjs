@@ -24,12 +24,14 @@ export function deploymentConfig(original, app, env) {
  const config=structuredClone(original);
  config.account_id=env.CLOUDFLARE_ACCOUNT_ID;
  config.name=env[app==='web'?'WEB_WORKER_NAME':'CRAWLER_WORKER_NAME'];
+ const previousQueuePrefix=(original.vars?.QUEUE_PREFIX||'crawl')+'-';
+ const queueName=name=>env.QUEUE_PREFIX+'-'+(name.startsWith(previousQueuePrefix)?name.slice(previousQueuePrefix.length):name);
  for(const db of config.d1_databases){db.database_id=env.D1_DATABASE_ID;db.database_name=env.D1_DATABASE_NAME;}
  for(const bucket of config.r2_buckets)bucket.bucket_name=env.R2_BUCKET_NAME;
  for(const ns of config.kv_namespaces??[])ns.id=env.LOCKS_KV_ID;
  for(const queue of [...config.queues?.producers??[],...config.queues?.consumers??[]]){
-   queue.queue=env.QUEUE_PREFIX+'-'+queue.queue.replace(/^crawl-/,'');
-   if(queue.dead_letter_queue)queue.dead_letter_queue=env.QUEUE_PREFIX+'-'+queue.dead_letter_queue.replace(/^crawl-/,'');
+   queue.queue=queueName(queue.queue);
+   if(queue.dead_letter_queue)queue.dead_letter_queue=queueName(queue.dead_letter_queue);
  }
  if(app==='crawler')config.vars.QUEUE_PREFIX=env.QUEUE_PREFIX;
  for(const key of ['SITE_URL','EMAIL_ENABLED','EMAIL_FROM','ADMIN_EMAILS'])config.vars[key]=env[key]||'';

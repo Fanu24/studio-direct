@@ -116,6 +116,7 @@ export interface SitemapEntries {
   jobs: SitemapJob[];
   companySlugs: string[];
   tagSlugs: string[];
+  remoteTagSlugs: string[];
   geoSlugs: string[];
   salarySlugs: string[];
   benefitSlugs: string[];
@@ -379,7 +380,7 @@ export async function listSitemapEntries(
 
   const tags = await db
     .prepare(
-      `SELECT jt.tag_slug AS slug, COUNT(*) AS total
+      `SELECT jt.tag_slug AS slug, COUNT(*) AS total, SUM(j.remote='remote') AS remoteTotal
       FROM job_tags jt
       JOIN jobs j ON j.id = jt.job_id
       JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
@@ -389,7 +390,7 @@ export async function listSitemapEntries(
       HAVING total >= 5`,
     )
     .bind(tenantSlug)
-    .all<{ slug: string }>();
+    .all<{ slug: string; remoteTotal: number }>();
 
   const geo = await db
     .prepare(
@@ -433,6 +434,7 @@ export async function listSitemapEntries(
     })),
     companySlugs: companies.results.map(({ nameNorm }) => slugTitle(nameNorm)),
     tagSlugs: tags.results.map((row) => row.slug),
+    remoteTagSlugs: tags.results.filter(row=>row.remoteTotal>=5).map(row=>row.slug),
     geoSlugs: geo.results.map((row) => row.slug),
     salarySlugs: [...new Set(salaryRows.filter(row=>row.jobCount30d>=5).map(row=>row.slug))].sort(),
     benefitSlugs: benefits.results.map((row) => row.slug),
