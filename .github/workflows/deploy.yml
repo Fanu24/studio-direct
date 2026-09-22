@@ -23,6 +23,7 @@ jobs:
       CRAWLER_WORKER_NAME: ${{ vars.CRAWLER_WORKER_NAME }}
       QUEUE_PREFIX: ${{ vars.QUEUE_PREFIX }}
       SITE_URL: ${{ vars.SITE_URL }}
+      SITE_INDEXING_ENABLED: ${{ vars.SITE_INDEXING_ENABLED }}
       ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
       EMAIL_FROM: ${{ vars.EMAIL_FROM }}
       EMAIL_ENABLED: ${{ vars.EMAIL_ENABLED }}
@@ -45,6 +46,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+        env:
+          SITE_URL: ''
       - name: Validate and configure production variables
         run: node scripts/configure-deployment.mjs
       - name: Prepare isolated database for build

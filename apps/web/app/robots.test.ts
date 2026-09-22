@@ -78,6 +78,11 @@ describe("robots route", () => {
     vi.unstubAllEnvs();
   });
 
+  it("keeps the preview deployment out of search engines", () => {
+    vi.stubEnv("SITE_INDEXING_ENABLED", "false");
+    expect(robots()).toEqual({ rules: [{ userAgent: "*", disallow: "/" }] });
+  });
+
   it("reads SITE_URL from the environment", () => {
     vi.stubEnv("SITE_URL", "https://jobs.example.com");
     expect(robots().sitemap).toBe("https://jobs.example.com/sitemap.xml");

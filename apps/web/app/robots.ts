@@ -63,5 +63,8 @@ export function buildRobots(siteUrl: string | null | undefined): MetadataRoute.R
 }
 
 export default function robots(): MetadataRoute.Robots {
+  if (process.env.SITE_INDEXING_ENABLED === "false") {
+    return { rules: [{ userAgent: "*", disallow: "/" }] };
+  }
   return buildRobots(process.env.SITE_URL);
 }
