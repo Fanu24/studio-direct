@@ -4,3 +4,5 @@ docs/specs/nodework-product-update-2026-09.md -text -whitespace
 packages/db/reference/*.json text eol=lf
 packages/db/reference/ISO-LANGUAGES-LICENSE text eol=lf
 packages/db/reference/GEONAMES-README.txt -text -whitespace
+# Keep upstream font license notices intact.
+apps/web/app/fonts/*-OFL.txt -text -whitespace

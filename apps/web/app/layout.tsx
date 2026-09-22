@@ -1,4 +1,4 @@
-import { Bricolage_Grotesque, Figtree, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
@@ -25,21 +25,23 @@ import "./styles/salary.css";
 import "./faq/faq.css";
 import "./hire/hire.css";
 
-const display = Bricolage_Grotesque({
-  subsets: ["latin"],
+const display = localFont({
+  src: "./fonts/bricolage-grotesque.ttf",
+  weight: "200 800",
   variable: "--font-display",
   display: "swap",
 });
 
-const sans = Figtree({
-  subsets: ["latin"],
+const sans = localFont({
+  src: "./fonts/figtree.ttf",
+  weight: "300 900",
   variable: "--font-sans",
   display: "swap",
 });
 
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const mono = localFont({
+  src: "./fonts/jetbrains-mono.ttf",
+  weight: "100 800",
   variable: "--font-mono",
   display: "swap",
 });

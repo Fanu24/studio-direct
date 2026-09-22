@@ -1,4 +1,4 @@
-import {MIN_SALARY_SAMPLE, SCRAPED_SALARY_SQL, publicSalaryStats} from '@gaming/shared';
+import {MIN_SALARY_SAMPLE, SCRAPED_JOB_SQL, SCRAPED_SALARY_SQL, publicSalaryStats} from '@gaming/shared';
 import {PUBLIC_SALARY_SQL,PUBLIC_HIGHLIGHT_SQL,PUBLIC_PIN_SQL,PUBLIC_REQUIREMENTS_SQL,DEFAULT_JOB_ORDER_SQL,annualUsdSalarySql} from '../product/job-projection';
 import {
   SALARY_ROLES,
@@ -598,7 +598,7 @@ function buildJobsWhere(
     whereBindings.push(containsPattern(filters.seniority.trim()));
   }
 
-  if(filters.aggregatedOnly)conditions.push("j.commercial_origin='aggregated'");
+  if(filters.aggregatedOnly)conditions.push(SCRAPED_JOB_SQL);
   if (filters.hasSalary) {
     conditions.push("j.salary_min IS NOT NULL AND j.salary_max IS NOT NULL");
   }

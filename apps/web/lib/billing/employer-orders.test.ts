@@ -50,6 +50,7 @@ describe('employer commerce',()=>{
     expect(sql.prepare('SELECT status FROM company_claims').get().status).toBe('pending');
     expect(sql.prepare('SELECT COUNT(*) n FROM company_purchase_entitlements').get().n).toBe(1);
     const j=sql.prepare('SELECT * FROM jobs').get();expect(j.title).toBe(listing.title);expect(j.apply_url).toBe(listing.applyUrl);
+    expect(j).toMatchObject({commercial_origin:'native',salary_currency:'USD',salary_period:'yearly'});
     expect(sql.prepare("SELECT COUNT(*) n FROM jobs_fts WHERE jobs_fts MATCH 'solidity'").get().n).toBe(1);
     sql.prepare('UPDATE jobs SET listed=0 WHERE id=?').run(j.id);
     expect(await fulfillEmployerOrder(db,s,'evt_retry')).toBe(false);
@@ -81,6 +82,7 @@ describe('employer commerce',()=>{
     expect(sql.prepare('SELECT COUNT(*) n FROM bundle_credits').get().n).toBe(2);
     await expect(redeemCredit(db,'other',`${o.id}:0`,listing)).rejects.toThrow();
     const id=await redeemCredit(db,'employer',`${o.id}:0`,listing,new Date('2026-09-17'));
+    expect(sql.prepare('SELECT commercial_origin FROM jobs WHERE id=?').get(id).commercial_origin).toBe('native');
     expect(sql.prepare('SELECT job_id FROM bundle_credits WHERE slot=0').get().job_id).toBe(id);
     await expect(redeemCredit(db,'employer',`${o.id}:0`,listing)).rejects.toThrow();
     await expect(redeemCredit(db,'employer',`${o.id}:1`,listing,new Date('2029-01-01'))).rejects.toThrow();

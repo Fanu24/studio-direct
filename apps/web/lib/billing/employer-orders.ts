@@ -40,8 +40,8 @@ function listingStatements(db:Database,order:EmployerOrder,jobId:string,input:Li
       SELECT ?,?,?,?,?,? WHERE ${guard}`).bind(companyId,order.tenant_id,input.companyName,companyNorm,new URL(input.companyUrl).hostname,at,...guardValues),
     db.prepare(`INSERT OR IGNORE INTO jobs(id,tenant_id,company_id,canonical_key,title,title_norm,slug,location,remote,
       description_html,apply_url,salary_min,salary_max,source,featured_until,highlight,posted_at,created_at,updated_at,
-      listing_logo_url,highlight_color,expires_at)
-      SELECT ?,?,(${companyWhere}),?,?,?,?,?,?,?,?,?,?,'manual',?,?,?,?,?,?,?,? WHERE ${guard}`)
+      listing_logo_url,highlight_color,expires_at,commercial_origin,salary_currency,salary_period)
+      SELECT ?,?,(${companyWhere}),?,?,?,?,?,?,?,?,?,?,'manual',?,?,?,?,?,?,?,?,'native','USD','yearly' WHERE ${guard}`)
       .bind(jobId,order.tenant_id,order.tenant_id,companyNorm,`paid:${jobId}`,input.title,input.title.toLowerCase(),slug,
         input.location,input.remote,input.descriptionHtml,input.applyUrl||`/jobs/${slug}/apply`,input.salaryMin,input.salaryMax,
         options.stickyDays?addDays(now,options.stickyDays):null,options.highlight==='none'?0:1,at,at,at,

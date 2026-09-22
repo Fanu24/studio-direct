@@ -11,7 +11,8 @@ export function annualUsdSalarySql(bound:'min'|'max') {
 export const RELIABLE_SALARY_SQL = `(${annualUsdSalarySql('min')}>0 AND ${annualUsdSalarySql('max')}>=${annualUsdSalarySql('min')})`;
 
 /** Owner policy: market salary statistics use external scraped jobs only, never our paid posts. */
-export const SCRAPED_SALARY_SQL = `(j.commercial_origin='aggregated' AND ${RELIABLE_SALARY_SQL})`;
+export const SCRAPED_JOB_SQL = "(j.commercial_origin='aggregated' AND j.source<>'manual')";
+export const SCRAPED_SALARY_SQL = `(${SCRAPED_JOB_SQL} AND ${RELIABLE_SALARY_SQL})`;
 
 /** The same cohort threshold applies to all public salary dimensions and breakdowns. */
 export function publicSalaryStats(rows:readonly {min:number|null;max:number|null}[]) {

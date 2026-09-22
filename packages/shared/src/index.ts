@@ -148,5 +148,5 @@ export {listingPeriodStatements,reconcileListingPeriods} from './listing-periods
 export {resolveJobLocations} from './job-locations.ts';
 export {careerDetailLinks} from './source-discovery.ts';
 
-export {MIN_SALARY_SAMPLE, annualUsdSalarySql, RELIABLE_SALARY_SQL, SCRAPED_SALARY_SQL, publicSalaryStats} from "./product/salary-policy.ts";
+export {MIN_SALARY_SAMPLE, annualUsdSalarySql, RELIABLE_SALARY_SQL, SCRAPED_JOB_SQL, SCRAPED_SALARY_SQL, publicSalaryStats} from "./product/salary-policy.ts";
 export {refreshFxRates,parseFxRates,FX_SOURCE,FX_ENDPOINT} from './product/fx-rates.ts';

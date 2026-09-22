@@ -99,9 +99,12 @@ it('excludes every native job from scraped salary statistics, including visible 
   expect(await tagSalaryRange(state.db,tenantId,'rust')).toEqual({min:null,max:null,count:0});
   expect(await resolveSalaryStats(state.db,tenantId,'role','rust-developer')).toBeNull();
   // Change fixture provenance to model a mixed catalog: only the external cohort counts.
-  state.sql.exec("UPDATE jobs SET commercial_origin='aggregated',hide_salary=0 WHERE id IN ('paid:cohort-0','paid:cohort-1','paid:cohort-2','paid:cohort-3')");
+  state.sql.exec("UPDATE jobs SET commercial_origin='aggregated',hide_salary=0 WHERE id='paid:cohort-5'");
+  expect(await tagSalaryRange(state.db,tenantId,'rust')).toEqual({min:null,max:null,count:0});
+  expect((await listJobs(state.db,tenantId,{aggregatedOnly:true})).total).toBe(0);
+  state.sql.exec("UPDATE jobs SET commercial_origin='aggregated',source='career_page',hide_salary=0 WHERE id IN ('paid:cohort-0','paid:cohort-1','paid:cohort-2','paid:cohort-3')");
   expect(await tagSalaryRange(state.db,tenantId,'rust')).toEqual({min:null,max:null,count:4});
-  state.sql.exec("UPDATE jobs SET commercial_origin='aggregated',hide_salary=0 WHERE id='paid:cohort-4'");
+  state.sql.exec("UPDATE jobs SET commercial_origin='aggregated',source='career_page',hide_salary=0 WHERE id='paid:cohort-4'");
   const range=await tagSalaryRange(state.db,tenantId,'rust');
   expect(range.count).toBe(5);expect(range.min).toBeCloseTo(listing.salaryMin*12*1.2);expect(range.max).toBeCloseTo(listing.salaryMax*12*1.2);
   expect((await listCompanies(state.db,tenantId))[0].avgSalary).toBe(Math.round((listing.salaryMin+listing.salaryMax)/2*12*1.2));
