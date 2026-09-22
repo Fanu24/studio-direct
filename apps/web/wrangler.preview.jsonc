@@ -45,6 +45,6 @@
     "ADMIN_EMAILS": "xavier@lcplocalizations.com",
     "BETTER_AUTH_URL": "https://nodework-web.xavier-ff2.workers.dev",
     "LOCAL_MAIL": "false",
-    "SITE_INDEXING_ENABLED": "false"
+    "SITE_INDEXING_ENABLED": "true"
   }
 }

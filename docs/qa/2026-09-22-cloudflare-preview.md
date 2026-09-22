@@ -12,7 +12,7 @@ Il proprietario ha autorizzato la pubblicazione su workers.dev, con Stripe sandb
 - D1 `nodework-jobs`, migrazioni 0001–0023; R2 `nodework-files` privato; KV `nodework-locks`; code `nodework-crawl-career`, `nodework-crawl-linkedin`, `nodework-crawl-indeed`, più `nodework-crawl-career-failed`.
 - Importato soltanto il catalogo pubblico: 1.192 provenienze, 70 aziende collegate e 61 pagine Careers attive. Nessun account, CV, ordine o annuncio fittizio locale è stato trasferito.
 - Il crawler esegue le operazioni periodiche ogni 5 minuti e la raccolta ogni 6 ore; la discovery applica il proprio intervallo minimo di 24 ore. La prima raccolta remota è stata avviata e ha già importato annunci reali. Il numero di fonti nel catalogo non equivale al numero di pagine effettivamente monitorate.
-- `SITE_INDEXING_ENABLED=false`: `robots.txt` esclude l'intero sito e le pagine ricevono `X-Robots-Tag: noindex, nofollow`. Questa è una preferenza per i motori di ricerca, non un controllo di accesso: le pagine pubbliche sono raggiungibili.
+- `SITE_INDEXING_ENABLED=true`, abilitato su successiva richiesta esplicita del proprietario: `robots.txt` consente a tutti i crawler (`User-Agent: *`), inclusi quelli AI, di visitare le pagine pubbliche e pubblica la sitemap. Rimosso il precedente blocco globale `Disallow: /` e l'header globale `X-Robots-Tag: noindex, nofollow`. Restano le esclusioni delle API e delle pagine account; i controlli di autenticazione restano attivi.
 - Turnstile è in modalità **invisible**, come richiesto dal proprietario: nessuna casella da spuntare, verifica server mantenuta.
 
 Il dominio email è stato attivato con Cloudflare Email Sending. La posta in ingresso resta su Google e il DMARC esistente `p=none` è stato conservato. Il client Google esistente include origine workers.dev e callback `/api/auth/callback/google`, oltre a localhost; resta un client di test.
@@ -27,6 +27,7 @@ Il dominio email è stato attivato con Cloudflare Email Sending. La posta in ing
 - R2: caricamento e lettura di un oggetto sintetico con hash identico; la rotta pubblica rifiuta il percorso privato CV; oggetto di prova rimosso. Nessun CV personale è stato usato.
 - Stripe: endpoint pubblico abilitato in modalità test, chiave `sk_test_`, nuova firma webhook dedicata al deployment. Evento reale sandbox `checkout.session.completed`, pagamento di prova `paid`, nessuna consegna webhook pendente. Richieste non firmate al webhook respinte con HTTP 400. Nessun addebito reale.
 - Crawler: risposte health, messaggi della coda elaborati, annunci presenti in D1; esecuzione reale del cron da 5 minuti osservata con esito `ok`.
+- Dopo l'apertura ai crawler: richieste pubbliche con User-Agent browser, GPTBot, ClaudeBot e Googlebot ricevono HTTP 200 su home e `robots.txt`, regola `User-Agent: *` con `Allow: /`, sitemap corretta, nessun header globale `noindex`; la home dichiara `index, follow`. Anche `/sitemap.xml` risponde HTTP 200. Sono verifiche delle risposte del sito, non prove di visite effettive da parte dei crawler.
 
 L'evento Stripe di collegamento usa le fixture della CLI: verifica il collegamento pubblico, non sostituisce il percorso completo acquisto→annuncio→dashboard. La prova R2 verifica il servizio e la protezione del percorso; il percorso completo profilo→upload→candidatura→download resta parte del collaudo finale. Le prove locali approfondite già svolte restano documentate nei report precedenti.
 
@@ -47,4 +48,4 @@ La pubblicazione iniziale da Windows usa il bundle Linux con `no_bundle`, regole
 
 ## Dopo design e modifiche al prodotto
 
-Eseguire il collaudo completo dei percorsi candidati, datori, recruiter e pubblicità; acquisti e rimborsi di tutti i servizi; allegati e permessi; desktop/mobile, accessibilità e usabilità; SEO e prestazioni. Completare identità del gestore, informazioni sui fornitori e condizioni commerciali prima del lancio. Incassi reali e indicizzazione saranno attivati solo nella fase commerciale concordata.
+Eseguire il collaudo completo dei percorsi candidati, datori, recruiter e pubblicità; acquisti e rimborsi di tutti i servizi; allegati e permessi; desktop/mobile, accessibilità e usabilità; SEO e prestazioni. Completare identità del gestore, informazioni sui fornitori e condizioni commerciali prima del lancio. Gli incassi reali saranno attivati solo nella fase commerciale concordata; l'indicizzazione è già consentita su richiesta del proprietario.

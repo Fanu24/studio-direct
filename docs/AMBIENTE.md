@@ -1,6 +1,6 @@
 # Ambiente locale e collegamento dei servizi
 
-Aggiornato il 22 settembre 2026. È disponibile un ambiente di prova Cloudflare su https://nodework-web.xavier-ff2.workers.dev, con D1, R2 privato, code e crawler. Google OAuth e invio email sono collegati; Stripe resta esclusivamente sandbox. L'indicizzazione è disattivata. Design, differenziazione del prodotto e collaudo completo finale restano successivi. Configurazione e prove: [deploy di prova](qa/2026-09-22-cloudflare-preview.md).
+Aggiornato il 22 settembre 2026. È disponibile un ambiente di prova Cloudflare su https://nodework-web.xavier-ff2.workers.dev, con D1, R2 privato, code e crawler. Google OAuth e invio email sono collegati; Stripe resta esclusivamente sandbox. Su richiesta del proprietario, l'indicizzazione è attiva e tutti i crawler, inclusi quelli AI, possono visitare le pagine pubbliche. Design, differenziazione del prodotto e collaudo completo finale restano successivi. Configurazione e prove: [deploy di prova](qa/2026-09-22-cloudflare-preview.md).
 
 ## Avvio
 
