@@ -8,22 +8,6 @@ import type { MetadataRoute } from "next";
  */
 const RESERVED_ORIGINS = ["https://studio-direct.example", "https://placeholder.example"];
 
-export const PRIVATE_PATHS = [
-  "/api/",
-  "/admin",
-  "/employer",
-  "/recruiter",
-  "/api-access",
-  "/applications",
-  "/notifications",
-  "/saved-jobs",
-  "/alerts",
-  "/dashboard",
-  "/profile",
-  "/settings",
-  "/onboarding",
-] as const;
-
 export const dynamic = "force-dynamic";
 
 /**
@@ -55,7 +39,6 @@ export function buildRobots(siteUrl: string | null | undefined): MetadataRoute.R
       {
         userAgent: "*",
         allow: "/",
-        disallow: [...PRIVATE_PATHS],
       },
     ],
     sitemap: resolveRobotsSitemap(siteUrl),
