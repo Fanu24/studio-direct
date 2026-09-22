@@ -9,8 +9,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    env:
-      SITE_URL: ${{ vars.SITE_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -22,6 +20,8 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test:portable
       - run: pnpm --filter @gaming/web cf:build
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
       - name: Bundle deployable Workers on Linux
         run: |
           pnpm --filter @gaming/web exec wrangler deploy --dry-run --outdir .worker-bundle
