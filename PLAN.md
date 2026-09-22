@@ -178,4 +178,4 @@ Acceptance: confidential content absent from every public index/feed/social/news
 - [ ] Phase 6 accepted.
 - [ ] Phase 7 accepted.
 
-Phase 1 work is local: reference data, additive migrations, paid claims, native checkout/publication/editing, public projections, external-only salary statistics, and browser verification. No new migration or feature flag has been applied online. Stripe configuration is unchanged. See docs/qa for verification evidence as each phase is completed.
+Phase 1 application code d586f47 is deployed on the sandbox preview; migrations0024–0025 and reference data are applied. One real Stripe sandbox native-post journey (USD219) succeeded and was fully refunded; its QA listing/company are hidden. Posting/claim flags were enabled only for that check and restored OFF. The owner then requested that testing stop after this payment; do not start further QA automatically. Phase1 is not fully accepted and phases2–7 remain open. See docs/qa/product-v2-phase-1.md for evidence and outstanding work.

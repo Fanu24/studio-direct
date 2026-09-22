@@ -1,6 +1,6 @@
 # Product v2 — phase 1, work in progress
 
-Phase 1 is **not accepted**. The new code follows commit `165c5b0`; no new migration or product flag has been applied to the online preview. Stripe remains in test mode. This record does not claim completion of the other six phases in PLAN.md.
+Phase 1 is **not fully accepted**. Application commit `d586f47` is deployed on the Cloudflare preview after successful CI35768135335. Migrations0024–0025 and reference imports are applied. Posting/claim flags were enabled for one sandbox payment journey and restored OFF afterward. Stripe remains in test mode. The owner explicitly stopped further testing after this payment; do not launch another QA campaign automatically. This record does not claim completion of the other six phases in PLAN.md.
 
 ## Owner clarification: market salary data
 
@@ -38,12 +38,20 @@ The same source restriction covers roles, locations, seniority, company averages
 - CI 35767263257 for ebacac2 succeeded, including the Linux production build and deployable Worker artifacts. The font correction is verified.
 - Checkout recovery now resumes only the stored Stripe session, sends completed orders to their status page and permits a new submission after verified expiry. Browser attempt 09 passed explicit expired-checkout retries with retained form/claim fields and a new order ID; 24 business/HTTP recovery tests and web types passed. A subsequent build must include these follow-up fixes.
 
-## Remaining before phase acceptance
+## Deployed payment and stop instruction
 
-- Complete the deployed D1/browser/payment journey; local component and HTTP integration checks are passed. Review expiration/retry and ownership boundaries in that environment.
-- Confirm preview D1 migrations/reference import and the native paid journey against Stripe sandbox, then the intended deployment/flag activation. No live payments or final design.
-- Finish canonical filter/location coverage and review imported salary provenance/units before the phase-5 salary expansion. Unknown currencies must not be invented.
-- Build/test the new working tree on Linux CI. Do not deploy partial artifacts from an older commit.
+- Exact application CI35768135335 succeeded. Web version5df60161-42a5-4dd0-90b1-9bf7f9f1b21b; crawler versioncec12174-a077-4b9f-897d-b756f1782f27. Both use the tested Linux bundles. D1 references/counts and foreign keys verified before deployment.
+- Preview home, salary page, posting page, robots and crawler health succeeded; anonymous account export remains unauthorized. Salary page expressly excludes native Nodework jobs.
+- Browser completed a real Stripe **sandbox** Checkout for USD219: base post129 + hidden salary25 + three-day pin65. Verified return page and D1 order paid, one native job published, company access and pending claim created. No ownership approval.
+- Order `a2c3a254-ad2d-4b4e-a8c1-b2f8271b4e29` was fully refunded in sandbox. The signed refund delivery left the order refunded, job unlisted, entitlement refunded and claim revoked. Temporary QA company hidden and the QA-only employer profile removed; original user preserved. Financial audit history retained.
+- Receipts are stored in ignored `.wrangler/deploy/product-v2-public/`. No real charge and no synthetic public activity left visible. Both product flags were restored to their previous OFF state.
+- Owner instruction: finish the open payment test and stop; no further tests, no standalone claim payment and no new implementation followed that instruction. The existing browser receipt now says refunded.
+
+## Outstanding, without automatic retesting
+
+- Standalone paid claim has local business/HTTP/browser evidence, but no real provider journey for the new offer. Do not call it remotely tested.
+- Canonical filter/location coverage and imported salary provenance/units remain to review during the planned product work. A company-picker dropdown remained visible after selecting a new company in the remote journey; the payment still completed, and no extra fix/test cycle was started after the owner's stop.
+- Candidate profiles, annual plans, Premium, reviews, salary-history expansion, talent/communications and company ATS/confidential features remain later phases. Final design and live commercial launch are deferred.
 
 ## Rollback
 
