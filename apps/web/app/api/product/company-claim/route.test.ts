@@ -29,6 +29,21 @@ beforeEach(()=>{
 });
 afterEach(()=>{state.sql.close();vi.unstubAllGlobals();});
 describe('company claim HTTP purchase journey',()=>{
+  it('reuses the bound claim checkout and releases its reservation after confirmed expiry',async()=>{
+    let status='open',creates=0;
+    vi.stubGlobal('fetch',vi.fn(async(url:string)=>{
+      if(url.endsWith('/checkout/sessions')){creates++;return Response.json({id:'cs_claim',url:'https://checkout.stripe.com/c/pay/cs_claim',livemode:false});}
+      return Response.json({id:'cs_claim',url:'https://checkout.stripe.com/c/pay/cs_claim',livemode:false,metadata:{claimOrderId:id},status});
+    }));
+    const body={id,companyId:'company',companyUrl:'https://example.com'};
+    expect((await claimCheckout(request(body))).status).toBe(200);expect((await claimCheckout(request(body))).status).toBe(200);expect(creates).toBe(1);
+    status='expired';const expired=await claimCheckout(request(body));expect(expired.status).toBe(409);expect((await expired.json()).restart).toBe(true);
+    expect(state.sql.prepare('SELECT status FROM company_claim_orders').get().status).toBe('expired');expect(await companyAccountActive(state.db,'tenant:gaming','buyer')).toBe(false);
+    // A fresh submission can reserve this company again without altering the old payment record.
+    vi.stubGlobal('fetch',vi.fn(async()=>Response.json({id:'cs_new_claim',url:'https://checkout.stripe.com/c/pay/cs_new_claim',livemode:false})));
+    expect((await claimCheckout(request({...body,id:'12345678-1234-1234-1234-123456789def'}))).status).toBe(200);
+    expect(state.sql.prepare('SELECT COUNT(*) n FROM company_claim_orders').get().n).toBe(2);
+  });
   it('uses the configured price, activates only from a signed paid event, verifies ownership and revokes on refund',async()=>{
     const stripe=vi.fn(async(_url:string,init:RequestInit)=>{
       const body=init.body as URLSearchParams;

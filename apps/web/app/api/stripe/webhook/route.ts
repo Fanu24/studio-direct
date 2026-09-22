@@ -56,6 +56,8 @@ export async function POST(request: Request) {
     await fulfillMarketOrder(env.DB,object as PaidSession,event.id);
   } else if(event.type==='checkout.session.expired'&&object?.metadata?.purchaseId&&event.id){
     await expireMarketCheckout(env.DB,object.id,event.id);
+  } else if(event.type==='checkout.session.expired'&&object?.metadata?.orderId){
+    await env.DB.prepare("UPDATE employer_orders SET status='cancelled' WHERE id=? AND stripe_session_id=? AND status='pending' AND offer_version=2").bind(object.metadata.orderId,object.id).run();
   } else if (object?.metadata?.orderId && ['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(event.type || '')) {
     if (!event.id) return Response.json({ code: 'invalid_event' }, { status: 400 });
     if(object.subscription){

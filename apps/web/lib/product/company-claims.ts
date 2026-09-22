@@ -64,6 +64,7 @@ export function companyPurchaseStatements(db: Database, input: {id:string;tenant
 
 export async function fulfillCompanyClaim(db: Database, session: PaidSession, eventId: string, now = new Date()) {
   if (!['paid','no_payment_required'].includes(session.payment_status)) return false;
+  if(session.livemode===true)throw new Error('Expected a test-mode checkout');
   const order = await claimOrderById(db,session.metadata?.claimOrderId ?? '');
   if (!order || order.status !== 'pending' || !order.user_id) return false;
   if (!order.stripe_session_id || order.stripe_session_id !== session.id) throw new Error('Claim checkout session mismatch.');

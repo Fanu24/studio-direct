@@ -20,7 +20,8 @@ export async function reconcileOrder(db:Database,secret:string,id:string,after='
   for(const item of invoices.data){const invoice=await resolveInvoice(secret,item,fetcher);await refundCheck(invoice.payment_intent);await recordPaidInvoice(db,invoice,'reconcile:'+invoice.id);}
   if(invoices.has_more)next=invoices.data.at(-1)?.id??null;
  }
- if(employer)await fulfillEmployerOrder(db,session,'reconcile:'+session.id);
+ if(employer?.offer_version===2&&session.status==='expired')await db.prepare("UPDATE employer_orders SET status='cancelled' WHERE id=? AND stripe_session_id=? AND status='pending' AND offer_version=2").bind(order.id,session.id).run();
+ else if(employer)await fulfillEmployerOrder(db,session,'reconcile:'+session.id);
  else if(session.status==='expired')await expireMarketCheckout(db,session.id,'reconcile:'+session.id);
  else await fulfillMarketOrder(db,session,'reconcile:'+session.id);
  if(employer&&session.subscription){

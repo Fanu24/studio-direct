@@ -4,6 +4,7 @@ import {loadProductFlags} from '../../../../lib/product/flags';
 import {claimOrderById,createCompanyClaimOrder,fulfillCompanyClaim} from '../../../../lib/product/company-claims';
 import {stripeRead} from '../../../../lib/billing/invoices';
 import {reversePayment} from '../../../../lib/billing/reversals';
+import {recoverProductCheckout} from '../../../../lib/product/checkout-recovery';
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({error:'Invalid request origin.'},{status:403});
@@ -33,16 +34,28 @@ export async function POST(request: Request) {
   let order;
   try {order = await createCompanyClaimOrder(env.DB,{id:raw.id,tenantId:tenant,userId:user.id,companyId:raw.companyId,companyUrl:raw.companyUrl});}
   catch (error) {return Response.json({error:error instanceof Error ? error.message : 'Invalid company claim.'},{status:400});}
-  if (order.status !== 'pending') return Response.json({error:'This claim checkout is already processed.'},{status:409});
   const origin = appOrigin(env);
+  const statusUrl=`${origin}/employer/claims?order=${order.id}`;
+  const expired=()=>Response.json({error:'This checkout expired. Your company selection is saved. Click Continue again to open a new checkout.',restart:true},{status:409});
+  if(order.status==='expired')return expired();
+  if(order.status!=='pending')return Response.json({url:statusUrl});
+  if(order.stripe_session_id)try{
+    const recovery=await recoverProductCheckout(env.STRIPE_SECRET_KEY,order.stripe_session_id,order.id,'claimOrderId',statusUrl);
+    if(!recovery.expired)return Response.json({url:recovery.url});
+    await env.DB.prepare("UPDATE company_claim_orders SET status='expired' WHERE id=? AND status='pending' AND stripe_session_id=?").bind(order.id,order.stripe_session_id).run();
+    return expired();
+  }catch{return Response.json({error:'Unable to check the existing payment. Please retry; no additional checkout was created.'},{status:502});}
   const body = new URLSearchParams({mode:'payment',customer_email:user.email,success_url:`${origin}/employer/claims?order=${order.id}`,cancel_url:`${origin}/claim-company?cancelled=1`,
     'metadata[claimOrderId]':order.id,'payment_intent_data[metadata][claimOrderId]':order.id,
     'line_items[0][quantity]':'1','line_items[0][price_data][currency]':order.currency,'line_items[0][price_data][unit_amount]':String(order.total_cents),
     'line_items[0][price_data][product_data][name]':'Nodework company page claim (no job posts)',allow_promotion_codes:'true',billing_address_collection:'required'});
+  try{
   const response = await fetch('https://api.stripe.com/v1/checkout/sessions',{method:'POST',headers:{Authorization:`Bearer ${env.STRIPE_SECRET_KEY}`,'Content-Type':'application/x-www-form-urlencoded','Idempotency-Key':`company-claim:${order.id}`},body,signal:AbortSignal.timeout(15000)});
   if (!response.ok) return Response.json({error:'Payment provider unavailable. Retry this claim.'},{status:502});
   const session = await response.json() as {id:string;url:string;livemode:boolean};
   if (!session.id || !session.url?.startsWith('https://checkout.stripe.com/') || session.livemode !== false) return Response.json({error:'Invalid test checkout response.'},{status:502});
   await env.DB.prepare('UPDATE company_claim_orders SET stripe_session_id=? WHERE id=? AND stripe_session_id IS NULL').bind(session.id,order.id).run();
+  if((await claimOrderById(env.DB,order.id))?.stripe_session_id!==session.id)throw new Error('Checkout identity mismatch.');
   return Response.json({url:session.url});
+  }catch{return Response.json({error:'Payment provider unavailable. Your company selection is saved; retry this claim.'},{status:502});}
 }

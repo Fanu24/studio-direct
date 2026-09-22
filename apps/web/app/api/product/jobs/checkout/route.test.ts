@@ -78,3 +78,23 @@ it('reconciles only the authenticated buyer and verifies the provider session, d
   runtime.user={id:'stranger',email:'stranger@example.com',emailVerified:true};expect((await checkout(request({id,action:'reconcile'}))).status).toBe(404);
   runtime.user={id:'buyer',email:'buyer@example.com',emailVerified:true};const checked=await checkout(request({id,action:'reconcile'}));expect(checked.status).toBe(200);expect(await checked.json()).toEqual({status:'paid'});
 });
+it('resumes one existing checkout and permits a fresh order only after confirmed expiry',async()=>{
+  let status='open',creates=0;
+  vi.stubGlobal('fetch',vi.fn(async(url:string)=>{
+    if(url.endsWith('/checkout/sessions')){creates++;return Response.json({id:'cs_job',url:'https://checkout.stripe.com/c/pay/cs_job',livemode:false});}
+    return Response.json({...session(),status,payment_status:'unpaid',payment_intent:null,url:'https://checkout.stripe.com/c/pay/cs_job'});
+  }));
+  expect((await checkout(request(payload()))).status).toBe(200);
+  expect((await (await checkout(request(payload()))).json()).url).toContain('checkout.stripe.com');expect(creates).toBe(1);
+  status='complete';expect((await (await checkout(request(payload()))).json()).url).toContain('/employer/purchase?order=');expect(creates).toBe(1);
+  status='expired';const expired=await checkout(request(payload()));expect(expired.status).toBe(409);expect((await expired.json()).restart).toBe(true);
+  expect(state.sql.prepare('SELECT status FROM employer_orders').get().status).toBe('cancelled');expect(creates).toBe(1);
+  expect(state.sql.prepare('SELECT COUNT(*) n FROM jobs').get().n).toBe(0);expect(await companyAccountActive(state.db,'tenant:gaming','buyer')).toBe(false);
+});
+it('handles signed expiry only for the bound pending session and keeps paid orders paid',async()=>{
+  vi.stubGlobal('fetch',vi.fn(async()=>Response.json({id:'cs_job',url:'https://checkout.stripe.com/c/pay/cs_job',livemode:false})));
+  await checkout(request(payload()));await webhook(signed('checkout.session.expired',{...session(),id:'cs_other'}));
+  expect(state.sql.prepare('SELECT status FROM employer_orders').get().status).toBe('pending');
+  await webhook(signed('checkout.session.completed',session()));await webhook(signed('checkout.session.expired',session()));
+  expect(state.sql.prepare('SELECT status FROM employer_orders').get().status).toBe('paid');
+});

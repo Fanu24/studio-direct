@@ -45,7 +45,7 @@ export function JobPostForm({earlyAccessEnabled=false,initial,initialChoices,ini
     event.preventDefault();const issues=validation();setErrors(issues);if(Object.keys(issues).length)return;
     setBusy(true);const bodyFingerprint=JSON.stringify({listing:draft,addons}),id=orderId&&fingerprint===bodyFingerprint?orderId:crypto.randomUUID();setOrderId(id);setFingerprint(bodyFingerprint);
     try{const response=await fetch(editJobId?'/api/product/jobs/edit':'/api/product/jobs/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,jobId:editJobId,listing:draft,addons})});
-      const data=await response.json();if(data.login){window.location.assign(data.login);return;}if(!response.ok){setErrors(data.fields??{form:data.error??'Checkout unavailable.'});setBusy(false);return;}window.location.assign(data.url);
+      const data=await response.json();if(data.login){window.location.assign(data.login);return;}if(!response.ok){if(data.restart===true){setOrderId('');setFingerprint('');}setErrors(data.fields??{form:data.error??'Checkout unavailable.'});setBusy(false);return;}window.location.assign(data.url);
     }catch{setErrors({form:'Unable to reach checkout. Your fields are still here; please retry.'});setBusy(false);}
   }
   return <form className="commerce-form stack" onSubmit={submit} noValidate><fieldset disabled={busy} className="stack">

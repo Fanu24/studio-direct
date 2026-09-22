@@ -35,6 +35,8 @@ The same source restriction covers roles, locations, seniority, company averages
 - CI 35765179016 for 90870c9 passed all Node suites and typechecks, then failed the old Workers scheduler assertion that cron never calls fetch. It now explicitly mocks and verifies the one daily FX call and queued source dispatch; the next CI run must confirm this fix.
 - CI 35765994574 for 7ec7b69 passed all Node/Workers tests, types, upgrade/reference checks and the Chromium journeys. Its production build failed inside next/font/google parsing an upstream font URL. The existing three font families are now loaded from pinned, hash-verified local originals with their licenses, removing that network dependency; no visual redesign. The next build must confirm the correction.
 - Additional salary provenance audit fixed legacy checkout/credit publication to explicitly mark those jobs native. Manual records are also excluded defensively from scraped cohorts and salary-page job lists. The 57 targeted job/query/payment tests and web typecheck passed after this correction.
+- CI 35767263257 for ebacac2 succeeded, including the Linux production build and deployable Worker artifacts. The font correction is verified.
+- Checkout recovery now resumes only the stored Stripe session, sends completed orders to their status page and permits a new submission after verified expiry. Browser attempt 09 passed explicit expired-checkout retries with retained form/claim fields and a new order ID; 24 business/HTTP recovery tests and web types passed. A subsequent build must include these follow-up fixes.
 
 ## Remaining before phase acceptance
 

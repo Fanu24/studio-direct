@@ -5,6 +5,7 @@ import {loadProductFlags} from '../../../../../lib/product/flags';
 import {createNativeOrder,nativeSelection} from '../../../../../lib/product/native-orders';
 import {orderById} from '../../../../../lib/billing/employer-orders';
 import {reconcileOrder} from '../../../../../lib/billing/reconcile-order';
+import {recoverProductCheckout} from '../../../../../lib/product/checkout-recovery';
 
 export async function POST(request:Request) {
   if(!sameOrigin(request))return Response.json({error:'Invalid request origin.'},{status:403});
@@ -26,8 +27,17 @@ export async function POST(request:Request) {
   let order;
   try{order=await createNativeOrder(env.DB,{id:raw.id,tenantId,userId:user.id,listing:raw.listing,addons:raw.addons,flags});}
   catch(error){return Response.json({error:error instanceof Error?error.message:'Invalid job.',...(error instanceof PostingValidationError?{fields:error.fields}:{})},{status:400});}
-  if(order.status!=='pending')return Response.json({error:'This order is already processed.'},{status:409});
   const {quote}=nativeSelection(order),origin=appOrigin(env);
+  const statusUrl=`${origin}/employer/purchase?order=${order.id}`;
+  const expired=()=>Response.json({error:'This checkout expired. Your draft is saved. Click Continue again to open a new checkout.',restart:true},{status:409});
+  if(order.status==='cancelled')return expired();
+  if(order.status!=='pending')return Response.json({url:statusUrl});
+  if(order.stripe_session_id)try{
+    const recovery=await recoverProductCheckout(env.STRIPE_SECRET_KEY,order.stripe_session_id,order.id,'orderId',statusUrl);
+    if(!recovery.expired)return Response.json({url:recovery.url});
+    await env.DB.prepare("UPDATE employer_orders SET status='cancelled' WHERE id=? AND status='pending' AND stripe_session_id=?").bind(order.id,order.stripe_session_id).run();
+    return expired();
+  }catch{return Response.json({error:'Unable to check the existing payment. Please retry; no additional checkout was created.'},{status:502});}
   const body=new URLSearchParams({mode:'payment',customer_email:user.email,success_url:`${origin}/employer/purchase?order=${order.id}`,cancel_url:`${origin}/post-web3-job?cancelled=1`,
     'metadata[orderId]':order.id,'payment_intent_data[metadata][orderId]':order.id,allow_promotion_codes:'true',billing_address_collection:'required'});
   const labels={job:`Nodework job post (${quote.durationDays} days, company claim included)`,hide_salary:'Hide salary range',pin:'Pinned placement',early_access:'Early Access',confidential:'Confidential post'};

@@ -12,7 +12,7 @@ export function CompanyClaimForm() {
     setBusy(true);setError('');const requestId=id||crypto.randomUUID();setId(requestId);
     try {
       const response=await fetch('/api/product/company-claim',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:requestId,companyId:company[0].id,companyUrl:`https://${company[0].domain}`})});
-      const result=await response.json();if(result.login){window.location.assign(result.login);return;}if(!response.ok)throw Error(result.error||'Checkout unavailable.');window.location.assign(result.url);
+      const result=await response.json();if(result.login){window.location.assign(result.login);return;}if(!response.ok){if(result.restart===true)setId('');throw Error(result.error||'Checkout unavailable.');}window.location.assign(result.url);
     } catch(error) {setError(error instanceof Error?error.message:'Checkout unavailable.');setBusy(false);}
   }
   return <form className="stack" onSubmit={submit}><fieldset disabled={busy}><legend>Company page claim</legend>

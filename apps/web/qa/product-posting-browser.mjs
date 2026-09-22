@@ -30,17 +30,19 @@ const bundle=await build({absWorkingDir:root,entryPoints:['fixture:entry'],plugi
 const choices={companies:[{id:'fixture-company',name:'Example Company',domain:'example.com'}],regions:[{id:'country:IT',name:'Italy'}],cities:[{id:3173435,name:'Milan',region:'Lombardy',country_name:'Italy'}],skills:[{id:'rust',name:'Rust'}],languages:[{id:'en',name:'English',native_name:'English'}],benefits:[]};
 const submissions=[];
 const claimSubmissions=[];
-let authenticated=false,browser,page;
+let authenticated=false,expireJobOnce=false,expireClaimOnce=false,browser,page;
 const server=createServer(async(request,response)=>{
   const url=new URL(request.url,'http://localhost');
   if(url.pathname==='/bundle.js'){response.setHeader('Content-Type','text/javascript');response.end(bundle.outputFiles[0].contents);return;}
   if(url.pathname==='/api/product/reference'){response.setHeader('Content-Type','application/json');response.end(JSON.stringify({items:choices[url.searchParams.get('kind')]??[]}));return;}
   if(url.pathname==='/api/product/jobs/checkout'){
     let body='';for await(const part of request)body+=part;submissions.push(JSON.parse(body));response.setHeader('Content-Type','application/json');
+    if(expireJobOnce){expireJobOnce=false;response.statusCode=409;response.end(JSON.stringify({restart:true,error:'This checkout expired. Your draft is saved.'}));return;}
     response.statusCode=authenticated?200:401;response.end(JSON.stringify(authenticated?{url:'/checkout-fixture'}:{login:'/employer/login?next=/post-web3-job'}));return;
   }
   if(url.pathname==='/api/product/company-claim'){
     let body='';for await(const part of request)body+=part;claimSubmissions.push(JSON.parse(body));response.setHeader('Content-Type','application/json');response.statusCode=authenticated?200:401;
+    if(expireClaimOnce){expireClaimOnce=false;response.statusCode=409;response.end(JSON.stringify({restart:true,error:'This checkout expired. Your company selection is saved.'}));return;}
     response.end(JSON.stringify(authenticated?{url:'/checkout-fixture'}:{login:'/employer/login?next=/claim-company'}));return;
   }
   if(url.pathname==='/employer/login'){authenticated=true;const next=url.searchParams.get('next')==='/claim-company'?'/claim-company':'/post-web3-job';response.end(`<h1>Fixture login</h1><a href="${next}">Return to your draft</a>`);return;}
@@ -78,6 +80,10 @@ try{
   expect(submissions).toHaveLength(2);expect(submissions[1].id).toBe(submissions[0].id);
   expect(submissions[1].listing).toMatchObject({salaryCurrency:'EUR',salaryPeriod:'monthly',cryptoPaymentAvailable:true,workArrangement:'remote',requiredSkillIds:['rust'],applicationsEmail:'hiring@example.com'});
   expect(submissions[1].addons).toMatchObject({pinDays:3,hideSalary:true});expect(errors).toEqual([]);
+  expireJobOnce=true;await page.goto(origin+'/post-web3-job');await page.getByRole('button',{name:/Continue to checkout/}).click();
+  await expect(page.getByText('This checkout expired. Your draft is saved.')).toBeVisible();await expect(page.getByLabel('Job title',{exact:false})).toHaveValue('Protocol Engineer');
+  await page.getByRole('button',{name:/Continue to checkout/}).click();await expect(page.getByRole('heading',{name:'Checkout reached'})).toBeVisible();
+  expect(submissions[2].id).toBe(submissions[1].id);expect(submissions[3].id).not.toBe(submissions[2].id);expect(submissions[3].listing).toEqual(submissions[2].listing);
   authenticated=false;await page.goto(origin+'/claim-company');
   await expect(page.getByRole('button',{name:/Continue to test checkout/})).toBeDisabled();await choose('Company','Example Company');
   await expect(page.getByText('No job posts are included.',{exact:false})).toBeVisible();
@@ -86,6 +92,9 @@ try{
   await page.getByRole('link',{name:'Return to your draft'}).click();await expect(page.getByText('Company website: https://example.com',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:/Continue to test checkout/}).click();await expect(page.getByRole('heading',{name:'Checkout reached'})).toBeVisible();
   expect(claimSubmissions).toHaveLength(2);expect(claimSubmissions[1]).toEqual(claimSubmissions[0]);expect(claimSubmissions[1].companyId).toBe('fixture-company');expect(errors).toEqual([]);
+  expireClaimOnce=true;await page.goto(origin+'/claim-company');await page.getByRole('button',{name:/Continue to test checkout/}).click();
+  await expect(page.getByText('This checkout expired. Your company selection is saved.')).toBeVisible();await page.getByRole('button',{name:/Continue to test checkout/}).click();
+  await expect(page.getByRole('heading',{name:'Checkout reached'})).toBeVisible();expect(claimSubmissions[2].id).toBe(claimSubmissions[1].id);expect(claimSubmissions[3].id).not.toBe(claimSubmissions[2].id);expect(errors).toEqual([]);
   await writeFile(resolve(out,'result.json'),JSON.stringify({passed:true,checks:['required-field validation','conditional location and eligibility','canonical suggestions','current price total','draft restored after login','idempotency key retained','standalone claim selection/price/no-post notice','claim retained across login'],transport:'local fixture; HTTP payment integration tested separately'},null,2));
   console.log('Product form browser checks passed. No live users, jobs or payments created.');
 }catch(error){if(page){await writeFile(resolve(out,'failure.html'),await page.content());await page.screenshot({path:resolve(out,'failure.png'),fullPage:true});}await writeFile(resolve(out,'result.json'),JSON.stringify({passed:false,error:String(error)},null,2));throw error;}
