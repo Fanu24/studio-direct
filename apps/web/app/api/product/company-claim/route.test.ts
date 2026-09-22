@@ -67,4 +67,16 @@ describe('company claim HTTP purchase journey',()=>{
     const response=await webhook(new Request(origin+'/api/stripe/webhook',{method:'POST',headers:{'stripe-signature':'t=1,v1=invalid'},body:JSON.stringify({type:'checkout.session.completed',data:{object:{metadata:{claimOrderId:id}}}})}));
     expect(response.status).toBe(400);expect(await companyAccountActive(state.db,'tenant:gaming','buyer')).toBe(false);
   });
+  it('can reconcile a previously purchased claim after new claim sales are disabled',async()=>{
+    vi.stubGlobal('fetch',vi.fn(async(url:string)=>{
+      if(url.endsWith('/checkout/sessions'))return Response.json({id:'cs_claim',url:'https://checkout.stripe.com/c/pay/cs_claim',livemode:false});
+      if(url.includes('payment_intents'))return Response.json({id:'pi_claim',latest_charge:{refunded:false}});
+      return Response.json({id:'cs_claim',livemode:false,metadata:{claimOrderId:id},payment_status:'paid',currency:'usd',amount_subtotal:pricing.companyClaim,amount_total:pricing.companyClaim,payment_intent:'pi_claim'});
+    }));
+    expect((await claimCheckout(request({id,companyId:'company',companyUrl:'https://example.com'}))).status).toBe(200);
+    runtime.env.PRODUCT_COMPANY_CLAIMS='false';
+    expect((await claimCheckout(request({id,companyId:'company',companyUrl:'https://example.com'}))).status).toBe(404);
+    const reconciled=await claimCheckout(request({id,action:'reconcile'}));expect(reconciled.status).toBe(200);expect(await reconciled.json()).toEqual({status:'paid'});
+    expect(await companyAccountActive(state.db,'tenant:gaming','buyer')).toBe(true);
+  });
 });

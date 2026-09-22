@@ -18,7 +18,7 @@ export default async function PostWeb3JobPage({searchParams}:{searchParams?:Prom
    let previous=null;
    if(repost){const buyer=await currentUser(environment);if(!buyer)redirect('/employer/login?next='+encodeURIComponent('/post-web3-job?repost='+repost));previous=await ownedNativeListing(environment.DB,buyer.id,repost);}
    return <main className="container container--content stack"><h1>Post a Web3 job</h1><p>Publish a job and claim your company page. Your company account activates after payment; ownership verification is separate.</p>
-     <p><Link href="/employer">Employer dashboard</Link> · <Link href="/claim-company">Claim a company page without a job</Link></p>
+     <p><Link href="/employer">Employer dashboard</Link>{flags.PRODUCT_COMPANY_CLAIMS?<> · <Link href="/claim-company">Claim a company page without a job</Link></>:null}</p>
      {repost&&!previous?<p>Reposting uses the current required fields. Complete the new form before purchasing.</p>:null}
      <JobPostForm initial={previous?.input} initialChoices={previous?.choices} initialAddons={previous?.addons}/></main>;
  }

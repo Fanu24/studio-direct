@@ -7,12 +7,13 @@ import {fileURLToPath} from 'node:url';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {existsSync,readFileSync} from 'node:fs';
 import {chromium,expect} from '@playwright/test';
+import {pricing,money} from '../../../packages/shared/src/product/pricing.ts';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const require=createRequire(import.meta.url);
 const vitestRequire=createRequire(require.resolve('vitest/package.json'));
 const {build}=createRequire(vitestRequire.resolve('vite/package.json'))('esbuild');
 const out=resolve(root,'../../.wrangler/qa/product-posting-browser');await mkdir(out,{recursive:true});
-const entry="import React from 'react';import {createRoot} from 'react-dom/client';import {JobPostForm} from './app/_components/product/job-post-form';createRoot(document.getElementById('app')).render(<JobPostForm/>);";
+const entry="import React from 'react';import {createRoot} from 'react-dom/client';import {JobPostForm} from './app/_components/product/job-post-form';import {CompanyClaimForm} from './app/_components/product/company-claim-form';createRoot(document.getElementById('app')).render(location.pathname==='/claim-company'?<CompanyClaimForm/>:<JobPostForm/>);";
 // Resolve and read only workspace files in Node. The native Windows bundler otherwise
 // scans inaccessible ancestor directories for config; no ancestor access is needed.
 const workspaceLoader={name:'workspace-files',setup(builder){
@@ -28,6 +29,7 @@ const workspaceLoader={name:'workspace-files',setup(builder){
 const bundle=await build({absWorkingDir:root,entryPoints:['fixture:entry'],plugins:[workspaceLoader],tsconfigRaw:{compilerOptions:{}},bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',define:{'process.env.NODE_ENV':'"test"'}});
 const choices={companies:[{id:'fixture-company',name:'Example Company',domain:'example.com'}],regions:[{id:'country:IT',name:'Italy'}],cities:[{id:3173435,name:'Milan',region:'Lombardy',country_name:'Italy'}],skills:[{id:'rust',name:'Rust'}],languages:[{id:'en',name:'English',native_name:'English'}],benefits:[]};
 const submissions=[];
+const claimSubmissions=[];
 let authenticated=false,browser,page;
 const server=createServer(async(request,response)=>{
   const url=new URL(request.url,'http://localhost');
@@ -37,7 +39,11 @@ const server=createServer(async(request,response)=>{
     let body='';for await(const part of request)body+=part;submissions.push(JSON.parse(body));response.setHeader('Content-Type','application/json');
     response.statusCode=authenticated?200:401;response.end(JSON.stringify(authenticated?{url:'/checkout-fixture'}:{login:'/employer/login?next=/post-web3-job'}));return;
   }
-  if(url.pathname==='/employer/login'){authenticated=true;response.end('<h1>Fixture login</h1><a href="/post-web3-job">Return to your draft</a>');return;}
+  if(url.pathname==='/api/product/company-claim'){
+    let body='';for await(const part of request)body+=part;claimSubmissions.push(JSON.parse(body));response.setHeader('Content-Type','application/json');response.statusCode=authenticated?200:401;
+    response.end(JSON.stringify(authenticated?{url:'/checkout-fixture'}:{login:'/employer/login?next=/claim-company'}));return;
+  }
+  if(url.pathname==='/employer/login'){authenticated=true;const next=url.searchParams.get('next')==='/claim-company'?'/claim-company':'/post-web3-job';response.end(`<h1>Fixture login</h1><a href="${next}">Return to your draft</a>`);return;}
   if(url.pathname==='/checkout-fixture'){response.end('<h1>Checkout reached</h1>');return;}
   response.setHeader('Content-Type','text/html; charset=utf-8');response.end('<!doctype html><html lang="en"><meta charset="utf-8"><title>Product form QA</title><div id="app"></div><script src="/bundle.js"></script></html>');
 });
@@ -64,7 +70,7 @@ try{
   await page.getByLabel('Restrict by time zone instead').uncheck();await choose('Countries, territories and regions','Italy');
   await choose('Required skills','Rust');await choose('Languages','English');
   await page.getByLabel('Email',{exact:true}).check();await page.getByLabel('Applications email').fill('hiring@example.com');
-  await page.getByLabel('Pinned placement').selectOption('3');await expect(page.getByRole('button',{name:'Continue to checkout · $219.00'})).toBeVisible();
+  await page.getByLabel('Pinned placement').selectOption('3');await expect(page.getByRole('button',{name:'Continue to checkout · '+money(pricing.jobPost.base+pricing.addons.hideSalary+pricing.addons.pin[3])})).toBeVisible();
   await page.getByRole('button',{name:/Continue to checkout/}).click();await expect(page.getByRole('heading',{name:'Fixture login'})).toBeVisible();
   await page.getByRole('link',{name:'Return to your draft'}).click();
   await expect(page.getByLabel('Job title',{exact:false})).toHaveValue('Protocol Engineer');await expect(page.getByLabel('Minimum',{exact:true})).toHaveValue('5000');
@@ -72,7 +78,15 @@ try{
   expect(submissions).toHaveLength(2);expect(submissions[1].id).toBe(submissions[0].id);
   expect(submissions[1].listing).toMatchObject({salaryCurrency:'EUR',salaryPeriod:'monthly',cryptoPaymentAvailable:true,workArrangement:'remote',requiredSkillIds:['rust'],applicationsEmail:'hiring@example.com'});
   expect(submissions[1].addons).toMatchObject({pinDays:3,hideSalary:true});expect(errors).toEqual([]);
-  await writeFile(resolve(out,'result.json'),JSON.stringify({passed:true,checks:['required-field validation','conditional location and eligibility','canonical suggestions','current price total','draft restored after login','idempotency key retained'],transport:'local fixture; HTTP payment integration tested separately'},null,2));
+  authenticated=false;await page.goto(origin+'/claim-company');
+  await expect(page.getByRole('button',{name:/Continue to test checkout/})).toBeDisabled();await choose('Company','Example Company');
+  await expect(page.getByText('No job posts are included.',{exact:false})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Continue to test checkout · '+money(pricing.companyClaim)})).toBeEnabled();
+  await page.getByRole('button',{name:/Continue to test checkout/}).click();await expect(page.getByRole('heading',{name:'Fixture login'})).toBeVisible();
+  await page.getByRole('link',{name:'Return to your draft'}).click();await expect(page.getByText('Company website: https://example.com',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:/Continue to test checkout/}).click();await expect(page.getByRole('heading',{name:'Checkout reached'})).toBeVisible();
+  expect(claimSubmissions).toHaveLength(2);expect(claimSubmissions[1]).toEqual(claimSubmissions[0]);expect(claimSubmissions[1].companyId).toBe('fixture-company');expect(errors).toEqual([]);
+  await writeFile(resolve(out,'result.json'),JSON.stringify({passed:true,checks:['required-field validation','conditional location and eligibility','canonical suggestions','current price total','draft restored after login','idempotency key retained','standalone claim selection/price/no-post notice','claim retained across login'],transport:'local fixture; HTTP payment integration tested separately'},null,2));
   console.log('Product form browser checks passed. No live users, jobs or payments created.');
 }catch(error){if(page){await writeFile(resolve(out,'failure.html'),await page.content());await page.screenshot({path:resolve(out,'failure.png'),fullPage:true});}await writeFile(resolve(out,'result.json'),JSON.stringify({passed:false,error:String(error)},null,2));throw error;}
 finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

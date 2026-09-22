@@ -10,7 +10,6 @@ export async function POST(request: Request) {
   const env = await platform(), user = await currentUser(env,request), tenant = await requireTenantId(env.DB);
   if (!user) return Response.json({error:'Sign in before claiming a company.',login:'/employer/login?next=/claim-company'},{status:401});
   const flags = await loadProductFlags(env.DB,tenant,env);
-  if (!flags.PRODUCT_COMPANY_CLAIMS) return Response.json({error:'Not found.'},{status:404});
   if (env.STRIPE_ENABLED !== 'true' || !env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) return Response.json({error:'Test checkout is not configured.'},{status:503});
   let raw: {id?:unknown;companyId?:unknown;companyUrl?:unknown;action?:unknown};
   try {raw = await request.json();} catch {return Response.json({error:'Invalid request.'},{status:400});}
@@ -29,6 +28,7 @@ export async function POST(request: Request) {
     else await fulfillCompanyClaim(env.DB,session,'reconcile:'+session.id);
     return Response.json({status:(await claimOrderById(env.DB,order.id))?.status});
   }
+  if (!flags.PRODUCT_COMPANY_CLAIMS) return Response.json({error:'Not found.'},{status:404});
   if (typeof raw.companyId !== 'string' || typeof raw.companyUrl !== 'string') return Response.json({error:'Choose the company and its website.'},{status:400});
   let order;
   try {order = await createCompanyClaimOrder(env.DB,{id:raw.id,tenantId:tenant,userId:user.id,companyId:raw.companyId,companyUrl:raw.companyUrl});}

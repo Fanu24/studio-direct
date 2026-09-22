@@ -31,9 +31,12 @@ The same source restriction covers roles, locations, seniority, company averages
 - Browser component journey uses the actual React form with local reference/checkout fixtures. Separate HTTP integration tests use real in-memory migrations and a signed webhook with a fake Stripe transport. These are **not** a real new-offer Stripe payment or deployed D1/browser journey.
 - Browser setup attempts 01–04 failed before running the form (module resolution, native Windows ancestor scanning, absent Chromium). The QA bundler now reads only workspace files using Node; Chromium is installed in ignored .wrangler/playwright. Browser attempts 05–06 exposed select-label and blur-layout issues. Attempt 07 passed after fixing them: required fields, arrangement/location/time-zone controls, canonical selections, price total, draft restoration and retained idempotency key. Receipts are outside the repo in work/control/product-browser-check-*.
 
+- Browser attempt 08 passed the posting and standalone claim journeys, including both login/draft recovery paths. Claim status/reconciliation remain available when new claim sales are disabled; 15 claim business/HTTP tests passed, including that rollback case.
+- CI 35765179016 for 90870c9 passed all Node suites and typechecks, then failed the old Workers scheduler assertion that cron never calls fetch. It now explicitly mocks and verifies the one daily FX call and queued source dispatch; the next CI run must confirm this fix.
+
 ## Remaining before phase acceptance
 
-- Complete browser verification for posting and company claim, including retries/expiration and relevant ownership boundaries.
+- Complete the deployed D1/browser/payment journey; local component and HTTP integration checks are passed. Review expiration/retry and ownership boundaries in that environment.
 - Confirm preview D1 migrations/reference import and the native paid journey against Stripe sandbox, then the intended deployment/flag activation. No live payments or final design.
 - Finish canonical filter/location coverage and review imported salary provenance/units before the phase-5 salary expansion. Unknown currencies must not be invented.
 - Build/test the new working tree on Linux CI. Do not deploy partial artifacts from an older commit.
