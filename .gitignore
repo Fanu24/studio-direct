@@ -1,6 +1,7 @@
 node_modules/
 .wrangler/
 .open-next/
+.worker-bundle/
 dist/
 .next/
 .turbo/

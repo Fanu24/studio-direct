@@ -1,6 +1,6 @@
 # Ambiente locale e collegamento dei servizi
 
-Aggiornato il 21 settembre 2026. Google OAuth in modalità Testing e Stripe sandbox sono stati collegati e collaudati in locale. Nessun deploy, addebito reale o invio di email reali è stato eseguito. Risultati e limiti: [resoconto QA](qa/2026-09-17-auth-payments-discovery.md).
+Aggiornato il 22 settembre 2026. È disponibile un ambiente di prova Cloudflare su https://nodework-web.xavier-ff2.workers.dev, con D1, R2 privato, code e crawler. Google OAuth e invio email sono collegati; Stripe resta esclusivamente sandbox. L'indicizzazione è disattivata. Design, differenziazione del prodotto e collaudo completo finale restano successivi. Configurazione e prove: [deploy di prova](qa/2026-09-22-cloudflare-preview.md).
 
 ## Avvio
 

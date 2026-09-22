@@ -1,0 +1,50 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nodework-web",
+  "account_id": "ff222c50c538a09ccd8d08f7d47e82e8",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-02",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nodework-jobs",
+      "database_id": "56265dff-9991-4a32-bd8e-8360f02ddafa",
+      "migrations_dir": "../../packages/db/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "nodework-files"
+    }
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL"
+    }
+  ],
+  "vars": {
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAE_xtphHrGgcW1W2",
+    "EMAIL_FROM": "xavier@lcplocalizations.com",
+    "STRIPE_ENABLED": "true",
+    "SITE_URL": "https://nodework-web.xavier-ff2.workers.dev",
+    "EMAIL_ENABLED": "true",
+    "ADMIN_EMAILS": "xavier@lcplocalizations.com",
+    "BETTER_AUTH_URL": "https://nodework-web.xavier-ff2.workers.dev",
+    "LOCAL_MAIL": "false",
+    "SITE_INDEXING_ENABLED": "false"
+  }
+}
