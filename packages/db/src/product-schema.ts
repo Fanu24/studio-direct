@@ -46,6 +46,9 @@ export const jobCities = sqliteTable('job_cities', {
 export const jobRemoteEligibility = sqliteTable('job_remote_eligibility', {
   jobId:text('job_id').primaryKey(),mode:text('mode').notNull(),rulesJson:text('rules_json').notNull(),
 });
+export const nativeListingDetails = sqliteTable('native_listing_details', {
+  jobId:text('job_id').primaryKey(),inputJson:text('input_json').notNull(),addonsJson:text('addons_json').notNull(),updatedAt:text('updated_at').notNull(),
+});
 export const companyClaimOrders = sqliteTable('company_claim_orders', {
   id:text('id').primaryKey(),tenantId:text('tenant_id').notNull(),userId:text('user_id'),companyId:text('company_id').notNull(),companyUrl:text('company_url').notNull(),
   totalCents:integer('total_cents').notNull(),currency:text('currency').notNull().default('usd'),status:text('status').notNull().default('pending'),
@@ -61,4 +64,8 @@ export const companyClaims = sqliteTable('company_claims', {
 });
 export const productBillingEvents = sqliteTable('product_billing_events', {
   id:text('id').primaryKey(),sourceId:text('source_id').notNull(),type:text('type').notNull(),processedAt:text('processed_at').notNull(),
+});
+
+export const fxRefreshState=sqliteTable('fx_refresh_state',{
+  id:integer('id').primaryKey(),nextAttemptAt:text('next_attempt_at').notNull(),leaseToken:text('lease_token').notNull(),lastSuccessAt:text('last_success_at'),lastError:text('last_error'),
 });

@@ -62,6 +62,7 @@ describe("buildRollupRow", () => {
       buildRollupRow("city", "berlin", [
         { min: 80000, max: 120000 },
         { min: 90000, max: 130000 },
+        ...Array.from({length:3},()=>({min:85000,max:125000})),
       ]),
     ).toEqual({
       dimension: "city",
@@ -69,18 +70,18 @@ describe("buildRollupRow", () => {
       avg: 105000,
       min: 80000,
       max: 130000,
-      jobCount30d: 2,
+      jobCount30d: 5,
     });
   });
 
   it("emits a company dimension row", () => {
-    expect(buildRollupRow("company", "riot-games", [{ min: 140000, max: 190000 }])).toEqual({
+    expect(buildRollupRow("company", "riot-games", Array.from({length:5},()=>({ min: 140000, max: 190000 })))).toEqual({
       dimension: "company",
       slug: "riot-games",
       avg: 165000,
       min: 140000,
       max: 190000,
-      jobCount30d: 1,
+      jobCount30d: 5,
     });
   });
 

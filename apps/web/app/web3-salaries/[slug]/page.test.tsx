@@ -120,6 +120,7 @@ describe("SalaryRolePage", () => {
     });
 
     expect(mocks.listJobs).toHaveBeenCalledWith(db, "tenant-gaming", {
+      aggregatedOnly: true,
       tag: undefined,
       orTitle: false,
       locationSlug: "united-states",
@@ -140,6 +141,7 @@ describe("SalaryRolePage", () => {
     });
 
     expect(mocks.listJobs).toHaveBeenCalledWith(db, "tenant-gaming", {
+      aggregatedOnly: true,
       tag: "solidity",
       orTitle: true,
       locationSlug: undefined,
@@ -168,8 +170,9 @@ describe("SalaryRolePage", () => {
     expect(copy).toContain("Average yearly salary");
     expect(copy).toContain("Not enough data yet");
     expect(copy).toContain("How many Solidity Developer jobs are there?");
-    expect(copy).toContain("How many applicants per Solidity Developer job?");
-    expect(copy).toContain("No one has applied");
+    expect(copy).not.toContain("How many applicants");
+    expect(copy).toContain("externally scraped job listings only");
+    expect(copy).not.toContain("No one has applied");
   });
 
   it("builds the full stats article - narrative, hourly rate, remote share and breakdowns - for a role with data", async () => {
@@ -214,8 +217,8 @@ describe("SalaryRolePage", () => {
     expect(copy).toContain("Solidity Developer salary by seniority");
     expect(copy).toContain("Nodework lists 10 Solidity Developer jobs right now.");
     expect(copy).toContain("6 of them published both a minimum and a maximum");
-    expect(copy).toContain("5 applications on Solidity Developer jobs");
-    expect(copy).toContain("averages 0.5 per listed role");
+    expect(copy).not.toContain("5 applications on Solidity Developer jobs");
+    expect(copy).not.toContain("averages 0.5 per listed role");
 
     const countryBreakdown = all.find(
       (el) => el.type === SalaryBreakdownTable && el.props.labelHeader === "Country",

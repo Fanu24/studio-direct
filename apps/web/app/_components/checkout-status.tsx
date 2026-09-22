@@ -13,6 +13,7 @@ export function CheckoutStatus({orderId}:{orderId:string}) {
         if(stopped)return;
         if(order.status==='paid'){
           for(const kind of ['job','bundle'])try{const key='nodework:listing:'+kind;if(JSON.parse(sessionStorage.getItem(key)||'null')?.id===orderId)sessionStorage.removeItem(key);}catch{}
+          try{if(JSON.parse(sessionStorage.getItem('nodework:posting:v2')||'null')?.orderId===orderId)sessionStorage.removeItem('nodework:posting:v2');}catch{}
           setStatus('Payment confirmed. Your purchase is available below.');router.refresh();return;
         }
         if(order.status!=='pending'){setStatus('Order status: '+order.status);return;}

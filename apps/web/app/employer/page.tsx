@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import {loadProductFlags} from '../../lib/product/flags';
+import {requireTenantId} from '../../lib/tenant';
 import {loadEmployer,employerOnboarding} from '../../lib/auth/employer';
 import {EmployerShell} from '../_components/employer-shell';
 import {CheckoutStatus} from '../_components/checkout-status';
@@ -11,6 +13,7 @@ export default async function EmployerPage({searchParams}:{searchParams?:Promise
   const orderId=(await searchParams)?.order;
   const env=await platform(),user=await currentUser(env);
   if(!user)redirect('/employer/login?next=/employer');
+  const product=await loadProductFlags(env.DB,await requireTenantId(env.DB),env);
   const account=await loadEmployer(env.DB,user.id,env);
   if(!account)redirect(employerOnboarding());
   const [orders,listings,credits,applications]=await Promise.all([
@@ -23,7 +26,7 @@ export default async function EmployerPage({searchParams}:{searchParams?:Promise
   ]);
   return <EmployerShell><p>{account.company_name}</p>
     {orderId&&orders.results.some(o=>o.id===orderId)?<CheckoutStatus orderId={orderId}/>:null}
-    <p><Link href="/post-web3-job">Post a job</Link> · <Link href="/post-web3-job/bundle">Buy a bundle</Link> · <Link href="/support">Contact support</Link></p>
+    <p><Link href="/post-web3-job">Post a job</Link> · {!product.PRODUCT_POSTING_V2?<Link href="/post-web3-job/bundle">Buy a bundle</Link>:<Link href="/employer/claims">Company page claim</Link>} · <Link href="/support">Contact support</Link></p>
     <p>After checkout, publication appears here once Stripe confirms payment. Closing a listing also stops its future automatic renewals. Use Manage billing to review your billing details.</p>
     <h2>Your listings</h2>{!listings.results.length?<p>No published listings yet.</p>:listings.results.map(j=><article className="panel" key={j.id}>
       <h3><Link href={`/jobs/${j.slug}`}>{j.title}</Link></h3><p>{j.listed?'Published':'Closed'} · Expires {j.expires_at.slice(0,10)}</p>

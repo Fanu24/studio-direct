@@ -3,6 +3,7 @@ import {employerAccessResponse,employerLogin} from '../../../../lib/auth/employe
 import { requireTenantId } from '../../../../lib/tenant';
 import { parseSelection } from '../../../../lib/billing/listing-catalog';
 import { parseListing } from '../../../../lib/billing/listing-input';
+import {loadProductFlags} from '../../../../lib/product/flags';
 import { createEmployerOrder } from '../../../../lib/billing/employer-orders';
 
 export async function POST(request:Request) {
@@ -13,6 +14,7 @@ export async function POST(request:Request) {
   const next=raw.kind==='bundle'?'/post-web3-job/bundle':'/post-web3-job';
   const env=await platform(),user=await currentUser(env,request);
   if(!user)return Response.json({error:'Sign in to post a job',login:employerLogin(next)},{status:401});
+  if((await loadProductFlags(env.DB,await requireTenantId(env.DB),env)).PRODUCT_POSTING_V2){const previous=await env.DB.prepare("SELECT id FROM employer_orders WHERE id=? AND user_id=? AND offer_version=1 AND status='pending'").bind(raw.id,user.id).first();if(!previous)return Response.json({error:'Use the current job posting form.',url:'/post-web3-job'},{status:409});}
   const access=await employerAccessResponse(env.DB,user.id,next,env);if(access)return access;
   if(env.STRIPE_ENABLED!=='true'||!env.STRIPE_SECRET_KEY)return Response.json({error:'Checkout is not configured yet'},{status:503});
   let order;

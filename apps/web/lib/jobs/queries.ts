@@ -1,5 +1,6 @@
+import {MIN_SALARY_SAMPLE, SCRAPED_SALARY_SQL, publicSalaryStats} from '@gaming/shared';
+import {PUBLIC_SALARY_SQL,PUBLIC_HIGHLIGHT_SQL,PUBLIC_PIN_SQL,PUBLIC_REQUIREMENTS_SQL,DEFAULT_JOB_ORDER_SQL,annualUsdSalarySql} from '../product/job-projection';
 import {
-  averageSalary,
   SALARY_ROLES,
   isCitySlug,
   isCountrySlug,
@@ -11,6 +12,8 @@ import {
 } from "@gaming/shared";
 
 export interface JobListFilters {
+  cryptoPayment?: boolean;
+  aggregatedOnly?: boolean;
   hidden?: boolean;
   q?: string;
   company?: string;
@@ -49,6 +52,11 @@ export interface JobsStatement {
 }
 
 export interface JobListItem {
+  salaryCurrency?:string|null;
+  salaryPeriod?:string|null;
+  hideSalary?:number;
+  cryptoPaymentAvailable?:number;
+  commercialOrigin?:string;
   id: string;
   slug: string;
   externalId: string | null;
@@ -79,6 +87,12 @@ export interface JobListResult {
 }
 
 export interface JobDetail {
+  requirements?: {requiredSkills:string[];preferredSkills:string[];languages:{code:string;level:string;kind:string}[];benefits:string[]};
+  salaryCurrency?:string|null;
+  salaryPeriod?:string|null;
+  hideSalary?:number;
+  cryptoPaymentAvailable?:number;
+  commercialOrigin?:string;
   id: string;
   slug: string;
   externalId: string | null;
@@ -223,7 +237,7 @@ export async function getJobForListItem(
   return getJobBySlug(db, tenantId, job.slug);
 }
 
-type JobDetailRow = JobDetail & { companyNameNorm: string; tagCsv: string | null };
+type JobDetailRow = JobDetail & { companyNameNorm: string; tagCsv: string | null; requirementsJson:string|null };
 
 /** Shared SELECT for loadJob/loadJobs - a `where` fragment is ANDed on. */
 function jobDetailQuery(where: string): string {
@@ -238,10 +252,9 @@ function jobDetailQuery(where: string): string {
       j.location,
       j.remote,
       j.description_html AS descriptionHtml,
-      j.salary_text AS salaryText,
-      j.salary_min AS salaryMin,
-      j.salary_max AS salaryMax,
-      j.highlight,
+      ${PUBLIC_REQUIREMENTS_SQL},
+      ${PUBLIC_SALARY_SQL},
+      ${PUBLIC_HIGHLIGHT_SQL},
       j.highlight_color AS highlightColor,
       j.exclusivity,
       j.posted_at AS postedAt,
@@ -255,11 +268,12 @@ function jobDetailQuery(where: string): string {
 }
 
 function mapJobDetailRow(row: JobDetailRow): JobDetail {
-  const { companyNameNorm, tagCsv, ...job } = row;
+  const { companyNameNorm, tagCsv, requirementsJson, ...job } = row;
   return {
     ...job,
     companySlug: slugTitle(companyNameNorm),
     tags: mapTags(tagCsv),
+    ...(requirementsJson?{requirements:JSON.parse(requirementsJson) as JobDetail['requirements']}:{}),
   };
 }
 
@@ -510,6 +524,7 @@ function buildJobsWhere(
     "c.listed = 1",
   ];
   const whereBindings: unknown[] = [tenantId];
+  if(filters.cryptoPayment)conditions.push('j.crypto_payment_available=1');
 
   const search = filters.q ? ftsQuery(filters.q) : "";
   if (search) {
@@ -583,14 +598,15 @@ function buildJobsWhere(
     whereBindings.push(containsPattern(filters.seniority.trim()));
   }
 
+  if(filters.aggregatedOnly)conditions.push("j.commercial_origin='aggregated'");
   if (filters.hasSalary) {
     conditions.push("j.salary_min IS NOT NULL AND j.salary_max IS NOT NULL");
   }
   if (Number.isFinite(filters.salaryMin)) {
-    conditions.push('j.salary_max >= ?');whereBindings.push(filters.salaryMin!);
+    conditions.push(`${annualUsdSalarySql('max')} >= ?`);whereBindings.push(filters.salaryMin!);
   }
   if (Number.isFinite(filters.salaryMax)) {
-    conditions.push('j.salary_min <= ?');whereBindings.push(filters.salaryMax!);
+    conditions.push(`${annualUsdSalarySql('min')} <= ?`);whereBindings.push(filters.salaryMax!);
   }
 
   const fromSql = `
@@ -620,14 +636,11 @@ export async function listJobs(
   const orderSql =
     filters.orderBy === "salary"
       ? `ORDER BY
-        j.salary_max DESC,
-        j.salary_min DESC,
+        ${annualUsdSalarySql('max')} DESC,
+        ${annualUsdSalarySql('min')} DESC,
         j.posted_at DESC,
         j.id ASC`
-      : `ORDER BY
-        CASE WHEN julianday(j.featured_until) > julianday('now') THEN 0 ELSE 1 END,
-        j.posted_at DESC,
-        j.id ASC`;
+      : DEFAULT_JOB_ORDER_SQL;
 
   const rows = await db
     .prepare(
@@ -642,12 +655,10 @@ export async function listJobs(
         CASE WHEN j.source='manual' THEN j.listing_logo_url ELSE c.logo_url END AS companyLogoUrl,
         j.location,
         j.remote,
-        j.salary_text AS salaryText,
-        j.salary_min AS salaryMin,
-        j.salary_max AS salaryMax,
-        j.highlight,
+        ${PUBLIC_SALARY_SQL},
+        ${PUBLIC_HIGHLIGHT_SQL},
       j.highlight_color AS highlightColor,
-        j.featured_until AS featuredUntil,
+        ${PUBLIC_PIN_SQL},
         j.exclusivity,
         j.posted_at AS postedAt,
         (SELECT GROUP_CONCAT(tag_slug, ',') FROM job_tags WHERE job_id = j.id) AS tagCsv
@@ -723,7 +734,8 @@ export async function listCompanies(
         c.domain AS domain,
         COUNT(j.id) AS jobCount,
         MAX(j.posted_at) AS lastPostedAt,
-        AVG((j.salary_min+j.salary_max)/2.0) AS avgSalary
+        CASE WHEN SUM(CASE WHEN ${SCRAPED_SALARY_SQL} THEN 1 ELSE 0 END)>=${MIN_SALARY_SAMPLE}
+          THEN AVG(CASE WHEN ${SCRAPED_SALARY_SQL} THEN (${annualUsdSalarySql('min')}+${annualUsdSalarySql('max')})/2.0 END) END AS avgSalary
       FROM companies c
       LEFT JOIN jobs j
         ON j.company_id = c.id
@@ -967,8 +979,8 @@ export async function tagSalaryRange(
   const row = await db
     .prepare(
       `SELECT
-        MIN(j.salary_min) AS min,
-        MAX(j.salary_max) AS max,
+        MIN(${annualUsdSalarySql('min')}) AS min,
+        MAX(${annualUsdSalarySql('max')}) AS max,
         COUNT(*) AS count
       FROM jobs j
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
@@ -976,14 +988,13 @@ export async function tagSalaryRange(
       WHERE j.tenant_id = ?
         AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
-        AND j.salary_min IS NOT NULL
-        AND j.salary_max IS NOT NULL`,
+        AND ${SCRAPED_SALARY_SQL}`,
     )
     .bind(tag, tenantId)
     .first<{ min: number | null; max: number | null; count: number | null }>();
   return {
-    min: row?.min ?? null,
-    max: row?.max ?? null,
+    min: Number(row?.count??0)>=MIN_SALARY_SAMPLE ? row?.min??null : null,
+    max: Number(row?.count??0)>=MIN_SALARY_SAMPLE ? row?.max??null : null,
     count: Number(row?.count ?? 0),
   };
 }
@@ -994,9 +1005,9 @@ export async function listSalaryRollups(
 ): Promise<SalaryRollupRow[]> {
   const sql = dimension
     ? `SELECT dimension, slug, avg, min, max, job_count_30d AS jobCount30d
-       FROM salary_rollups WHERE dimension = ? ORDER BY avg DESC`
+       FROM salary_rollups WHERE dimension = ? AND job_count_30d>=${MIN_SALARY_SAMPLE} ORDER BY avg DESC`
     : `SELECT dimension, slug, avg, min, max, job_count_30d AS jobCount30d
-       FROM salary_rollups ORDER BY dimension, avg DESC`;
+       FROM salary_rollups WHERE job_count_30d>=${MIN_SALARY_SAMPLE} ORDER BY dimension, avg DESC`;
   const statement = db.prepare(sql);
   const rows = dimension
     ? await statement.bind(dimension).all<SalaryRollupRow>()
@@ -1019,7 +1030,7 @@ export async function getSalaryRollup(
   return db
     .prepare(
       `SELECT dimension, slug, avg, min, max, job_count_30d AS jobCount30d
-       FROM salary_rollups WHERE dimension = ? AND slug = ? LIMIT 1`,
+       FROM salary_rollups WHERE dimension = ? AND slug = ? AND job_count_30d>=${MIN_SALARY_SAMPLE} LIMIT 1`,
     )
     .bind(dimension, slug)
     .first<SalaryRollupRow>();
@@ -1054,8 +1065,8 @@ async function listSalariedJobs(
   const rows = await db
     .prepare(
       `SELECT
-        j.salary_min AS min,
-        j.salary_max AS max,
+        ${annualUsdSalarySql('min')} AS min,
+        ${annualUsdSalarySql('max')} AS max,
         j.title,
         (SELECT GROUP_CONCAT(tag_slug, ',') FROM job_tags WHERE job_id = j.id) AS tagCsv
       FROM jobs j
@@ -1063,8 +1074,7 @@ async function listSalariedJobs(
       WHERE j.tenant_id = ?
         AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
-        AND j.salary_min IS NOT NULL
-        AND j.salary_max IS NOT NULL`,
+        AND ${SCRAPED_SALARY_SQL}`,
     )
     .bind(tenantId)
     .all<SalariedJobRow>();
@@ -1076,7 +1086,7 @@ function statsFromRows(
   slug: string,
   rows: readonly { min: number | null; max: number | null }[],
 ): SalaryStatsRow | null {
-  const stats = averageSalary(rows);
+  const stats = publicSalaryStats(rows);
   if (!stats) return null;
   return {
     dimension,
@@ -1084,7 +1094,7 @@ function statsFromRows(
     avg: stats.avg,
     min: stats.min,
     max: stats.max,
-    jobCount30d: rows.filter((row) => row.min != null && row.max != null).length,
+    jobCount30d: stats.count,
   };
 }
 
@@ -1142,9 +1152,9 @@ async function liveAggregateLocations(
     .prepare(
       `SELECT
         jl.location_slug AS slug,
-        AVG((j.salary_min + j.salary_max) / 2.0) AS avg,
-        MIN(j.salary_min) AS min,
-        MAX(j.salary_max) AS max,
+        AVG((${annualUsdSalarySql('min')} + ${annualUsdSalarySql('max')}) / 2.0) AS avg,
+        MIN(${annualUsdSalarySql('min')}) AS min,
+        MAX(${annualUsdSalarySql('max')}) AS max,
         COUNT(*) AS jobCount30d
       FROM jobs j
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
@@ -1152,8 +1162,7 @@ async function liveAggregateLocations(
       WHERE j.tenant_id = ?
         AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
-        AND j.salary_min IS NOT NULL
-        AND j.salary_max IS NOT NULL
+        AND ${SCRAPED_SALARY_SQL}
         AND jl.location_slug IN (${placeholders})
       GROUP BY jl.location_slug`,
     )
@@ -1168,7 +1177,7 @@ async function liveAggregateLocations(
 
   for (const row of rows.results) {
     const count = Number(row.jobCount30d ?? 0);
-    if (count === 0 || row.avg == null || row.min == null || row.max == null) continue;
+    if (count < MIN_SALARY_SAMPLE || row.avg == null || row.min == null || row.max == null) continue;
     map.set(row.slug, {
       dimension,
       slug: row.slug,
@@ -1253,8 +1262,8 @@ async function salariedJobsForTag(
   const rows = await db
     .prepare(
       `SELECT
-        j.salary_min AS min,
-        j.salary_max AS max,
+        ${annualUsdSalarySql('min')} AS min,
+        ${annualUsdSalarySql('max')} AS max,
         j.title,
         (SELECT GROUP_CONCAT(location_slug, ',') FROM job_locations WHERE job_id = j.id) AS locationCsv
       FROM jobs j
@@ -1263,8 +1272,7 @@ async function salariedJobsForTag(
       WHERE j.tenant_id = ?
         AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
-        AND j.salary_min IS NOT NULL
-        AND j.salary_max IS NOT NULL`,
+        AND ${SCRAPED_SALARY_SQL}`,
     )
     .bind(tag, tenantId)
     .all<{ min: number; max: number; title: string; locationCsv: string | null }>();
@@ -1315,7 +1323,7 @@ export async function resolveSalaryBreakdown(
 
   const results: SalaryBreakdownRow[] = [];
   for (const [slug, rows] of buckets) {
-    const stats = averageSalary(rows);
+    const stats = publicSalaryStats(rows);
     if (!stats) continue;
     results.push({ slug, min: stats.min, avg: stats.avg, max: stats.max, count: rows.length });
   }

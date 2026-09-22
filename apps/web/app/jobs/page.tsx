@@ -93,7 +93,7 @@ function loadJobs(params: JobsSearchParams) {
     first(params.remote) === "1",
     first(params.source),
     first(params.hidden) === "1",
-    JSON.stringify({locationSlug:first(params.location),benefit:first(params.benefit),tags:first(params.tags)?.split(',').filter(Boolean).slice(0,10),salaryMin:positiveNumber(params.salary_min),salaryMax:positiveNumber(params.salary_max)}),
+    JSON.stringify({cryptoPayment:first(params.crypto_payment)==='1',locationSlug:first(params.location),benefit:first(params.benefit),tags:first(params.tags)?.split(',').filter(Boolean).slice(0,10),salaryMin:positiveNumber(params.salary_min),salaryMax:positiveNumber(params.salary_max)}),
     positiveNumber(params.page),
     positiveNumber(params.pageSize),
   );
@@ -209,6 +209,7 @@ export default async function JobsPage({
     filters.tags?.length ? {key: "tags", label: filters.tags.map(tagLabel).join(' + ')} : null,
     filters.locationSlug ? {key: "location", label: tagLabel(filters.locationSlug)} : null,
     filters.benefit ? {key: "benefit", label: tagLabel(filters.benefit)} : null,
+    filters.cryptoPayment ? {key: "crypto_payment",label:"Crypto payment"} : null,
     filters.salaryMin ? {key: "salary_min", label: `Salary from $${filters.salaryMin.toLocaleString('en-US')}`} : null,
     filters.salaryMax ? {key: "salary_max", label: `Salary to $${filters.salaryMax.toLocaleString('en-US')}`} : null,
   ].filter((chip): chip is { key: string; label: string } => chip !== null);

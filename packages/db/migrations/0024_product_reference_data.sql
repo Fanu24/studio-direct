@@ -78,6 +78,13 @@ CREATE TABLE fx_rates (
   updated_at TEXT NOT NULL,
   source TEXT NOT NULL
 );
+CREATE TABLE fx_refresh_state (
+  id INTEGER PRIMARY KEY CHECK (id=1),
+  next_attempt_at TEXT NOT NULL,
+  lease_token TEXT NOT NULL,
+  last_success_at TEXT,
+  last_error TEXT
+);
 CREATE TABLE reference_imports (
   dataset TEXT PRIMARY KEY,
   source_url TEXT NOT NULL,

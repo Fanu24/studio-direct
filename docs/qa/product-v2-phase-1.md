@@ -1,42 +1,43 @@
 # Product v2 — phase 1, work in progress
 
-This is an intermediate verification record. Phase 1 is **not accepted** and no new flag or migration is enabled online. The target specification and owner overrides are in PLAN.md.
+Phase 1 is **not accepted**. The new code follows commit `165c5b0`; no new migration or product flag has been applied to the online preview. Stripe remains in test mode. This record does not claim completion of the other six phases in PLAN.md.
 
-## Implemented locally
+## Owner clarification: market salary data
 
-- Shared USD pricing (including the one-time company claim), inherited plan entitlement definitions, opt-in addons, feature dependencies and rollback switches. Legacy orders retain their historical configuration.
-- 476 skills, 48 separate benefits, 86 role definitions, 250 countries/territories, 34,146 canonical cities, 183 languages with native names, and 270 deduplicated eligibility choices. Reference-only importer, provenance hashes and licenses are retained in packages/db/reference.
-- Additive migrations 0024 and 0025, with new native posting fields and paid company claim/account records. No remote migration applied.
-- Server-side native form validation, canonical reference lookups, geographic expansion, sanitized rich text and plain-text descriptions.
-- Company claim test checkout, private order/status page, signed webhook fulfillment, recovery from Stripe, manual ownership approval and refund revocation. A claim creates no job/credit. Payment creates account access; ownership verification grants company-page control separately.
-- A company claim entitlement is included by the shared fulfillment helper for job/annual-plan purchases. These new purchase flows are still being connected; do not interpret the helper tests as completed annual-plan checkout.
-- Product-aware employer activation blocks free onboarding when the new posting flag is enabled, preserves prior paid legacy access and retains old free records without granting new paid permissions.
-- New job form component is under construction and is not mounted on the public posting page. Its checkout endpoint is not implemented yet.
+Salary pages and all market salary aggregates use **externally scraped vacancies only**. Native Nodework posts and company-managed native ATS posts are excluded, whether their salary is visible or hidden. This supersedes the attachment's suggestion to include native salaries. The original attachment is preserved unchanged. Salary filters on the general job board can still match native ranges without revealing a hidden range.
 
-## Verification evidence
+The same source restriction covers roles, locations, seniority, company averages, tag ranges, breakdowns, scheduled rollups and the jobs shown on salary pages. Minimum sample: five reliable ranges. The internal application-volume section was removed from salary pages. Low-sample salary pages are noindex; robots.txt remains permissive.
 
-Bounded local run: work/control/product-foundation-check-01/receipt.json (outside the repository). All portable Node suites and TypeScript checks for shared, DB and web completed with exit 0. Exact test counts follow below. This run preceded the latest form/editor changes and the standalone-claim checkout concurrency fix; follow-up checks passed: 14 claim/HTTP tests, web TypeScript, and the isolated upgrade/reference import check. The new form remains unmounted and still requires a browser journey.
+## Implemented
 
-A separate HTTP workflow test exercises checkout creation using a fake Stripe transport, a correctly signed paid webhook, admin-only ownership approval, and a signed refund. This proves server integration, **not** a real Stripe sandbox payment or a browser journey. Test fixtures use in-memory SQLite and never create remote activity.
+- Shared current/legacy pricing and feature switches; 476 skills, 48 benefits, 86 roles, 250 countries/territories, 34,146 GeoNames cities, 183 languages and 270 eligibility choices. Reference-only imports with source hashes/licenses; no synthetic public activity.
+- Additive migrations 0024–0025, typed schema, canonical reference API and native form validation. Geographic/time-zone eligibility, skills/languages, city IDs, HTML sanitization and plain text are validated on the server.
+- One-time USD150 claim checkout, signed payment/refund processing, company account activation, private claim status and admin ownership approval. Payment never automatically proves ownership.
+- Native job checkout with server-calculated itemized prices, coupons, sandbox guard, signed webhook fulfillment and explicit Stripe reconciliation. First-time buyers need no existing employer account. The private purchase status page works while payment is pending.
+- Company account activation and included pending claim after native/legacy job purchase. Upgrade backfills included claims for valid old paid jobs; legacy credit redemption grants the same entitlement without another claim charge.
+- New form mounted behind PRODUCT_POSTING_V2; session-tab draft restoration across login; conditional fields, blur/submit validation and order idempotency. Legacy bundles retire for new sales when the flag is on; historical orders and credits retain their terms.
+- Native job dashboard editing and reposting. Content edits preserve purchased options, publication slug, pin and expiry; unauthorized/refunded editing is rejected. Company identity changes require support review.
+- Public salary redaction in list/detail/API/JSON-LD, correct currency/period JSON-LD, annual USD salary filters, native-only pin ordering/highlight expiry, crypto-pay filter/badges/API, structured public requirements, and safe links for skills without an SEO landing page.
+- Whitelisted public requirements omit private application emails and hidden salary values. Private snapshots remain in billing/job detail storage.
+- Daily bounded FX refresh with a database lease, validation and failure retention; rates older than seven days are excluded from conversions. Source: [ExchangeRate-API open endpoint](https://www.exchangerate-api.com/docs/free), with required attribution in the footer. No public raw-rate endpoint. A real read on 22 September validated all 20 supported currencies, observation 2026-09-22T00:02:31Z.
+- Early Access and confidential options are not sold before their delivery/enforcement phases. Annual plan fulfillment is still a later phase.
 
-- Tests  193 passed (193)
-- Duration  2.63s (transform 339ms, setup 0ms, collect 1.40s, tests 84ms, environment 2ms, prepare 1.28s)
-- Tests  18 passed (18)
-- Duration  904ms (transform 160ms, setup 0ms, collect 604ms, tests 215ms, environment 1ms, prepare 240ms)
-- Tests  610 passed | 1 skipped (611)
-- Duration  23.24s (transform 1.83s, setup 0ms, collect 12.91s, tests 10.19s, environment 16ms, prepare 7.98s)
-- Tests  107 passed (107)
-- Duration  3.89s (transform 959ms, setup 0ms, import 2.69s, tests 1.06s, environment 1ms)
+## Evidence
 
-## Required before phase acceptance
+- Last successful baseline CI: 35758756522 for 165c5b0, including portable Node/Workers tests, types, OpenNext build, Worker bundles and local setup.
+- Local full run `work/control/product-foundation-check-02/receipt.json`: shared/DB/crawler passed; web had two obsolete page-test mocks fail after the page became flag-aware/asynchronous. Both tests were repaired, with additional enabled/disabled-offer checks; all seven targeted tests passed. All shared/DB/web typechecks passed in that run.
+- Subsequent integration checks: 75 tests passed across public queries, native publication/privacy, signed HTTP checkout/edit/refund/reconciliation, API and job views. Web and crawler typechecks passed. Salary/posting page follow-up: 14 tests passed.
+- Upgrade test 0023 → current and two complete reference imports passed again after the claim backfill and FX schema additions: original jobs/prices preserved, included legacy claim retained pending, no automatic ownership approval or feature activation, foreign keys valid.
+- Browser component journey uses the actual React form with local reference/checkout fixtures. Separate HTTP integration tests use real in-memory migrations and a signed webhook with a fake Stripe transport. These are **not** a real new-offer Stripe payment or deployed D1/browser journey.
+- Browser setup attempts 01–04 failed before running the form (module resolution, native Windows ancestor scanning, absent Chromium). The QA bundler now reads only workspace files using Node; Chromium is installed in ignored .wrangler/playwright. Browser attempts 05–06 exposed select-label and blur-layout issues. Attempt 07 passed after fixing them: required fields, arrangement/location/time-zone controls, canonical selections, price total, draft restoration and retained idempotency key. Receipts are outside the repo in work/control/product-browser-check-*.
 
-- Complete v2 native checkout/publication, dashboard editing, price breakdown and coupon handling; connect the new form behind its flag. Backfill included claims for legacy paid job owners and integrate claim creation on legacy credit redemption before enabling the new claim offer.
-- Apply public salary/visibility rules across every reader; validate pin order, crypto-pay filter/badge/API, and legacy-job rendering.
-- Finish company claim browser QA, retry/expiration and concurrent ownership cases; keep Stripe in test mode.
-- Isolated SQLite upgrade from 0023 and two full reference imports passed (34,146 cities); old jobs/prices were retained, no flags enabled, foreign keys valid. Confirm the same import in the intended D1 environment before activation.
-- Browser end-to-end tests for the new form, required-field blur errors, canonical choices, checkout and company claim.
-- Build the Workers artifacts through the existing Linux CI, apply reviewed migrations/reference data to preview, and activate only accepted functionality. No final graphical redesign in this phase.
+## Remaining before phase acceptance
+
+- Complete browser verification for posting and company claim, including retries/expiration and relevant ownership boundaries.
+- Confirm preview D1 migrations/reference import and the native paid journey against Stripe sandbox, then the intended deployment/flag activation. No live payments or final design.
+- Finish canonical filter/location coverage and review imported salary provenance/units before the phase-5 salary expansion. Unknown currencies must not be invented.
+- Build/test the new working tree on Linux CI. Do not deploy partial artifacts from an older commit.
 
 ## Rollback
 
-Disable PRODUCT_POSTING_V2 to disable dependent flags; do not remove financial/ownership audit records. Signed webhooks for existing purchases still need to be processed. Keep the old route/form/order readers for historical orders and credits. No destructive down migration is authorized.
+Disable PRODUCT_POSTING_V2 and its dependent sales flags. Preserve financial/claim history and continue signed fulfillment/reversal processing for existing purchases. Existing native editing and order status remain available. Never run a destructive down migration automatically.

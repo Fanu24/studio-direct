@@ -31,10 +31,12 @@ try {
   assert.equal(db.prepare('SELECT COUNT(*) n FROM jobs').get().n,2);
   assert.equal(db.prepare('SELECT COUNT(*) n FROM users').get().n,1);
   assert.equal(db.prepare('SELECT COUNT(*) n FROM feature_flags').get().n,0);
-  assert.equal(db.prepare('SELECT COUNT(*) n FROM company_claims').get().n,0);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM company_claims').get().n,1);
+  assert.equal(db.prepare('SELECT status FROM company_claims').get().status,'pending');
+  assert.equal(db.prepare('SELECT company_id FROM company_claims').get().company_id,'upgrade-company');
   assert.equal(db.prepare('PRAGMA foreign_key_check').all().length,0);
   const report={status:'passed',environment:'isolated in-memory SQLite',migrationUpgrade:'0023 to current',importRuns:2,referenceSha256:receipt.sha256,
     countries:receipt.countries,cities:receipt.cities,languages:receipt.languages,skills:receipt.skills,regions:receipt.regions,roles:receipt.roles,
-    existingJobsPreserved:true,historicalPricePreserved:true,noFeatureActivation:true,foreignKeysValid:true};
+    existingJobsPreserved:true,historicalPricePreserved:true,includedLegacyClaimRetained:true,noAutomaticOwnershipApproval:true,noFeatureActivation:true,foreignKeysValid:true};
   writeFileSync(resolve(root,'.wrangler/reference-data/upgrade-check.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
 }finally{db.close();}

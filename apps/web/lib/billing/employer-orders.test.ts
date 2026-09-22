@@ -47,10 +47,13 @@ describe('employer commerce',()=>{
   it('publishes once, indexes real content, and does not reopen a closed listing on retry',async()=>{
     const o=await order(),s=session(o.id,o.total_cents);
     expect(await fulfillEmployerOrder(db,s,'evt_1')).toBe(true);
+    expect(sql.prepare('SELECT status FROM company_claims').get().status).toBe('pending');
+    expect(sql.prepare('SELECT COUNT(*) n FROM company_purchase_entitlements').get().n).toBe(1);
     const j=sql.prepare('SELECT * FROM jobs').get();expect(j.title).toBe(listing.title);expect(j.apply_url).toBe(listing.applyUrl);
     expect(sql.prepare("SELECT COUNT(*) n FROM jobs_fts WHERE jobs_fts MATCH 'solidity'").get().n).toBe(1);
     sql.prepare('UPDATE jobs SET listed=0 WHERE id=?').run(j.id);
     expect(await fulfillEmployerOrder(db,s,'evt_retry')).toBe(false);
+    expect(sql.prepare('SELECT COUNT(*) n FROM company_claims').get().n).toBe(1);
     expect(sql.prepare('SELECT listed FROM jobs').get().listed).toBe(0);
   });
   it('rejects the wrong currency, amount and checkout session',async()=>{

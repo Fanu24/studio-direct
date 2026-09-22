@@ -1,3 +1,5 @@
+import {JobRequirements} from '../../_components/product/job-requirements';
+import {jobTagHref} from '../../../lib/jobs/tag-links';
 import { formatSalaryRange, landingPath, tagLabel } from "@gaming/shared";
 import Link from "next/link";
 
@@ -58,7 +60,7 @@ export function postedAge(iso: string | null): string | null {
 }
 
 export function jobPlaceLabel(job: { remote: string; location: string | null }): string {
-  if (job.remote === "remote") return "Remote";
+  if (job.remote === "remote") return job.location || "Remote";
   return job.location || remoteLabel(job.remote) || "Location not listed";
 }
 
@@ -76,7 +78,7 @@ function companyMark(name: string) {
 }
 
 function tagHref(tag: string) {
-  return landingPath({ kind: "tag", tag, tags: [tag] });
+  return jobTagHref(tag);
 }
 
 function JobDetailRows({ jobs }: { jobs: JobListItem[] }) {
@@ -189,6 +191,7 @@ export function JobDetailBody({
         ) : null}
         <ul aria-label="Role details" className="jd-meta">
           <li className="chip chip--on">{place}</li>
+          {job.cryptoPaymentAvailable ? <li className="chip">Crypto pay</li> : null}
           {salary ? (
             <li className="chip jd-meta__salary">Compensation: {salary}</li>
           ) : (
@@ -214,6 +217,7 @@ export function JobDetailBody({
             />
           </section>
 
+          <JobRequirements job={job}/>
           <div className="jd-apply-inline">
             {gated ? (
               <>
@@ -363,7 +367,7 @@ export function JobDetailBody({
             {label} salary
           </h2>
           <p className="jd-panel__lead">
-            {sections.salary.count} listed {label} roles on Nodework publish a range, and
+            {sections.salary.count} externally scraped {label} roles publish a range, and
             together they span {roleRange}. Use it as a floor for the conversation, not a
             promise about this listing.
           </p>

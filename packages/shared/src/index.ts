@@ -3,7 +3,7 @@ export {validatePostingDraft, PostingValidationError, publicHttpsUrl} from './pr
 export type {PostingDraft, PostingErrors} from './product/posting';
 export {buildReferenceRegions} from './product/regions';
 export type {ReferenceCountry, ReferenceRegion} from './product/regions';
-export {resolveJobRole} from './product/taxonomy';
+export {resolveJobRole,SKILL_SEEDS} from './product/taxonomy';
 export {pricing, money, DEFAULT_JOB_ADDONS, parseJobAddons, quoteJob} from './product/pricing.ts';
 export type {CompanyPlanTier, PinDays, JobAddons, JobQuoteContext, QuoteLine} from './product/pricing.ts';
 export {PRODUCT_FLAGS, FLAG_DEPENDENCIES, effectiveProductFlags} from './product/flags.ts';
@@ -147,3 +147,6 @@ export {listingPeriodStatements,reconcileListingPeriods} from './listing-periods
 
 export {resolveJobLocations} from './job-locations.ts';
 export {careerDetailLinks} from './source-discovery.ts';
+
+export {MIN_SALARY_SAMPLE, annualUsdSalarySql, RELIABLE_SALARY_SQL, SCRAPED_SALARY_SQL, publicSalaryStats} from "./product/salary-policy.ts";
+export {refreshFxRates,parseFxRates,FX_SOURCE,FX_ENDPOINT} from './product/fx-rates.ts';

@@ -42,6 +42,13 @@ CREATE TABLE job_remote_eligibility (
 );
 ALTER TABLE companies ADD COLUMN company_x_url TEXT;
 ALTER TABLE companies ADD COLUMN company_linkedin_url TEXT;
+ALTER TABLE companies ADD COLUMN pending_publication INTEGER NOT NULL DEFAULT 0 CHECK (pending_publication IN (0,1));
+CREATE TABLE native_listing_details (
+  job_id TEXT PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE,
+  input_json TEXT NOT NULL CHECK (json_valid(input_json)),
+  addons_json TEXT NOT NULL CHECK (json_valid(addons_json)),
+  updated_at TEXT NOT NULL
+);
 
 CREATE TABLE company_claim_orders (
   id TEXT PRIMARY KEY,
@@ -93,3 +100,13 @@ CREATE TABLE product_billing_events (
   type TEXT NOT NULL,
   processed_at TEXT NOT NULL
 );
+
+-- Existing paid posts include a claim too; none are automatically verified as owners.
+INSERT INTO company_purchase_entitlements(id,tenant_id,user_id,company_id,kind,source_id,stripe_payment_intent_id,created_at)
+SELECT 'purchase:legacy-job:'||j.id,j.tenant_id,l.user_id,j.company_id,'job',j.id,o.stripe_payment_intent_id,COALESCE(o.paid_at,j.created_at)
+FROM employer_listings l JOIN jobs j ON j.id=l.job_id JOIN employer_orders o ON o.id=l.order_id
+WHERE o.status='paid' AND o.offer_version=1 AND l.user_id IS NOT NULL AND l.user_id=o.user_id AND j.tenant_id=o.tenant_id
+AND NOT EXISTS(SELECT 1 FROM payment_reversals r WHERE r.payment_intent_id=o.stripe_payment_intent_id);
+INSERT INTO company_claims(id,tenant_id,user_id,company_id,entitlement_id,created_at)
+SELECT 'claim:'||MIN(id),tenant_id,user_id,company_id,MIN(id),MIN(created_at)
+FROM company_purchase_entitlements WHERE status='active' GROUP BY tenant_id,user_id,company_id;

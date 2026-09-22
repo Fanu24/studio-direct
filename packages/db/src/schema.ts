@@ -20,6 +20,7 @@ export const companies = sqliteTable("companies", {
   atsSlug: text("ats_slug"),
   companyXUrl: text('company_x_url'),
   companyLinkedinUrl: text('company_linkedin_url'),
+  pendingPublication: integer('pending_publication').notNull().default(0),
   listed: integer("listed").notNull().default(1),
   createdAt: text("created_at").notNull(),
 });

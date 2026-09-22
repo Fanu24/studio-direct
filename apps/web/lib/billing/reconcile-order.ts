@@ -9,6 +9,7 @@ export async function reconcileOrder(db:Database,secret:string,id:string,after='
  const order=employer??await db.prepare('SELECT * FROM marketplace_orders WHERE id=?').bind(id).first<Record<string,any>>();if(!order)throw new Error('Order not found');
  if(!order.stripe_session_id)throw new Error('No recorded checkout session. Sponsor recovery checks orphaned reservations separately.');
  const session=await stripeRead(secret,'checkout/sessions/'+encodeURIComponent(order.stripe_session_id),fetcher);
+ if(employer?.offer_version===2&&session.livemode!==false)throw new Error('Expected a test-mode checkout');
  if((employer?session.metadata?.orderId:session.metadata?.purchaseId)!==id)throw new Error('Checkout ownership mismatch');
  async function refundCheck(pi:string|undefined){if(!pi)return;const payment=await stripeRead(secret,'payment_intents/'+encodeURIComponent(pi)+'?expand[]=latest_charge',fetcher);if(payment.latest_charge?.refunded)await reversePayment(db,pi,'reconcile:refund:'+pi);}
  if(session.payment_intent)await refundCheck(session.payment_intent);

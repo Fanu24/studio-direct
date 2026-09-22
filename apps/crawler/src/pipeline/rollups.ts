@@ -1,5 +1,7 @@
 import {
-  averageSalary,
+  publicSalaryStats,
+  annualUsdSalarySql,
+  SCRAPED_SALARY_SQL,
   isCitySlug,
   slugTitle,
   SALARY_ROLES,
@@ -39,7 +41,7 @@ export function buildRollupRow(
   slug: string,
   rows: readonly { min: number | null; max: number | null }[],
 ): RollupRow | null {
-  const stats = averageSalary(rows);
+  const stats = publicSalaryStats(rows);
   if (!stats) return null;
   return {
     dimension,
@@ -47,7 +49,7 @@ export function buildRollupRow(
     avg: stats.avg,
     min: stats.min,
     max: stats.max,
-    jobCount30d: rows.filter((row) => row.min != null && row.max != null).length,
+    jobCount30d: stats.count,
   };
 }
 
@@ -101,8 +103,8 @@ export async function rebuildSalaryRollups(
   const { results } = await db
     .prepare(
       `SELECT
-        j.salary_min AS min,
-        j.salary_max AS max,
+        ${annualUsdSalarySql('min')} AS min,
+        ${annualUsdSalarySql('max')} AS max,
         j.title,
         j.location,
         c.name_norm AS companyNameNorm,
@@ -113,8 +115,7 @@ export async function rebuildSalaryRollups(
       LEFT JOIN job_tags t ON t.job_id = j.id
       LEFT JOIN job_locations jl ON jl.job_id = j.id
       WHERE j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday(?))
-        AND j.salary_min IS NOT NULL
-        AND j.salary_max IS NOT NULL
+        AND ${SCRAPED_SALARY_SQL}
       GROUP BY j.id`,
     )
     .bind(nowIso)

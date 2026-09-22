@@ -71,6 +71,7 @@ export function JobCard({
             Not on LinkedIn
           </span>
         ) : null}
+        {job.cryptoPaymentAvailable ? <span className="badge">Crypto pay</span> : null}
         {job.salaryText ? <span className="job-card__salary">{job.salaryText}</span> : null}
       </div>
     </article>

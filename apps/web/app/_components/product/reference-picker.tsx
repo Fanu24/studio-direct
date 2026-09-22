@@ -3,7 +3,7 @@ import {useEffect,useId,useRef,useState} from 'react';
 
 export type ReferenceChoice = {id:string|number;name:string;domain?:string|null;region?:string;country_name?:string;native_name?:string};
 type Kind = 'companies'|'cities'|'regions'|'skills'|'benefits'|'languages';
-export function ReferencePicker({label,kind,value,onChange,max=1,required=false,error,allowNewCompany=false}:{label:string;kind:Kind;value:ReferenceChoice[];onChange:(value:ReferenceChoice[])=>void;max?:number;required?:boolean;error?:string;allowNewCompany?:boolean}) {
+export function ReferencePicker({label,kind,value,onChange,max=1,required=false,error,allowNewCompany=false,onBlur}:{label:string;kind:Kind;value:ReferenceChoice[];onChange:(value:ReferenceChoice[])=>void;max?:number;required?:boolean;error?:string;allowNewCompany?:boolean;onBlur?:()=>void}) {
   const id = useId(), [query,setQuery] = useState(''), [items,setItems] = useState<ReferenceChoice[]>([]), [open,setOpen] = useState(false), [active,setActive] = useState(0), [loading,setLoading] = useState(false), [failure,setFailure] = useState('');
   const input = useRef<HTMLInputElement>(null), selected = new Set(value.map(item=>String(item.id)));
   const choices = items.filter(item=>!selected.has(String(item.id)));
@@ -19,7 +19,7 @@ export function ReferencePicker({label,kind,value,onChange,max=1,required=false,
     return ()=>{clearTimeout(timer);controller.abort();};
   },[query,kind,open]);
   function choose(item:ReferenceChoice) {if(value.length>=max)return;onChange([...value,item]);setQuery('');setOpen(false);input.current?.focus();}
-  return <div className="stack" onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null))setOpen(false);}}>
+  return <div className="stack" onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null)){setOpen(false);onBlur?.();}}}>
     <label htmlFor={id}>{label}{required?<span aria-label="required" style={{color:'#bc1c32'}}> *</span>:null}</label>
     {value.length?<ul>{value.map(item=><li key={item.id}>{caption(item)} <button type="button" aria-label={`Remove ${item.name}`} onClick={()=>onChange(value.filter(entry=>entry.id!==item.id))}>Remove</button></li>)}</ul>:null}
     {value.length<max?<input ref={input} id={id} role="combobox" autoComplete="off" aria-autocomplete="list" aria-expanded={open} aria-controls={`${id}-options`} aria-activedescendant={open&&choices[active]?`${id}-option-${active}`:undefined}

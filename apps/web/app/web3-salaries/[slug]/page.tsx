@@ -50,7 +50,6 @@ import {
   type SalaryStatsRow,
 } from "../../../lib/jobs/queries";
 import { requireTenantId } from "../../../lib/tenant";
-import { applicantsSentence, applicationVolume } from "../queries";
 
 // Read live D1 data at request time; builds must not depend on a local database.
 export const dynamic = "force-dynamic";
@@ -117,7 +116,7 @@ function averageNarrative(
   rollup: SalaryRollupRow | null,
 ): string {
   if (!rollup) {
-    return `Nodework does not yet have a published salary band for ${subject}. Open listings below still apply on this site once a source publishes a range.`;
+    return `Nodework does not yet have a published salary band for ${subject}. Statistics appear once at least five imported listings have reliable published ranges.`;
   }
   const jobWord = rollup.jobCount30d === 1 ? "job" : "jobs";
   const range = `${formatSalaryRange(rollup.min, rollup.min)} to ${formatSalaryRange(rollup.max, rollup.max)}`;
@@ -163,13 +162,16 @@ export async function generateMetadata({
   const subject = subjectPhrase(parsed, label);
   const month = catalogMonthLabel();
   const title = buildLandingTitle({ headline: `${label} salary`, month, newJobs: 0 });
+  const {db,tenantId}=await tenantDatabase();
+  const stats=await resolveSalaryStats(db,tenantId,parsed.kind==='role'?'role':parsed.kind,slug);
   return {
     title,
-    description: `${subject} salary data on Nodework for ${month}, aggregated from job listings that published a pay band.`,
+    description: `${subject} salary data on Nodework for ${month}, based only on salary ranges scraped from external job listings.`,
     // Deliberately always /web3-salaries/{slug}: /web3-non-tech-salaries/[slug] renders this
     // same component for roles that also live in SALARY_ROLES (see salary-tables.tsx IA note),
     // so both URLs point their canonical at the one page Nodework treats as authoritative.
     alternates: { canonical: `/web3-salaries/${slug}` },
+    robots: {index:!!stats,follow:true},
   };
 }
 
@@ -186,6 +188,7 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
   const stem = parsed.kind === "role" ? salaryRoleStem(parsed.role) : undefined;
 
   const listFilters: JobListFilters = {
+    aggregatedOnly: true,
     tag: stem,
     orTitle: isRole,
     locationSlug:
@@ -195,16 +198,11 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
     seniority: parsed.kind === "seniority" ? parsed.seniority : undefined,
   };
 
-  const [rollup, jobs, remoteCount, applications] = await Promise.all([
+  const [rollup, jobs, remoteCount] = await Promise.all([
     resolveSalaryStats(db, tenantId, dimension, slug),
     listJobs(db, tenantId, { ...listFilters, pageSize: 20 }),
     listJobs(db, tenantId, { ...listFilters, remoteOnly: true, pageSize: 1 }),
-    applicationVolume(db, tenantId, {
-      tag: stem,
-      orTitle: isRole,
-      locationSlug: listFilters.locationSlug,
-      titleLike: listFilters.seniority,
-    }),
+
   ]);
   const selected = await getJobForListItem(db, tenantId, jobs.jobs[0]);
   const details = (
@@ -343,6 +341,7 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
         />
 
         <h2>Average yearly salary</h2>
+        <p>These market statistics use externally scraped job listings only. Jobs purchased or published directly on Nodework are excluded. Salaries are normalized to annual USD; at least five reliable ranges are required.</p>
         {rollup ? (
           <>
             <div className="stat">
@@ -362,7 +361,7 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
         ) : (
           <p className="muted">
             Not enough data yet. A listing only reaches this figure when it publishes both
-            a minimum and a maximum, and nothing in this slice has done that so far.
+            a minimum and a maximum, and this slice has fewer than five reliable ranges.
           </p>
         )}
 
@@ -382,7 +381,7 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
             Nodework lists {jobs.total} {remotePhrase(parsed, label, subject)} right now.
             {rollup
               ? ` ${rollup.jobCount30d} of them published both a minimum and a maximum, which is the set every figure on this page is computed from.`
-              : " None of them published both a minimum and a maximum, which is why this page has no salary figure."}
+              : " Fewer than five imported listings have a reliable salary range, so no salary statistic is published."}
           </p>
         ) : (
           <p className="muted">
@@ -391,9 +390,6 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
             fill in again the next time a matching role is imported.
           </p>
         )}
-
-        <h2>How many applicants per {parsed.kind === "role" ? `${label} job` : "job"}?</h2>
-        <p>{applicantsSentence(applications, remotePhrase(parsed, label, subject), jobs.total)}</p>
 
         <h2>How many {remotePhrase(parsed, label, subject)} are remote?</h2>
         {jobs.total > 0 ? (
@@ -448,7 +444,7 @@ export default async function SalaryRolePage({ params }: { params: SalaryParams 
         <div className="panel panel--accent salary-cta">
           <h2>{hireHeading(parsed, label)}</h2>
           <p>
-            Post a role to reach Web3 candidates. Published matching roles appear on this page,
+            Post a role to reach Web3 candidates. Your post appears in the job search,
             and verified recruiters can browse candidates who choose to share their profiles.
           </p>
           <div className="cluster salary-cta__actions">

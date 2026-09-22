@@ -38,6 +38,7 @@ export async function prepareCommerceDeletion(db:Database,userId:string,secret?:
     db.prepare("UPDATE company_claims SET status='revoked' WHERE user_id=?").bind(userId),
     db.prepare("UPDATE company_purchase_entitlements SET status='revoked',revoked_at=? WHERE user_id=? AND status='active'").bind(new Date().toISOString(),userId),
     db.prepare('DELETE FROM listing_details WHERE job_id IN(SELECT job_id FROM employer_listings WHERE user_id=?)').bind(userId),
+    db.prepare('DELETE FROM native_listing_details WHERE job_id IN(SELECT job_id FROM employer_listings WHERE user_id=?)').bind(userId),
     db.prepare('UPDATE jobs SET listed=0 WHERE id IN(SELECT job_id FROM employer_listings WHERE user_id=?)').bind(userId),
     db.prepare("UPDATE employer_listings SET closed_at=?,contact_email='',logo_url=NULL WHERE user_id=?").bind(new Date().toISOString(),userId),
     db.prepare("UPDATE employer_orders SET payload_json='{}',status=CASE WHEN status='pending' THEN 'cancelled' ELSE status END WHERE user_id=?").bind(userId),

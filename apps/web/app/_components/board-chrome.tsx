@@ -134,6 +134,7 @@ export function BoardSearch({
         <span aria-hidden="true" className="remote-toggle__track" />
         Remote
       </Link>
+      <Link role="switch" aria-checked={searchFacets(filters).crypto_payment==='1'} href={searchHref({...filters,...(remoteActive?{remote:'1'}:{})},{crypto_payment:searchFacets(filters).crypto_payment==='1'?undefined:'1'})}>Crypto payment</Link>
     </form>
   );
 }

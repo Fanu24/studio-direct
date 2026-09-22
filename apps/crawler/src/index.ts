@@ -8,6 +8,7 @@ import { handleLinkedinMessage } from "./consumers/linkedin";
 import { handleWeb3ApiMessage } from "./consumers/web3-api";
 import { enqueueCronWork } from "./cron";
 import { rebuildSalaryRollups } from "./pipeline/rollups";
+import {refreshFxRates} from '@gaming/shared';
 import {handleAlert} from './consumers/alerts';
 import {enqueueDiscovery,handleCatalog,handleSourceDiscovery} from './discovery';
 
@@ -140,6 +141,7 @@ export default {
     if(_controller.cron==="*/5 * * * *")return;
     const now = new Date();
     const nowIso = now.toISOString();
+    try{await refreshFxRates(env.DB);}catch(error){console.error('Daily FX refresh failed',error);}
     const stats = await enqueueCronWork(env);
     await enqueueDiscovery(env,now);
 

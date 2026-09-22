@@ -19,6 +19,16 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test:portable
+      - name: Verify reference data and database upgrade
+        run: |
+          pnpm references:build
+          pnpm references:verify
+      - name: Install the browser for functional form checks
+        timeout-minutes: 5
+        run: pnpm --filter @gaming/web exec playwright install --with-deps chromium --only-shell
+      - name: Verify the product posting form in Chromium
+        timeout-minutes: 2
+        run: pnpm --filter @gaming/web exec node qa/product-posting-browser.mjs
       - run: pnpm --filter @gaming/web cf:build
         env:
           SITE_URL: ${{ vars.SITE_URL }}

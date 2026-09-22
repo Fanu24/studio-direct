@@ -106,3 +106,20 @@ export async function reverseCompanyPurchase(db: Database, paymentIntent: string
     db.prepare(`UPDATE company_claims SET status='revoked' WHERE entitlement_id IN(SELECT id FROM company_purchase_entitlements WHERE stripe_payment_intent_id=?)`).bind(paymentIntent),
   ]);
 }
+
+/** Historical job purchases and redeemed bundle credits retain their included company claim. */
+export function legacyCompanyClaimStatements(db:Database,orderId:string):Statement[] {
+  return [
+    db.prepare(`INSERT OR IGNORE INTO company_purchase_entitlements(id,tenant_id,user_id,company_id,kind,source_id,stripe_payment_intent_id,created_at)
+      SELECT 'purchase:legacy-job:'||j.id,j.tenant_id,l.user_id,j.company_id,'job',j.id,o.stripe_payment_intent_id,COALESCE(o.paid_at,j.created_at)
+      FROM employer_listings l JOIN jobs j ON j.id=l.job_id JOIN employer_orders o ON o.id=l.order_id
+      WHERE o.id=? AND o.status='paid' AND o.offer_version=1 AND l.user_id IS NOT NULL AND l.user_id=o.user_id AND j.tenant_id=o.tenant_id
+      AND NOT EXISTS(SELECT 1 FROM payment_reversals r WHERE r.payment_intent_id=o.stripe_payment_intent_id)`).bind(orderId),
+    db.prepare(`INSERT OR IGNORE INTO company_claims(id,tenant_id,user_id,company_id,entitlement_id,created_at)
+      SELECT 'claim:'||MIN(e.id),e.tenant_id,e.user_id,e.company_id,MIN(e.id),MIN(e.created_at)
+      FROM company_purchase_entitlements e WHERE e.status='active' AND e.user_id IS NOT NULL
+      AND e.kind='job' AND e.source_id IN(SELECT job_id FROM employer_listings WHERE order_id=?)
+      AND NOT EXISTS(SELECT 1 FROM company_claims c WHERE c.company_id=e.company_id AND c.user_id=e.user_id AND c.status IN ('approved','pending'))
+      GROUP BY e.tenant_id,e.user_id,e.company_id`).bind(orderId),
+  ];
+}

@@ -4,10 +4,12 @@ import { listingPeriodStatements, slugTitle, normalizeCompanyName } from '@gamin
 import type { Database, Statement } from '../platform';
 import type { ListingInput } from './listing-input';
 import { quoteListing, type ListingSelection } from './listing-catalog';
+import {legacyCompanyClaimStatements} from '../product/company-claims';
+import {fulfillNativeOrder} from '../product/native-orders';
 
 export type EmployerOrder={id:string;tenant_id:string;user_id:string;kind:'job'|'bundle';payload_json:string;
   selection_json:string;total_cents:number;currency:string;status:string;stripe_session_id:string|null;
-  stripe_subscription_id:string|null;stripe_customer_id:string|null;created_at:string;paid_at:string|null};
+  stripe_subscription_id:string|null;stripe_customer_id:string|null;created_at:string;paid_at:string|null;offer_version?:number};
 export async function orderById(db:Database,id:string) {
   return db.prepare('SELECT * FROM employer_orders WHERE id=?').bind(id).first<EmployerOrder>();
 }
@@ -60,13 +62,14 @@ function listingStatements(db:Database,order:EmployerOrder,jobId:string,input:Li
   statements.push(...listingFacets(db,jobId,input));
   return statements;
 }
-export type PaidSession={id:string;payment_status:string;status?:string;currency:string;amount_subtotal:number;
+export type PaidSession={livemode?:boolean;id:string;payment_status:string;status?:string;currency:string;amount_subtotal:number;
   amount_total:number;total_details?:{amount_discount?:number;amount_tax?:number};metadata?:{orderId?:string;purchaseId?:string;claimOrderId?:string};
   customer?:string;subscription?:string;payment_intent?:string};
 export async function fulfillEmployerOrder(db:Database,session:PaidSession,eventId:string,now=new Date()) {
   if(!['paid','no_payment_required'].includes(session.payment_status))return false;
   const order=await orderById(db,session.metadata?.orderId||'');
   if(!order||order.status!=='pending')return false;
+  if(order.offer_version===2)return fulfillNativeOrder(db,order,session,eventId,now);
   if(order.stripe_session_id&&order.stripe_session_id!==session.id)throw new Error('Checkout session mismatch');
   const discount=session.total_details?.amount_discount??0,tax=session.total_details?.amount_tax??0;
   if(session.currency!==order.currency||session.amount_subtotal!==order.total_cents||!Number.isSafeInteger(discount)
@@ -89,7 +92,7 @@ export async function fulfillEmployerOrder(db:Database,session:PaidSession,event
     .bind(paymentIntent,now.toISOString(),session.id,session.customer||null,session.subscription||null,paymentIntent,order.id));
   statements.push(db.prepare(`INSERT OR IGNORE INTO billing_events(id,order_id,type,processed_at) VALUES(?,?,'checkout.paid',?)`)
     .bind(eventId,order.id,now.toISOString()));
-  statements.push(...listingPeriodStatements(db,now));
+  statements.push(...legacyCompanyClaimStatements(db,order.id),...listingPeriodStatements(db,now));
   await db.batch(statements);
   return (await orderById(db,order.id))?.status==='paid';
 }
@@ -107,6 +110,7 @@ export async function redeemCredit(db:Database,userId:string,creditId:string,inp
   const statements=listingStatements(db,order,jobId,input,JSON.parse(credit.selection_json),now,guard,[credit.id,userId,now.toISOString()]);
   statements.push(db.prepare(`UPDATE bundle_credits SET job_id=? WHERE id=? AND job_id IS NULL
     AND EXISTS(SELECT 1 FROM jobs WHERE id=?)`).bind(jobId,credit.id,jobId));
+  statements.push(...legacyCompanyClaimStatements(db,order.id));
   await db.batch(statements);
   const redeemed=await db.prepare('SELECT job_id FROM bundle_credits WHERE id=?').bind(credit.id).first<string>('job_id');
   if(redeemed!==jobId)throw new Error('Credit was already used');

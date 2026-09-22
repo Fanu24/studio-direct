@@ -38,8 +38,9 @@ const QUERY_PARAMS = [
   { param: "location", desc: "A city slug from the location pages, e.g. new-york." },
   { param: "remote", desc: "true or 1 to only return jobs flagged remote." },
   { param: "seniority", desc: "Free-text match against the job title, e.g. senior or intern." },
-  { param: "salary_min", desc: "Only return jobs whose parsed salaryMax is at least this value." },
-  { param: "salary_max", desc: "Only return jobs whose parsed salaryMin is at most this value." },
+  { param: "crypto_payment", desc: "Set to 1 to return jobs offering payment in crypto." },
+  { param: "salary_min", desc: "Only return jobs whose annual salary maximum in USD is at least this value." },
+  { param: "salary_max", desc: "Only return jobs whose annual salary minimum in USD is at most this value." },
   { param: "page", desc: "1-based page number. Defaults to 1." },
   { param: "page_size", desc: "Results per page: 1–100, default 20. Also accepts limit." },
 ];
@@ -132,7 +133,7 @@ export default function Web3JobsApiPage() {
             <p>
               One read endpoint returning paginated jobs, filtered the same way the job
               board itself is: by tag, location, remote flag, seniority text match and
-              salary bounds. Every job already carries a parsed salaryMin and salaryMax,
+              salary bounds. Every job already carries a annual salary minimum in USD and salaryMax,
               so range filtering is a real field, not a future addition.
             </p>
           </div>

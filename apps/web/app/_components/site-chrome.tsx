@@ -121,6 +121,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
               <li>
                 <Link href="/legal">Legal</Link>
               </li>
+              <li><a href="https://www.exchangerate-api.com" rel="noopener noreferrer">Rates By Exchange Rate API</a></li>
             </ul>
           </div>
         </div>

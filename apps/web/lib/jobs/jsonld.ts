@@ -13,6 +13,9 @@ export interface JobPostingJsonLdInput {
   salaryMin?: number | null;
   salaryMax?: number | null;
   salaryText?: string | null;
+  salaryCurrency?: string | null;
+  salaryPeriod?: string | null;
+  hideSalary?: number | boolean;
   companyLogoUrl?: string | null;
 }
 
@@ -95,14 +98,15 @@ interface BaseSalaryField {
 }
 
 function buildBaseSalaryField(job: JobPostingJsonLdInput): BaseSalaryField {
+  if(job.hideSalary)return {};
   if (job.salaryMin == null && job.salaryMax == null) return {};
-  const value: SalaryQuantitativeValue = { "@type": "QuantitativeValue", unitText: "YEAR" };
+  const value: SalaryQuantitativeValue = { "@type": "QuantitativeValue", unitText: job.salaryPeriod==='monthly'?'MONTH':job.salaryPeriod==='hourly'?'HOUR':'YEAR' };
   if (job.salaryMin != null) value.minValue = job.salaryMin;
   if (job.salaryMax != null) value.maxValue = job.salaryMax;
   return {
     baseSalary: {
       "@type": "MonetaryAmount",
-      currency: DEFAULT_SALARY_CURRENCY,
+      currency: job.salaryCurrency || DEFAULT_SALARY_CURRENCY,
       value,
     },
   };

@@ -10,6 +10,7 @@ export async function ownedListing(db:Database,userId:string,id:string){
  FROM employer_listings l JOIN jobs j ON j.id=l.job_id JOIN companies c ON c.id=j.company_id JOIN employer_orders o ON o.id=l.order_id
  LEFT JOIN listing_details d ON d.job_id=j.id WHERE l.job_id=? AND l.user_id=?`).bind(id,userId).first<Record<string,any>>();
  if(!row)return null;
+ if(await db.prepare('SELECT job_id FROM native_listing_details WHERE job_id=?').bind(id).first())throw new Error('Use the current job editor for this listing.');
  const tags=await db.prepare('SELECT tag_slug FROM job_tags WHERE job_id=? ORDER BY tag_slug').bind(id).all<{tag_slug:string}>();
  const saved=row.input_json?JSON.parse(row.input_json):{};
  const input:ListingInput={...saved,title:row.title,descriptionHtml:row.description_html,companyName:row.company_name,
