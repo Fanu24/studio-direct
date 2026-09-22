@@ -1,6 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { headers } from 'next/headers';
 import { createAuth, type AuthEnv } from './auth/index';
+import type {ProductFlag} from '@gaming/shared';
 
 export interface Statement {
   bind(...values:unknown[]):Statement;
@@ -9,7 +10,7 @@ export interface Statement {
   run():Promise<{meta?:{changes?:number}}>;
 }
 export interface Database { prepare(sql:string):Statement; batch(statements:Statement[]):Promise<unknown[]>; }
-export type PlatformEnv = Omit<AuthEnv,'DB'> & {
+export type PlatformEnv = Omit<AuthEnv,'DB'> & Partial<Record<ProductFlag, string>> & {
   DB:Database; STRIPE_ENABLED?:string; STRIPE_SECRET_KEY?:string; STRIPE_WEBHOOK_SECRET?:string;
   FILES:{put(key:string,value:ArrayBuffer,options?:unknown):Promise<unknown>;get(key:string):Promise<{body:ReadableStream;httpMetadata?:{contentType?:string}}|null>;delete?(key:string):Promise<unknown>};
   ADMIN_EMAILS?:string;

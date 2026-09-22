@@ -1,5 +1,6 @@
 import {resolveInvoice,recordPaidInvoice,stripeRead,recordSubscriptionState,invoiceNotification} from '../../../../lib/billing/invoices';
 import {reversePayment} from '../../../../lib/billing/reversals';
+import {fulfillCompanyClaim} from '../../../../lib/product/company-claims';
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { fulfillEmployerOrder, type PaidSession } from '../../../../lib/billing/employer-orders';
 import type { Database } from '../../../../lib/platform';
@@ -45,6 +46,11 @@ export async function POST(request: Request) {
   const object = event.data?.object as Record<string, any> | undefined;
   if(event.type==='charge.refunded'&&object?.refunded===true&&typeof object.payment_intent==='string'&&event.id){
     await reversePayment(env.DB,object.payment_intent,event.id);
+  } else if (object?.metadata?.claimOrderId && ['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(event.type || '')) {
+    if(!event.id)return Response.json({code:'invalid_event'},{status:400});
+    await fulfillCompanyClaim(env.DB,object as PaidSession,event.id);
+  } else if(event.type==='checkout.session.expired'&&object?.metadata?.claimOrderId){
+    await env.DB.prepare("UPDATE company_claim_orders SET status='expired' WHERE id=? AND stripe_session_id=? AND status='pending'").bind(object.metadata.claimOrderId,object.id).run();
   } else if (object?.metadata?.purchaseId && ['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(event.type || '')) {
     if(!event.id)return Response.json({code:'invalid_event'},{status:400});
     await fulfillMarketOrder(env.DB,object as PaidSession,event.id);

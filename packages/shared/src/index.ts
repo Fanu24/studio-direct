@@ -1,4 +1,15 @@
 export const PACKAGE_NAME = "@gaming/shared";
+export {validatePostingDraft, PostingValidationError, publicHttpsUrl} from './product/posting';
+export type {PostingDraft, PostingErrors} from './product/posting';
+export {buildReferenceRegions} from './product/regions';
+export type {ReferenceCountry, ReferenceRegion} from './product/regions';
+export {resolveJobRole} from './product/taxonomy';
+export {pricing, money, DEFAULT_JOB_ADDONS, parseJobAddons, quoteJob} from './product/pricing.ts';
+export type {CompanyPlanTier, PinDays, JobAddons, JobQuoteContext, QuoteLine} from './product/pricing.ts';
+export {PRODUCT_FLAGS, FLAG_DEPENDENCIES, effectiveProductFlags} from './product/flags.ts';
+export type {ProductFlag, ProductFlags} from './product/flags.ts';
+export {SALARY_CURRENCIES, SALARY_PERIODS, LANGUAGE_LEVELS, WORK_ARRANGEMENTS, UTC_OFFSETS, formatUtcOffset, eligibilitySatisfied} from './product/fields.ts';
+export type {SalaryCurrency, SalaryPeriod, LanguageLevel, WorkArrangement, LanguageRequirement, Eligibility, GeoEligibility, TimezoneEligibility, ReferenceCity, ReferenceOption} from './product/fields.ts';
 export {coinMarketCapSeeds,defiLlamaSeeds,cryptoPortfolioSeeds,discoverCompany,createSiteReader,publicHttps,robotsAllowed,atsBoard,boardMatchesCompany,extractLinks} from './source-discovery.ts';
 export type {SourceSeed,SourceCandidate} from './source-discovery.ts';
 export {CURATED_WEB3_COMPANIES} from './web3-companies.ts';

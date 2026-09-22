@@ -1,6 +1,7 @@
 import type {Database,Statement} from '../platform';
+import {pricing} from '@gaming/shared';
 import type {PaidSession} from './employer-orders';
-export const SPONSOR_PRICES={1:499900,2:399900,3:299900,4:199900} as const;
+export const SPONSOR_PRICES=pricing.legacy.sponsors;
 export type SponsorInput={slot:1|2|3|4;title:string;subtitle:string;url:string;color:string};
 export type MarketOrder={id:string;user_id:string|null;kind:'sponsor'|'recruiter';payload_json:string;total_cents:number;status:string;stripe_session_id:string|null;expires_at:string|null;created_at:string};
 export function parseSponsor(raw:unknown):SponsorInput{

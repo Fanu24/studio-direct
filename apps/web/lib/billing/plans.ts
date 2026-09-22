@@ -1,19 +1,19 @@
-import { TENANT_NAME } from "@gaming/shared";
+import { TENANT_NAME, pricing, money } from "@gaming/shared";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export const PLAN_CURRENCY = "eur" as const;
+export const PLAN_CURRENCY = pricing.legacy.candidate.currency;
 
 export const PLAN_COPY = {
   monthly: {
     id: "monthly",
-    label: "€9 / month",
-    amountCents: 900,
+    label: `${money(pricing.legacy.candidate.monthly, PLAN_CURRENCY).replace(/\.00$/, '')} / month`,
+    amountCents: pricing.legacy.candidate.monthly,
     interval: "month",
   },
   yearly: {
     id: "yearly",
-    label: "€59 / year",
-    amountCents: 5900,
+    label: `${money(pricing.legacy.candidate.yearly, PLAN_CURRENCY).replace(/\.00$/, '')} / year`,
+    amountCents: pricing.legacy.candidate.yearly,
     interval: "year",
   },
 } as const;

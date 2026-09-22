@@ -11,7 +11,7 @@ export default async function EmployerPage({searchParams}:{searchParams?:Promise
   const orderId=(await searchParams)?.order;
   const env=await platform(),user=await currentUser(env);
   if(!user)redirect('/employer/login?next=/employer');
-  const account=await loadEmployer(env.DB,user.id);
+  const account=await loadEmployer(env.DB,user.id,env);
   if(!account)redirect(employerOnboarding());
   const [orders,listings,credits,applications]=await Promise.all([
     env.DB.prepare('SELECT * FROM employer_orders WHERE user_id=? ORDER BY created_at DESC LIMIT 100').bind(user.id).all<{id:string;kind:string;status:string;total_cents:number;stripe_customer_id:string|null;renewal_status:string|null;renewal_next_at:string|null}>(),

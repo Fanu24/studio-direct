@@ -8,7 +8,7 @@ export async function submitEmployerOnboarding(form:FormData) {
   const env=await platform(),user=await currentUser(env);
   if(!user)redirect(employerLogin(next));
   try {
-    await saveEmployer(env.DB,user.id,{companyName:String(form.get('companyName')??''),companyUrl:String(form.get('companyUrl')??''),contactName:String(form.get('contactName')??'')});
+    await saveEmployer(env.DB,user.id,{companyName:String(form.get('companyName')??''),companyUrl:String(form.get('companyUrl')??''),contactName:String(form.get('contactName')??'')},env);
   } catch {redirect(employerOnboarding(next)+'&error=invalid');}
   redirect(next);
 }

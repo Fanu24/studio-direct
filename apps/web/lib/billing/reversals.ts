@@ -1,5 +1,6 @@
 import {reconcileListingPeriods} from '@gaming/shared';
 import type {Database} from '../platform';
+import {reverseCompanyPurchase} from '../product/company-claims';
 
 /** Called after a signed event or authenticated Stripe lookup confirms a full refund. */
 export async function reversePayment(db:Database,paymentIntent:string,eventId:string,now=new Date()) {
@@ -21,6 +22,7 @@ export async function reversePayment(db:Database,paymentIntent:string,eventId:st
     db.prepare("INSERT OR IGNORE INTO marketplace_events(id,order_id,type,created_at) VALUES(?,?,'payment.reversed',?)").bind(eventId,market.id,now.toISOString()),
   ]);
   await reconcileListingPeriods(db,now);
+  await reverseCompanyPurchase(db,paymentIntent,eventId,now);
 }
 
 /** Cancel remote renewals before erasing the local account that manages them. */
@@ -32,6 +34,9 @@ export async function prepareCommerceDeletion(db:Database,userId:string,secret?:
     if(!result.ok){const body=await result.json() as {error?:{code?:string}};if(body.error?.code!=='resource_missing')throw new Error('Subscription cancellation failed; account retained');}
   }
   await db.batch([
+    db.prepare("UPDATE company_claim_orders SET status='expired' WHERE user_id=? AND status='pending'").bind(userId),
+    db.prepare("UPDATE company_claims SET status='revoked' WHERE user_id=?").bind(userId),
+    db.prepare("UPDATE company_purchase_entitlements SET status='revoked',revoked_at=? WHERE user_id=? AND status='active'").bind(new Date().toISOString(),userId),
     db.prepare('DELETE FROM listing_details WHERE job_id IN(SELECT job_id FROM employer_listings WHERE user_id=?)').bind(userId),
     db.prepare('UPDATE jobs SET listed=0 WHERE id IN(SELECT job_id FROM employer_listings WHERE user_id=?)').bind(userId),
     db.prepare("UPDATE employer_listings SET closed_at=?,contact_email='',logo_url=NULL WHERE user_id=?").bind(new Date().toISOString(),userId),

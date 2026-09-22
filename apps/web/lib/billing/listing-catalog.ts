@@ -1,11 +1,9 @@
-// Public configurator observed 2026-09-16: https://web3.career/post-web3-job
-export const BASE_CENTS = 29900;
-export const STICKY_CENTS = { 0: 0, 1: 4900, 3: 9900, 7: 14900, 14: 19900, 30: 29900 } as const;
-export const HIGHLIGHT_CENTS = { none: 0, standard: 9900, custom: 14900 } as const;
-// All slider values verified in the live reference configurator on 2026-09-19.
-export const BUNDLE_LADDER = [[2,20],[4,29],[6,30],[8,31],[10,32],[12,33],[14,34],[16,35],
-  [18,36],[20,37],[22,38],[24,39],[26,40],[28,41],[30,42],[32,43],[34,44],[36,45],
-  [38,46],[40,47],[42,48],[44,49],[46,50],[48,51],[50,55]] as const;
+import {pricing} from '@gaming/shared';
+// Retain historical selections and credits while the new offer is rolled out.
+export const BASE_CENTS = pricing.legacy.jobBase;
+export const STICKY_CENTS = pricing.legacy.sticky;
+export const HIGHLIGHT_CENTS = pricing.legacy.highlight;
+export const BUNDLE_LADDER = pricing.legacy.bundles;
 export type ListingSelection = {
   stickyDays: keyof typeof STICKY_CENTS;
   highlight: keyof typeof HIGHLIGHT_CENTS;
@@ -35,7 +33,7 @@ export function parseSelection(raw: unknown, kind: 'job' | 'bundle'): ListingSel
 }
 export function quoteListing(selection: ListingSelection) {
   const unitCents = BASE_CENTS + STICKY_CENTS[selection.stickyDays] + HIGHLIGHT_CENTS[selection.highlight]
-    + (selection.logo ? 4900 : 0) + (selection.support ? 9900 : 0);
+    + (selection.logo ? pricing.legacy.logo : 0) + (selection.support ? pricing.legacy.support : 0);
   const percent = selection.quantity > 1 ? BUNDLE_LADDER.find(([n])=>n===selection.quantity)?.[1] ?? 0 : 0;
   const subtotalCents = unitCents * selection.quantity;
   // Reference bundle UI charges whole dollars (24 × $695 × 61% -> $10,175).

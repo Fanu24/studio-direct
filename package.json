@@ -12,6 +12,8 @@
     "test:portable": "node scripts/test-portable.mjs",
     "sources:discover": "node scripts/discover-catalog.mjs",
     "sources:import": "node scripts/import-sources.mjs",
+    "references:build": "node scripts/build-reference-import.mjs",
+    "references:verify": "node scripts/check-reference-upgrade.mjs",
     "stripe:listen": "node scripts/stripe-listen.mjs",
     "audit:public": "node scripts/audit-public.mjs",
     "test:node": "node scripts/test-portable.mjs --node-only"

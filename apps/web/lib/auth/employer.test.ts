@@ -18,3 +18,11 @@ it('requires a separate company account and keeps it isolated from other users',
  expect(await loadEmployer(state.db,'two')).toBeNull();
  await expect(saveEmployer(state.db,'two',{companyName:'Company',companyUrl:'javascript:alert(1)',contactName:'Tester'})).rejects.toThrow();
 });
+it('prevents free company activation when product posting is enabled, preserving the existing free record',async()=>{
+ await saveEmployer(state.db,'one',{companyName:'Company',companyUrl:'https://company.com',contactName:'Tester'});
+ const env={PRODUCT_POSTING_V2:'true'};
+ expect(await loadEmployer(state.db,'one',env)).toBeNull();
+ await expect(saveEmployer(state.db,'two',{companyName:'Company',companyUrl:'https://company.com',contactName:'Tester'},env)).rejects.toThrow('Purchase');
+ expect(state.sql.prepare("SELECT COUNT(*) n FROM employer_accounts WHERE user_id='one'").get().n).toBe(1);
+ expect(await loadEmployer(state.db,'one',{PRODUCT_POSTING_V2:'false'})).toMatchObject({company_name:'Company'});
+});

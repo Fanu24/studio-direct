@@ -1,4 +1,5 @@
 import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+export * from './product-schema';
 
 export const tenants = sqliteTable("tenants", {
   id: text("id").primaryKey(),
@@ -17,6 +18,8 @@ export const companies = sqliteTable("companies", {
   careerUrl: text("career_url"),
   atsType: text("ats_type"),
   atsSlug: text("ats_slug"),
+  companyXUrl: text('company_x_url'),
+  companyLinkedinUrl: text('company_linkedin_url'),
   listed: integer("listed").notNull().default(1),
   createdAt: text("created_at").notNull(),
 });
@@ -38,6 +41,18 @@ export const jobs = sqliteTable(
     salaryText: text("salary_text"),
     salaryMin: integer("salary_min"),
     salaryMax: integer("salary_max"),
+    salaryCurrency: text('salary_currency'),
+    salaryPeriod: text('salary_period'),
+    hideSalary: integer('hide_salary').notNull().default(0),
+    cryptoPaymentAvailable: integer('crypto_payment_available').notNull().default(0),
+    commercialOrigin: text('commercial_origin').notNull().default('aggregated'),
+    descriptionText: text('description_text'),
+    publishedAt: text('published_at'),
+    bumpedAt: text('bumped_at'),
+    pinnedUntil: text('pinned_until'),
+    earlyAccessUntil: text('early_access_until'),
+    confidential: integer('confidential').notNull().default(0),
+    jobRoleId: text('job_role_id'),
     source: text("source").notNull().default("career_page"),
     externalId: text("external_id"),
     featuredUntil: text("featured_until"),
@@ -210,6 +225,7 @@ export const jobLocations = sqliteTable("job_locations", {
 export const benefits = sqliteTable("benefits", {
   slug: text("slug").primaryKey(),
   label: text("label").notNull(),
+  aliasesJson: text('aliases_json').notNull().default('[]'),
 });
 
 export const jobBenefits = sqliteTable("job_benefits", {

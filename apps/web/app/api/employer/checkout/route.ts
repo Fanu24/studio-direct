@@ -13,7 +13,7 @@ export async function POST(request:Request) {
   const next=raw.kind==='bundle'?'/post-web3-job/bundle':'/post-web3-job';
   const env=await platform(),user=await currentUser(env,request);
   if(!user)return Response.json({error:'Sign in to post a job',login:employerLogin(next)},{status:401});
-  const access=await employerAccessResponse(env.DB,user.id,next);if(access)return access;
+  const access=await employerAccessResponse(env.DB,user.id,next,env);if(access)return access;
   if(env.STRIPE_ENABLED!=='true'||!env.STRIPE_SECRET_KEY)return Response.json({error:'Checkout is not configured yet'},{status:503});
   let order;
   try{

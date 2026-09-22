@@ -61,7 +61,7 @@ function listingStatements(db:Database,order:EmployerOrder,jobId:string,input:Li
   return statements;
 }
 export type PaidSession={id:string;payment_status:string;status?:string;currency:string;amount_subtotal:number;
-  amount_total:number;total_details?:{amount_discount?:number;amount_tax?:number};metadata?:{orderId?:string;purchaseId?:string};
+  amount_total:number;total_details?:{amount_discount?:number;amount_tax?:number};metadata?:{orderId?:string;purchaseId?:string;claimOrderId?:string};
   customer?:string;subscription?:string;payment_intent?:string};
 export async function fulfillEmployerOrder(db:Database,session:PaidSession,eventId:string,now=new Date()) {
   if(!['paid','no_payment_required'].includes(session.payment_status))return false;
