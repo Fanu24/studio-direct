@@ -1,6 +1,6 @@
 # Nodework product differentiation plan
 
-Status 23 September: phases 2–7 are implemented locally, including migrations 0026–0032. Local type checks and the repaired functional cases pass; Linux CI/build and preview deployment are the remaining delivery checks. The historical phase-1 stop below is superseded. See docs/product-v2-operations.md for the functional handoff. No live billing or real marketing sends are enabled.
+Status 23 September: phases 1–7 are implemented and enabled on the Cloudflare preview at application commit 1d81549. Linux CI/build and essential remote checks passed; migrations 0026–0032 are applied. See docs/qa/2026-09-23-product-functional-release.md and docs/product-v2-operations.md. Design and commercial/provider activation remain separate; Stripe is sandbox and real marketing delivery is off. Historical incomplete-phase notes below are superseded.
 
 Source: [September 2026 specification](docs/specs/nodework-product-update-2026-09.md), supplied as `Workin aggiornamento.md`. SHA-256: `6a68f3f43b1c5bf360218467e46c9368c7d2ad8c18f39cfe9ce544ccd7e40ae2`.
 
@@ -172,12 +172,12 @@ Acceptance: confidential content absent from every public index/feed/social/news
 - [x] Public links/direct contacts/wallet decision recorded.
 - [x] Review readership/submission/proof/reply and ATS overage decisions received.
 - [x] Company activation clarified: annual plan, job post, or standalone USD 150 claim; claim included with a job. Only claimed pages may receive candidate reviews; companies cannot review.
-- [ ] Phase 1 accepted.
-- [ ] Phase 2 accepted.
-- [ ] Phase 3 accepted.
-- [ ] Phase 4 accepted.
-- [ ] Phase 5 accepted.
-- [ ] Phase 6 accepted.
-- [ ] Phase 7 accepted.
+- [x] Phase 1 implemented and enabled in preview (verification scope in the release report).
+- [x] Phase 2 implemented and enabled in preview (verification scope in the release report).
+- [x] Phase 3 implemented and enabled in preview (verification scope in the release report).
+- [x] Phase 4 implemented and enabled in preview (verification scope in the release report).
+- [x] Phase 5 implemented and enabled in preview (verification scope in the release report).
+- [x] Phase 6 implemented and enabled in preview (verification scope in the release report).
+- [x] Phase 7 implemented and enabled in preview (verification scope in the release report).
 
 Phase 1 application code d586f47 is deployed on the sandbox preview; migrations0024–0025 and reference data are applied. One real Stripe sandbox native-post journey (USD219) succeeded and was fully refunded; its QA listing/company are hidden. Posting/claim flags were enabled only for that check and restored OFF. The owner then requested that testing stop after this payment; do not start further QA automatically. Phase1 is not fully accepted and phases2–7 remain open. See docs/qa/product-v2-phase-1.md for evidence and outstanding work.

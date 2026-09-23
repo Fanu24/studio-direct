@@ -1,5 +1,7 @@
 # Nodework product update: functional handoff
 
+Implemented and enabled on the Cloudflare preview on 23 September. See the [release and verification record](qa/2026-09-23-product-functional-release.md) for the exact version and operational limits.
+
 The September owner decisions in `PLAN.md` override the original specification. Visual design and live commercial launch remain separate work. All new purchases require Stripe sandbox keys.
 
 ## Implemented surfaces
