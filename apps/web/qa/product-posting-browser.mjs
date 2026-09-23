@@ -35,6 +35,7 @@ const server=createServer(async(request,response)=>{
   const url=new URL(request.url,'http://localhost');
   if(url.pathname==='/bundle.js'){response.setHeader('Content-Type','text/javascript');response.end(bundle.outputFiles[0].contents);return;}
   if(url.pathname==='/api/product/reference'){response.setHeader('Content-Type','application/json');response.end(JSON.stringify({items:choices[url.searchParams.get('kind')]??[]}));return;}
+  if(url.pathname==='/api/product/jobs/quote'){response.setHeader('Content-Type','application/json');response.end(JSON.stringify({context:null}));return;}
   if(url.pathname==='/api/product/jobs/checkout'){
     let body='';for await(const part of request)body+=part;submissions.push(JSON.parse(body));response.setHeader('Content-Type','application/json');
     if(expireJobOnce){expireJobOnce=false;response.statusCode=409;response.end(JSON.stringify({restart:true,error:'This checkout expired. Your draft is saved.'}));return;}
