@@ -33,7 +33,8 @@ export function deploymentConfig(original, app, env) {
    queue.queue=queueName(queue.queue);
    if(queue.dead_letter_queue)queue.dead_letter_queue=queueName(queue.dead_letter_queue);
  }
- if(app==='crawler')config.vars.QUEUE_PREFIX=env.QUEUE_PREFIX;
+ if(app==='crawler'){config.vars.QUEUE_PREFIX=env.QUEUE_PREFIX;config.services=[...(config.services??[]).filter(service=>service.binding!=='PRODUCT_WEB'),{binding:'PRODUCT_WEB',service:env.WEB_WORKER_NAME}];}
+ if(app==='web'){for(const key of ['SOCIAL_DELIVERY_ENABLED','NEWSLETTER_DELIVERY_ENABLED'])config.vars[key]=env[key]||'false';}
  for(const key of ['SITE_URL','EMAIL_ENABLED','EMAIL_FROM','ADMIN_EMAILS'])config.vars[key]=env[key]||'';
  if(app==='web'){config.vars.BETTER_AUTH_URL=env.SITE_URL;config.vars.TURNSTILE_SITE_KEY=env.TURNSTILE_SITE_KEY;config.vars.STRIPE_ENABLED=env.STRIPE_ENABLED||'false';config.vars.LOCAL_MAIL='false';config.vars.SITE_INDEXING_ENABLED=env.SITE_INDEXING_ENABLED||'true';}
  return config;

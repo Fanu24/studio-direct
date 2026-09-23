@@ -266,6 +266,7 @@ export class D1JobsRepository
       .run();
   }
 
+  async isManagedCompany(companyId:string){return !!await this.db.prepare('SELECT id FROM company_ats_integrations WHERE company_id=? UNION ALL SELECT id FROM jobs WHERE company_id=? AND confidential=1 LIMIT 1').bind(companyId,companyId).first();}
   async upsertJob(job: JobUpsert): Promise<JobRecord> {
     const row = await this.db
       .prepare(
@@ -323,6 +324,7 @@ export class D1JobsRepository
       .first<JobRow>();
 
     if (!row) throw new Error(`D1 did not return upserted job: ${job.id}`);
+    if(job.statedSalary)await this.db.prepare("UPDATE jobs SET salary_min=?,salary_max=?,salary_currency=?,salary_period=? WHERE id=? AND commercial_origin='aggregated'").bind(job.statedSalary.min,job.statedSalary.max,job.statedSalary.currency,job.statedSalary.period,row.id).run();
     return mapJob(row);
   }
 

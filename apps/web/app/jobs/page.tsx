@@ -93,7 +93,7 @@ function loadJobs(params: JobsSearchParams) {
     first(params.remote) === "1",
     first(params.source),
     first(params.hidden) === "1",
-    JSON.stringify({cryptoPayment:first(params.crypto_payment)==='1',locationSlug:first(params.location),benefit:first(params.benefit),tags:first(params.tags)?.split(',').filter(Boolean).slice(0,10),salaryMin:positiveNumber(params.salary_min),salaryMax:positiveNumber(params.salary_max)}),
+    JSON.stringify({workArrangement:first(params.arrangement),language:first(params.language),eligibleCountry:first(params.eligible_country),eligibleUtc:first(params.eligible_utc)?Number(first(params.eligible_utc)):undefined,skillIds:first(params.skills)?.split(',').filter(Boolean).slice(0,30),cryptoPayment:first(params.crypto_payment)==='1',locationSlug:first(params.location),benefit:first(params.benefit),tags:first(params.tags)?.split(',').filter(Boolean).slice(0,10),salaryMin:positiveNumber(params.salary_min),salaryMax:positiveNumber(params.salary_max)}),
     positiveNumber(params.page),
     positiveNumber(params.pageSize),
   );

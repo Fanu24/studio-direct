@@ -1,7 +1,7 @@
 import type { LandingKind } from '@gaming/shared';
 
 export type SearchState = Record<string, string | string[] | undefined>;
-const facets = ['company', 'seniority', 'tag', 'tags', 'remote', 'location', 'benefit', 'salary_min', 'salary_max', 'crypto_payment'];
+const facets = ['company', 'seniority', 'tag', 'tags', 'remote', 'location', 'benefit', 'salary_min', 'salary_max', 'crypto_payment', 'arrangement', 'language', 'eligible_country', 'eligible_utc', 'skills'];
 
 /** Keep only public search facets. Navigation never carries a stale page or selected job. */
 export function searchFacets(state: SearchState = {}): Record<string, string> {

@@ -4,7 +4,8 @@ export const PUBLIC_SALARY_SQL = `
   CASE WHEN j.hide_salary=1 THEN NULL ELSE j.salary_min END AS salaryMin,
   CASE WHEN j.hide_salary=1 THEN NULL ELSE j.salary_max END AS salaryMax,
   j.salary_currency AS salaryCurrency,j.salary_period AS salaryPeriod,j.hide_salary AS hideSalary,
-  j.crypto_payment_available AS cryptoPaymentAvailable,j.commercial_origin AS commercialOrigin`;
+  j.crypto_payment_available AS cryptoPaymentAvailable,j.commercial_origin AS commercialOrigin,
+  CASE WHEN j.commercial_origin IN ('native','native_ats') THEN j.early_access_until ELSE NULL END AS earlyAccessUntil`;
 
 export const PUBLIC_HIGHLIGHT_SQL = `CASE WHEN j.commercial_origin='aggregated' THEN 0
   WHEN EXISTS(SELECT 1 FROM native_listing_details n WHERE n.job_id=j.id) THEN CASE WHEN julianday(j.pinned_until)>julianday('now') THEN 1 ELSE 0 END
@@ -16,7 +17,8 @@ export const PUBLIC_REQUIREMENTS_SQL = `(SELECT json_object(
   'requiredSkills',json_extract(n.input_json,'$.requiredSkillIds'),
   'preferredSkills',json_extract(n.input_json,'$.preferredSkillIds'),
   'languages',json_extract(n.input_json,'$.languages'),
-  'benefits',json_extract(n.input_json,'$.benefitSlugs'))
+  'benefits',json_extract(n.input_json,'$.benefitSlugs'),
+  'eligibility',json_extract(n.input_json,'$.eligibility'))
   FROM native_listing_details n WHERE n.job_id=j.id) AS requirementsJson`;
 
 export {annualUsdSalarySql} from '@gaming/shared';

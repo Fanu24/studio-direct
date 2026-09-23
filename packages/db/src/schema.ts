@@ -9,6 +9,13 @@ export const tenants = sqliteTable("tenants", {
 });
 
 export const companies = sqliteTable("companies", {
+  description:text('description'),
+  lastCrawledAt:text('last_crawled_at'),
+  lastCrawlError:text('last_crawl_error'),
+  bannerUrl:text('banner_url'),
+  headquarters:text('headquarters'),
+  size:text('size'),
+
   id: text("id").primaryKey(),
   tenantId: text("tenant_id").notNull(),
   name: text("name").notNull(),
@@ -137,6 +144,8 @@ export const verification = sqliteTable("verification", {
 });
 
 export const profiles = sqliteTable("profiles", {
+  handle:text('handle'),photoUrl:text('photo_url'),cityId:integer('city_id'),countryCode:text('country_code'),utcOffset:integer('utc_offset'),availability:text('availability').notNull().default('open_to_work'),openToCrypto:integer('open_to_crypto').notNull().default(0),featuredOptIn:integer('featured_opt_in').notNull().default(1),verifiedAt:text('verified_at'),lastActiveAt:text('last_active_at'),productProfileCompleted:integer('product_profile_completed').notNull().default(0),
+  publicProfile:integer('public_profile').notNull().default(0),bio:text('bio'),website:text('website'),languages:text('languages'),experienceYears:integer('experience_years'),talentExportOptIn:integer('talent_export_opt_in').notNull().default(0),
   userId: text("user_id").primaryKey(),
   displayName: text("display_name"),
   headline: text("headline"),
@@ -245,6 +254,7 @@ export const salaryRollups = sqliteTable("salary_rollups", {
 });
 
 export const jobApplications = sqliteTable("job_applications", {
+  userId:text('user_id'),cvR2Key:text('cv_r2_key'),status:text('status').notNull().default('new'),employerNote:text('employer_note').notNull().default(''),updatedAt:text('updated_at'),profileSnapshotJson:text('profile_snapshot_json'),matchScore:integer('match_score'),scoreBreakdownJson:text('score_breakdown_json'),invited:integer('invited').notNull().default(0),
   id: text("id").primaryKey(),
   tenantId: text("tenant_id").notNull(),
   jobId: text("job_id").notNull(),

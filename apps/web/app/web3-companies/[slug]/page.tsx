@@ -1,3 +1,5 @@
+import {CompanyReviews} from '../../_components/product/company-reviews';
+import {CompanyBenefits} from '../../_components/product/company-benefits';
 import { tagLabel } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
@@ -258,7 +260,7 @@ export default async function CompanyPage({
           alone. The filter chips below stay the interactive control; these
           are the summary.
         */}
-        <div className="panel panel--lg company-profile">
+        <CompanyBenefits companyId={company.id}/><div className="panel panel--lg company-profile">
           <div className="jobs-studio-header__row company-profile__id">
             <span aria-hidden="true" className="jobs-studio-mark">
               {logoUrl ? (
@@ -434,7 +436,7 @@ export default async function CompanyPage({
         ) : null}
       </section>
 
-      <p className="jobs-back">
+      <CompanyReviews companyId={company.id}/><p className="jobs-back">
         <Link className="text-link" href="/web3-companies">
           See every company in the index
           <ArrowRightIcon size={16} />

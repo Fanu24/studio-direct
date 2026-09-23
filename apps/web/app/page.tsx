@@ -1,3 +1,5 @@
+import {FeaturedMember} from './_components/product/featured-member';
+import {HiringNow} from './_components/product/company-benefits';
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -139,7 +141,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      <div className="home-sections">
+      <div className="home-sections"><div className="container"><HiringNow/><FeaturedMember/></div>
         {/* Job board: this is the page, per web3.career's own header row. */}
         <section className="home-section m-reveal" data-reveal data-reveal-delay="1">
           <div className="container">

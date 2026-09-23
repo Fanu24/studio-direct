@@ -1,8 +1,13 @@
 import type {Database,PlatformEnv} from '../platform';
 import {cvUploadRejection} from '../profile/cv';
 import {parseApplyInput} from './apply';
-export const APPLICATION_STATUSES=['new','reviewing','shortlisted','interview','rejected','hired'] as const;
+import {JOB_ACCESS_SQL} from '../product/job-access';
+import {recordNativeApplication} from '../product/applications';
+export const APPLICATION_STATUSES=['redirected','applied','reviewed','interview','rejected','hired'] as const;
 export async function submitCandidateApplication(env:Pick<PlatformEnv,'DB'|'FILES'>,user:{id:string;email:string},tenantId:string,form:FormData){
+ const native=await env.DB.prepare("SELECT id FROM jobs WHERE id=? AND tenant_id=? AND commercial_origin IN ('native','native_ats')").bind(String(form.get('jobId')||''),tenantId).first();
+ if(native){await recordNativeApplication(env,{tenantId,jobId:String(form.get('jobId')),user,mode:'email',form});return;}
+ if(await env.DB.prepare("SELECT name FROM feature_flags WHERE tenant_id=? AND name='PRODUCT_POSTING_V2' AND enabled=1").bind(tenantId).first())throw Error('Apply directly on the external company website.');
  const raw=parseApplyInput({tenantId,jobId:String(form.get('jobId')||''),name:String(form.get('name')||''),email:user.email,profileUrl:String(form.get('profileUrl')||''),note:String(form.get('note')||''),honeypot:String(form.get('company_website')||'')});
  if(raw.honeypot)return;
  if(raw.name.length<2)throw new Error('Enter your name');
@@ -37,10 +42,16 @@ export async function submitCandidateApplication(env:Pick<PlatformEnv,'DB'|'FILE
  }catch(error){if(key)await env.FILES.delete?.(key);throw error;}
 }
 export async function applicationFile(db:Database,userId:string,id:string){
- return db.prepare(`SELECT a.cv_r2_key FROM job_applications a JOIN employer_listings l ON l.job_id=a.job_id WHERE a.id=? AND a.status!='withdrawn' AND (a.user_id=? OR l.user_id=?)`).bind(id,userId,userId).first<string>('cv_r2_key');
+ return db.prepare(`SELECT a.cv_r2_key FROM job_applications a JOIN employer_listings l ON l.job_id=a.job_id JOIN jobs j ON j.id=a.job_id WHERE a.id=? AND a.status!='withdrawn' AND (a.user_id=? OR ${JOB_ACCESS_SQL})`).bind(id,userId,userId,userId).first<string>('cv_r2_key');
 }
 export async function updateApplication(db:Database,employerId:string,id:string,status:string,note:string){
  if(!(APPLICATION_STATUSES as readonly string[]).includes(status)||note.length>4000)throw new Error('Invalid application update');
- const result=await db.prepare(`UPDATE job_applications SET status=?,employer_note=?,updated_at=? WHERE id=? AND status!='withdrawn' AND job_id IN(SELECT job_id FROM employer_listings WHERE user_id=?)`).bind(status,note.trim(),new Date().toISOString(),id,employerId).run();
- if(!result.meta?.changes)throw new Error('Application not found');
+ const application=await db.prepare(`SELECT a.user_id,a.status,j.title FROM job_applications a JOIN employer_listings l ON l.job_id=a.job_id JOIN jobs j ON j.id=a.job_id WHERE a.id=? AND a.status!='withdrawn' AND ${JOB_ACCESS_SQL}`).bind(id,employerId,employerId).first<{user_id:string|null;status:string;title:string}>();if(!application)throw Error('Application not found');
+ const at=new Date().toISOString(),event=crypto.randomUUID(),guard=`EXISTS(SELECT 1 FROM job_applications a JOIN employer_listings l ON l.job_id=a.job_id JOIN jobs j ON j.id=a.job_id WHERE a.id=? AND ${JOB_ACCESS_SQL} AND a.status!='withdrawn')`;
+ await db.batch([
+ db.prepare(`INSERT INTO application_stage_history(id,application_id,stage,changed_by,created_at) SELECT ?,?,?,?,? WHERE ${guard} AND EXISTS(SELECT 1 FROM job_applications WHERE id=? AND status<>?)`).bind(event,id,status,employerId,at,id,employerId,employerId,id,status),
+ db.prepare(`UPDATE job_applications SET status=?,employer_note=?,updated_at=? WHERE id=? AND ${guard}`).bind(status,note.trim(),at,id,id,employerId,employerId),
+ db.prepare(`INSERT OR IGNORE INTO notification_outbox(id,user_id,application_id,kind,subject,body,destination_path,created_at) SELECT ?,?,?,'application_stage',?,?, '/account/applications',? WHERE EXISTS(SELECT 1 FROM application_stage_history WHERE id=?) AND EXISTS(SELECT 1 FROM candidate_subscriptions WHERE user_id=? AND status IN ('active','trialing') AND renews_at>?)`)
+ .bind('stage:'+event,application.user_id,id,'Application update: '+application.title,'Your application is now '+status+'.',at,event,application.user_id,at),
+ ]);
 }

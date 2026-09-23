@@ -68,7 +68,7 @@ export async function exportAccountData(
     ]);
 
   const owned_records:Record<string,Record<string,unknown>[]>={};
-  for(const table of ['saved_jobs','job_alerts','employer_orders','bundle_credits','marketplace_orders','recruiter_accounts','employer_accounts','support_requests','job_applications','notification_outbox']){
+  for(const table of ['saved_jobs','job_alerts','employer_orders','bundle_credits','marketplace_orders','recruiter_accounts','employer_accounts','support_requests','job_applications','notification_outbox','candidate_skills','candidate_languages','candidate_links','notification_preferences','candidate_subscriptions','early_access_reminders','product_orders','company_reviews','candidate_verification_requests','company_members','newsletter_subscribers','support_tickets']){
     const exists=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind(table).first();
     if(exists)owned_records[table]=await allRows(db,`SELECT * FROM ${table} WHERE user_id=?`,userId);
   }
@@ -76,6 +76,8 @@ export async function exportAccountData(
   if(shortlist)owned_records.recruiter_shortlist=await allRows(db,'SELECT * FROM recruiter_shortlist WHERE recruiter_id=?',userId);
   const keys=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind('jobs_api_keys').first();
   if(keys)owned_records.jobs_api_keys=await allRows(db,'SELECT id,prefix,website,created_at,revoked_at,last_used_at FROM jobs_api_keys WHERE user_id=?',userId);
+  if(await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind('product_invitations').first())owned_records.invitations=await allRows(db,'SELECT * FROM product_invitations WHERE candidate_id=?',userId);
+  if(await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind('profile_views').first())owned_records.profile_views=await allRows(db,'SELECT viewed_at FROM profile_views WHERE candidate_id=?',userId);
   return {
     owned_records,
     user,

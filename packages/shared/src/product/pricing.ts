@@ -32,7 +32,7 @@ export const pricing = {
 
 export type CompanyPlanTier = keyof typeof pricing.plans;
 export type PinDays = 0 | keyof typeof pricing.addons.pin;
-export type JobAddons = {hideSalary: boolean; pinDays: PinDays; earlyAccess: boolean; confidential: boolean};
+export type JobAddons = {hideSalary: boolean; pinDays: PinDays; earlyAccess: boolean; confidential: boolean; maskCompany?:boolean; sector?:string};
 export const DEFAULT_JOB_ADDONS: JobAddons = {hideSalary: false, pinDays: 0, earlyAccess: false, confidential: false};
 export type JobQuoteContext = {
   plan: CompanyPlanTier | null;
@@ -51,7 +51,9 @@ export function parseJobAddons(raw: unknown): JobAddons {
     || typeof value.pinDays !== 'number' || (value.pinDays !== 0 && !Object.hasOwn(pricing.addons.pin, value.pinDays))) {
     throw new Error('Choose valid job options.');
   }
-  return {hideSalary: value.hideSalary as boolean, pinDays: value.pinDays as PinDays,
+  const mask=value.maskCompany===true&&value.confidential===true,sector=typeof value.sector==='string'?value.sector.trim():'';
+  if(mask&&(!/^[\p{L}\p{N} &(),./-]{2,80}$/u.test(sector)))throw Error('Choose a sector label of 2–80 characters for the confidential company.');
+  return {...(mask?{maskCompany:true,sector}:{}),hideSalary: value.hideSalary as boolean, pinDays: value.pinDays as PinDays,
     earlyAccess: value.earlyAccess as boolean, confidential: value.confidential as boolean};
 }
 

@@ -15,6 +15,7 @@ import { requireTenantId } from "../../../../lib/tenant";
 import {currentUser,type PlatformEnv} from '../../../../lib/platform';
 
 import { applicationDestination } from '../../../../lib/jobs/application-destination';
+import {ProductApplyPanel} from '../../../_components/product/apply-panel';
 export const dynamic = 'force-dynamic';
 
 type ApplyParams = Promise<{ slug: string; id: string }>;
@@ -54,6 +55,7 @@ export default async function ApplyPage({
   if (!job) notFound();
   const {env}=await getCloudflareContext({async:true});
   const db=(env as unknown as {DB:JobsDatabase}).DB;
+  if(job.commercialOrigin&&job.commercialOrigin!=='aggregated')return <ProductApplyPanel env={env as unknown as PlatformEnv} tenantId={await requireTenantId(db)} jobId={job.id} user={await currentUser(env as unknown as PlatformEnv)}/>;
   const destination=await applicationDestination(db,await requireTenantId(db),job.id);
   if(!destination)notFound();
   if(destination.mode==='external')redirect(destination.url);

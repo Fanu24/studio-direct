@@ -10,7 +10,7 @@ export async function POST(request:Request){
   // Keep the key until storage confirms deletion so a failed request can retry.
   if(row.cv_r2_key)await env.FILES.delete?.(row.cv_r2_key);
   await env.DB.batch([
-   env.DB.prepare("UPDATE job_applications SET status='withdrawn',note='',profile_url=NULL,cv_r2_key=NULL,employer_note='',updated_at=? WHERE id=? AND user_id=?").bind(new Date().toISOString(),id,user.id),
+   env.DB.prepare("UPDATE job_applications SET status='withdrawn',profile_snapshot_json=NULL,match_score=NULL,score_breakdown_json=NULL,note='',profile_url=NULL,cv_r2_key=NULL,employer_note='',updated_at=? WHERE id=? AND user_id=?").bind(new Date().toISOString(),id,user.id),
    env.DB.prepare('DELETE FROM notification_outbox WHERE application_id=? AND EXISTS(SELECT 1 FROM job_applications WHERE id=? AND user_id=?)').bind(id,id,user.id),
   ]);
   return Response.redirect(new URL('/applications',request.url),303);

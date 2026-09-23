@@ -1,5 +1,6 @@
 import {reconcileListingPeriods} from '@gaming/shared';
 import type {Database} from '../platform';
+import {reverseProductPayment} from '../product/billing';
 import {reverseCompanyPurchase} from '../product/company-claims';
 
 /** Called after a signed event or authenticated Stripe lookup confirms a full refund. */
@@ -23,11 +24,12 @@ export async function reversePayment(db:Database,paymentIntent:string,eventId:st
   ]);
   await reconcileListingPeriods(db,now);
   await reverseCompanyPurchase(db,paymentIntent,eventId,now);
+  await reverseProductPayment(db,paymentIntent,now);
 }
 
 /** Cancel remote renewals before erasing the local account that manages them. */
 export async function prepareCommerceDeletion(db:Database,userId:string,secret?:string,fetcher=fetch) {
-  const orders=await db.prepare('SELECT stripe_subscription_id FROM employer_orders WHERE user_id=? AND stripe_subscription_id IS NOT NULL').bind(userId).all<{stripe_subscription_id:string}>();
+  const orders=await db.prepare('SELECT stripe_subscription_id FROM employer_orders WHERE user_id=? AND stripe_subscription_id IS NOT NULL UNION SELECT stripe_subscription_id FROM product_orders WHERE user_id=? AND stripe_subscription_id IS NOT NULL').bind(userId,userId).all<{stripe_subscription_id:string}>();
   for(const order of orders.results){
     if(!secret)throw new Error('Billing must be connected to cancel your recurring listings before deletion');
     const result=await fetcher(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(order.stripe_subscription_id)}`,{method:'DELETE',headers:{Authorization:`Bearer ${secret}`}});

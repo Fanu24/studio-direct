@@ -1,6 +1,9 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 import { createAuth, type AuthEnv } from "../../../../lib/auth/index";
+import {loadProductFlags} from '../../../../lib/product/flags';
+import {requireTenantId} from '../../../../lib/tenant';
+import type {Database} from '../../../../lib/platform';
 import {
   isEmailAuthPath,
   turnstileTokenFromRequest,
@@ -20,6 +23,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const env = await authEnv();
   const pathname = new URL(request.url).pathname;
+  if(['/sign-in/email','/sign-up/email','/request-password-reset'].some(p=>pathname.endsWith(p))&&!(await loadProductFlags(env.DB as Database,await requireTenantId(env.DB as Database))).PRODUCT_PROFILES_V2)return Response.json({message:'Email/password access is not enabled.'},{status:404});
 
   if (isEmailAuthPath(pathname)) {
     const result = await verifyTurnstile({

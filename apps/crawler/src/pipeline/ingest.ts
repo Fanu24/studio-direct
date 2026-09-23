@@ -1,3 +1,4 @@
+import {externalSalary} from '@gaming/shared';
 import {
   canonicalApplyUrl,
   classifyRemote,
@@ -88,6 +89,7 @@ export async function ingestDrafts(
   drafts: readonly JobDraft[],
   ctx: IngestContext,
 ): Promise<IngestResult> {
+  if(await ctx.repo.isManagedCompany?.(ctx.companyId))return {upserted:0,jobIds:[],droppedStaffing:0};
   const now = ctx.now ?? new Date();
   const timestamp = now.toISOString();
   const jobIds = new Set<string>();
@@ -135,6 +137,7 @@ export async function ingestDrafts(
       remote,
       descriptionHtml: draft.descriptionHtml,
       applyUrl: preferredApplyUrl(draft, existing, existingHasCareerSighting),
+      statedSalary:externalSalary(draft),
       salaryText: draft.salaryText ?? existing?.salaryText ?? null,
       salaryMin: draft.salaryMin ?? existing?.salaryMin ?? null,
       salaryMax: draft.salaryMax ?? existing?.salaryMax ?? null,

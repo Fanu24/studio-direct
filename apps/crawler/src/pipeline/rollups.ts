@@ -114,7 +114,7 @@ export async function rebuildSalaryRollups(
       JOIN companies c ON c.id = j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       LEFT JOIN job_tags t ON t.job_id = j.id
       LEFT JOIN job_locations jl ON jl.job_id = j.id
-      WHERE j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday(?))
+      WHERE j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday(?))
         AND ${SCRAPED_SALARY_SQL}
       GROUP BY j.id`,
     )

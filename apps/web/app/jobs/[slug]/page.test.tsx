@@ -129,7 +129,7 @@ describe("Job page apply control", () => {
       "Alpha Studio is hiringGameplay Engineer",
     );
     expect(hrefs).toContain("/web3-companies/alpha");
-    expect(content).toContain("Apply now");
+    expect(content).toContain("Apply");
     expect(content).toContain("More at Alpha Studio");
     expect(content).not.toContain("Not on LinkedIn");
     expect(content).not.toContain("5 free unlocks");

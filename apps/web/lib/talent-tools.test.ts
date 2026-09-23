@@ -11,7 +11,7 @@ it('keeps private candidates outside public search and combines paid professiona
  expect((await listTalent(state.db,{experience:4,salaryMax:95000,language:'Italian'},'recruiter')).rows.map(p=>p.user_id)).toEqual(['export']);
 });
 it('exports only explicit current consent, records access, and refuses expired or revoked purchases',async()=>{
- const result=await exportTalent(state.db,'recruiter',{});expect(result.count).toBe(1);expect(result.csv).toContain('export@example.test');expect(result.csv).not.toContain('shared@example.test');expect(result.csv).not.toContain('hidden@example.test');
+ const result=await exportTalent(state.db,'recruiter',{});expect(result.count).toBe(1);expect(result.csv).not.toContain('export@example.test');expect(result.csv).toContain('export');expect(result.csv).not.toContain('shared@example.test');expect(result.csv).not.toContain('hidden@example.test');
  expect(state.sql.prepare('SELECT candidate_id FROM candidate_access_log').get().candidate_id).toBe('export');state.sql.exec("UPDATE profiles SET talent_export_opt_in=0 WHERE user_id='export'");expect((await exportTalent(state.db,'recruiter',{})).count).toBe(0);
  state.sql.exec("UPDATE marketplace_orders SET status='refunded'");await expect(exportTalent(state.db,'recruiter',{})).rejects.toThrow('access required');
 });

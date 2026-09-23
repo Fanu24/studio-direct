@@ -1,6 +1,6 @@
 # Nodework product differentiation plan
 
-Status: repository inventory and product clarifications complete; phase 1 implementation in progress. This is a plan, not a completion report.
+Status 23 September: phases 2–7 are implemented locally, including migrations 0026–0032. Local type checks and the repaired functional cases pass; Linux CI/build and preview deployment are the remaining delivery checks. The historical phase-1 stop below is superseded. See docs/product-v2-operations.md for the functional handoff. No live billing or real marketing sends are enabled.
 
 Source: [September 2026 specification](docs/specs/nodework-product-update-2026-09.md), supplied as `Workin aggiornamento.md`. SHA-256: `6a68f3f43b1c5bf360218467e46c9368c7d2ad8c18f39cfe9ce544ccd7e40ae2`.
 
@@ -163,6 +163,8 @@ Acceptance: confidential content absent from every public index/feed/social/news
 - Preserve existing unrelated advertising/crawler functions and all valid public URLs. Stripe live, final design and commercial launch remain outside this implementation's authorization.
 
 ## Progress
+
+23 September: candidate/profile/application implementation is underway. Changes are local until compiled and committed. The owner requests necessary business/security checks and a final integration check, avoiding repeated broad test campaigns. No design changes or real social/newsletter sends are authorized by this development request.
 
 - [x] Entire attachment read; original snapshot saved.
 - [x] Current runtime, data/auth, posting/pricing, email and scheduler inventoried.

@@ -1,3 +1,4 @@
+import {ProductJobBadges} from './product/job-badges';
 import {JobRequirements} from './product/job-requirements';
 import {jobTagHref} from '../../lib/jobs/tag-links';
 import { formatSalaryRange, tagLabel } from "@gaming/shared";
@@ -237,7 +238,7 @@ export function JobBoard({
                     ) : null}
                   </td>
                   <td className="board-col-pay">
-        {job.cryptoPaymentAvailable ? <span className="badge">Crypto pay</span> : null}
+        <ProductJobBadges job={job}/>{job.cryptoPaymentAvailable ? <span className="badge">Crypto pay</span> : null}
                     {salary ? <span className="board-row__pay">{salary}</span> : null}
                   </td>
                   <td className="board-col-tags">

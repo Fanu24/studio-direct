@@ -1,8 +1,9 @@
+import {canManageCompany} from '../../../../../lib/product/company-claims';
 import {PostingValidationError} from '@gaming/shared';
 import {platform,currentUser,sameOrigin,appOrigin} from '../../../../../lib/platform';
 import {requireTenantId} from '../../../../../lib/tenant';
 import {loadProductFlags} from '../../../../../lib/product/flags';
-import {createNativeOrder,nativeSelection} from '../../../../../lib/product/native-orders';
+import {createNativeOrder,nativeSelection,fulfillNativeOrder} from '../../../../../lib/product/native-orders';
 import {orderById} from '../../../../../lib/billing/employer-orders';
 import {reconcileOrder} from '../../../../../lib/billing/reconcile-order';
 import {recoverProductCheckout} from '../../../../../lib/product/checkout-recovery';
@@ -24,18 +25,28 @@ export async function POST(request:Request) {
   }
   const flags=await loadProductFlags(env.DB,tenantId,env);
   if(!flags.PRODUCT_POSTING_V2)return Response.json({error:'Not found.'},{status:404});
+  if(raw.atsDraftId){const draft=await env.DB.prepare('SELECT a.id,a.job_id,i.company_id FROM company_ats_jobs a JOIN company_ats_integrations i ON i.id=a.integration_id WHERE a.id=? AND i.tenant_id=?').bind(String(raw.atsDraftId),tenantId).first<{id:string;job_id:string|null;company_id:string}>();if(!draft||draft.job_id||raw.listing?.companyId!==draft.company_id||!await canManageCompany(env.DB,tenantId,user.id,draft.company_id))return Response.json({error:'ATS draft unavailable.'},{status:403});}
   let order;
   try{order=await createNativeOrder(env.DB,{id:raw.id,tenantId,userId:user.id,listing:raw.listing,addons:raw.addons,flags});}
   catch(error){return Response.json({error:error instanceof Error?error.message:'Invalid job.',...(error instanceof PostingValidationError?{fields:error.fields}:{})},{status:400});}
+  if(raw.atsDraftId){await env.DB.prepare("UPDATE company_ats_jobs SET order_id=?,status='checkout',posting_json=? WHERE id=? AND job_id IS NULL AND (order_id IS NULL OR order_id=? OR NOT EXISTS(SELECT 1 FROM employer_orders o WHERE o.id=company_ats_jobs.order_id AND o.status IN ('pending','paid')))").bind(order.id,order.payload_json,String(raw.atsDraftId),order.id).run();if(!await env.DB.prepare('SELECT id FROM company_ats_jobs WHERE id=? AND order_id=?').bind(String(raw.atsDraftId),order.id).first()){await env.DB.batch([env.DB.prepare("UPDATE employer_orders SET status='cancelled' WHERE id=? AND status='pending' AND stripe_session_id IS NULL").bind(order.id),env.DB.prepare("UPDATE plan_credit_reservations SET status='released' WHERE order_id=? AND status='held' AND EXISTS(SELECT 1 FROM employer_orders WHERE id=? AND status='cancelled')").bind(order.id,order.id)]);return Response.json({error:'Another checkout is already active for this draft.'},{status:409});}}
   const {quote}=nativeSelection(order),origin=appOrigin(env);
   const statusUrl=`${origin}/employer/purchase?order=${order.id}`;
   const expired=()=>Response.json({error:'This checkout expired. Your draft is saved. Click Continue again to open a new checkout.',restart:true},{status:409});
   if(order.status==='cancelled')return expired();
   if(order.status!=='pending')return Response.json({url:statusUrl});
+  if(quote.totalCents===0){
+    const id='credit:'+order.id;
+    await env.DB.prepare('UPDATE employer_orders SET stripe_session_id=? WHERE id=? AND stripe_session_id IS NULL').bind(id,order.id).run();
+    const stored=await orderById(env.DB,order.id);if(!stored||stored.stripe_session_id!==id)return Response.json({error:'Publication reservation mismatch.'},{status:409});
+    await fulfillNativeOrder(env.DB,stored,{id,payment_status:'no_payment_required',currency:'usd',amount_subtotal:0,amount_total:0,livemode:false},'credit:'+order.id);
+    return Response.json({url:statusUrl});
+  }
   if(order.stripe_session_id)try{
     const recovery=await recoverProductCheckout(env.STRIPE_SECRET_KEY,order.stripe_session_id,order.id,'orderId',statusUrl);
     if(!recovery.expired)return Response.json({url:recovery.url});
     await env.DB.prepare("UPDATE employer_orders SET status='cancelled' WHERE id=? AND status='pending' AND stripe_session_id=?").bind(order.id,order.stripe_session_id).run();
+    await env.DB.prepare("UPDATE plan_credit_reservations SET status='released' WHERE order_id=? AND status='held'").bind(order.id).run();
     return expired();
   }catch{return Response.json({error:'Unable to check the existing payment. Please retry; no additional checkout was created.'},{status:502});}
   const body=new URLSearchParams({mode:'payment',customer_email:user.email,success_url:`${origin}/employer/purchase?order=${order.id}`,cancel_url:`${origin}/post-web3-job?cancelled=1`,

@@ -1,12 +1,13 @@
 import type {Database} from '../platform';
 
-export const REFERENCE_KINDS = ['cities','regions','skills','benefits','languages','companies'] as const;
+export const REFERENCE_KINDS = ['countries','cities','regions','skills','benefits','languages','companies'] as const;
 export type ReferenceKind = typeof REFERENCE_KINDS[number];
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, character => `\\${character}`);
 export const normalizeSearch = (value: string) => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 export async function searchReference(db: Database, tenantId: string, kind: ReferenceKind, query: string) {
   if (typeof query !== 'string' || query.length > 100) throw new Error('Search is too long.');
   const input = query.trim(), anywhere = `%${escapeLike(input.toLowerCase())}%`, prefix = `${escapeLike(normalizeSearch(input))}%`;
+  if(kind==='countries')return (await db.prepare("SELECT code AS id,name FROM reference_countries WHERE name LIKE ? OR code=? ORDER BY name LIMIT 250").bind(anywhere,input.toUpperCase()).all()).results;
   if (kind === 'cities') {
     if (input.length < 2) return [];
     return (await db.prepare(`SELECT c.id,c.name,c.region,c.country_code,c.latitude,c.longitude,c.timezone,n.name AS country_name

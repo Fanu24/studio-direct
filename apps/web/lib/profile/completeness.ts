@@ -70,6 +70,7 @@ export async function loadProfileCompleteness(
   db: CompletenessDatabase,
   userId: string,
 ): Promise<number> {
+  const product=await db.prepare('SELECT completeness,product_profile_completed FROM profiles WHERE user_id=?').bind(userId).first<{completeness:number;product_profile_completed:number}>();if(product?.product_profile_completed)return product.completeness;
   const profile = await db
     .prepare(
       `SELECT display_name, target_role, location, remote_pref, cv_r2_key

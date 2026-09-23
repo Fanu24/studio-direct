@@ -5,6 +5,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AccountShell } from "../_components/account-shell";
+import {loadProductFlags} from '../../lib/product/flags';
+import {requireTenantId} from '../../lib/tenant';
+import type {Database} from '../../lib/platform';
 import { CheckIcon, MinusIcon } from "../_components/icons";
 import { createAuth, type AuthEnv } from "../../lib/auth/index";
 import {
@@ -79,6 +82,7 @@ function experienceDates(entry: ExperienceEntry): string | null {
 
 export default async function ProfilePage() {
   const env = await profileEnv();
+  if((await loadProductFlags(env.DB as Database,await requireTenantId(env.DB as Database))).PRODUCT_PROFILES_V2)redirect('/account/profile');
   const userId = await sessionUserId(env);
 
   if (!userId) {

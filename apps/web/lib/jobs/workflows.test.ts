@@ -10,6 +10,7 @@ let state:ReturnType<typeof testDatabase>,jobId:string;
 const input=()=>parseListing({title:'Web3 engineer',companyName:'Test Company',companyUrl:'https://example.com',location:'Worldwide',remote:'remote',applyMode:'internal',descriptionHtml:'<p>'+ 'A meaningful job description for testing only. '.repeat(4)+'</p>',primarySkill:'solidity',benefits:['PTO'],tags:[]},'employer@example.test');
 const files={put:vi.fn(),get:vi.fn(),delete:vi.fn()};
 beforeEach(async()=>{state=testDatabase();vi.clearAllMocks();state.sql.exec(`INSERT INTO users(id,tenant_id,email,created_at) VALUES('employer','tenant:gaming','employer@example.test','2026-09-19'),('candidate','tenant:gaming','candidate@example.test','2026-09-19'),('stranger','tenant:gaming','stranger@example.test','2026-09-19');`);
+ state.sql.exec("UPDATE users SET email_verified=1");
  const o=await createEmployerOrder(state.db,{id:'testorder',tenantId:'tenant:gaming',userId:'employer',kind:'job',listing:input(),selection:{...DEFAULT_SELECTION,logo:false,autoRenew:false}});
  await fulfillEmployerOrder(state.db,{id:'cs',payment_status:'paid',currency:'usd',amount_subtotal:o.total_cents,amount_total:o.total_cents,metadata:{orderId:o.id}},'checkout');jobId='paid:testorder';
 });
@@ -35,9 +36,9 @@ it('stores one application and private CV, using verified identity instead of su
  await submitCandidateApplication(env,candidate,'tenant:gaming',form());await submitCandidateApplication(env,candidate,'tenant:gaming',form());
  const rows=state.sql.prepare('SELECT * FROM job_applications').all();expect(rows).toHaveLength(1);expect(rows[0].email).toBe(candidate.email);expect(files.put).toHaveBeenCalledTimes(1);
  expect(await applicationFile(state.db,'candidate',rows[0].id)).toBe(rows[0].cv_r2_key);expect(await applicationFile(state.db,'employer',rows[0].id)).toBe(rows[0].cv_r2_key);expect(await applicationFile(state.db,'stranger',rows[0].id)).toBeNull();
- expect(state.sql.prepare('SELECT COUNT(*) n FROM notification_outbox').get().n).toBe(1);
+ expect(state.sql.prepare('SELECT COUNT(*) n FROM notification_outbox').get().n).toBe(2);
  await expect(updateApplication(state.db,'stranger',rows[0].id,'hired','')).rejects.toThrow();
- await updateApplication(state.db,'employer',rows[0].id,'shortlisted','Private note');expect(state.sql.prepare('SELECT status FROM job_applications').get().status).toBe('shortlisted');
+ await updateApplication(state.db,'employer',rows[0].id,'reviewed','Private note');expect(state.sql.prepare('SELECT status FROM job_applications').get().status).toBe('reviewed');
  state.sql.exec("UPDATE job_applications SET status='withdrawn'");expect(await applicationFile(state.db,'employer',rows[0].id)).toBeNull();
  await expect(submitCandidateApplication(env,candidate,'tenant:gaming',form())).rejects.toThrow('You withdrew this application');
  expect(files.put).toHaveBeenCalledTimes(1);
@@ -46,12 +47,12 @@ it('stores one application and private CV, using verified identity instead of su
 it('rejects disguised documents and applications to closed jobs before storing files',async()=>{
  const f=form();f.set('cv',new File(['not a PDF'],'cv.pdf',{type:'application/pdf'}));
  await expect(submitCandidateApplication({DB:state.db,FILES:files},{id:'candidate',email:'candidate@example.test'},'tenant:gaming',f)).rejects.toThrow('valid PDF');
- state.sql.exec('UPDATE jobs SET listed=0');await expect(submitCandidateApplication({DB:state.db,FILES:files},{id:'candidate',email:'candidate@example.test'},'tenant:gaming',form())).rejects.toThrow('no longer');expect(files.put).not.toHaveBeenCalled();
+ state.sql.exec('UPDATE jobs SET listed=0');await expect(submitCandidateApplication({DB:state.db,FILES:files},{id:'candidate',email:'candidate@example.test'},'tenant:gaming',form())).rejects.toThrow('closed');expect(files.put).not.toHaveBeenCalled();
 });
 it('retains failed email delivery for retry and does not send twice in a successful pass',async()=>{
  await submitCandidateApplication({DB:state.db,FILES:files},{id:'candidate',email:'candidate@example.test'},'tenant:gaming',form());
  const send=vi.fn().mockRejectedValueOnce(Error('provider unavailable')).mockResolvedValue({});const env={DB:state.db,EMAIL:{send},EMAIL_ENABLED:'true',EMAIL_FROM:'mail@example.test',SITE_URL:'https://example.test'};
  const now=new Date();expect((await deliverNotifications(env,now)).failed).toBe(1);expect(state.sql.prepare('SELECT sent_at FROM notification_outbox').get().sent_at).toBeNull();
- expect((await deliverNotifications(env,new Date(now.getTime()+600000))).sent).toBe(1);await deliverNotifications(env,new Date(now.getTime()+1200000));expect(send).toHaveBeenCalledTimes(2);
- expect(send.mock.calls[1][0].to).toBe('employer@example.test');expect(send.mock.calls[1][0].text).not.toContain('applications/candidate');
+ expect((await deliverNotifications(env,new Date(now.getTime()+600000))).sent).toBe(1);await deliverNotifications(env,new Date(now.getTime()+1200000));expect(send).toHaveBeenCalledTimes(3);
+ expect(send.mock.calls[2][0].to).toBe(send.mock.calls[0][0].to);expect(new Set(send.mock.calls.map(c=>c[0].to))).toEqual(new Set(['candidate@example.test','employer@example.test']));for(const [mail] of send.mock.calls)expect(mail.text).not.toContain('applications/candidate');
 });

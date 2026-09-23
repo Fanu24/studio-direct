@@ -5,6 +5,9 @@ import { CheckIcon } from "../_components/icons";
 import Link from "next/link";
 import {loginDestinations,type AccountPortal} from "../../lib/auth/portals";
 import { GoogleSignInButton, LoginForm } from "./login-form";
+import {loadProductFlags} from '../../lib/product/flags';
+import {requireTenantId} from '../../lib/tenant';
+import type {PlatformEnv} from '../../lib/platform';
 
 /* Only things the account actually does. Companies never see a profile unless the
    talent pool is switched on from Settings, and that is off by default. */
@@ -21,6 +24,7 @@ export async function renderLoginPage(
   const employer=portal==='employer';
   const {env}=await getCloudflareContext({async:true});
   const config=env as {TURNSTILE_SITE_KEY?:string;GOOGLE_CLIENT_ID?:string;GOOGLE_CLIENT_SECRET?:string;LOCAL_MAIL?:string;SITE_URL?:string};
+  const productEnv=env as unknown as PlatformEnv,flags=await loadProductFlags(productEnv.DB,await requireTenantId(productEnv.DB),productEnv);
   const siteKey = config.TURNSTILE_SITE_KEY ?? "";
   const localTesting=process.env.NODE_ENV==='development'&&config.LOCAL_MAIL==='true'&&siteKey==='1x00000000000000000000AA'&&['http://localhost:3000','http://127.0.0.1:3000'].includes(config.SITE_URL||'');
   const {callbackURL,newUserCallbackURL,errorCallbackURL}=loginDestinations(portal,next);
@@ -64,7 +68,7 @@ export async function renderLoginPage(
               {"Sign-in could not be completed. Please try again."}
             </p>
           ) : null}
-          <LoginForm localTesting={localTesting} callbackURL={callbackURL} newUserCallbackURL={newUserCallbackURL} errorCallbackURL={errorCallbackURL} siteKey={siteKey}>
+          <LoginForm passwordEnabled={flags.PRODUCT_PROFILES_V2} localTesting={localTesting} callbackURL={callbackURL} newUserCallbackURL={newUserCallbackURL} errorCallbackURL={errorCallbackURL} siteKey={siteKey}>
             <div className="field">
               <label className="field__label" htmlFor="login-email">Email</label>
               <input
@@ -86,7 +90,7 @@ export async function renderLoginPage(
             Continue with Google
           </GoogleSignInButton> : null}
           <p className="auth-fine">
-            {employer ? "New here? Sign in, then add your company details to create your employer account." : "New here? Your account is created the first time you sign in. We then ask for a display name and a target role."}
+            {employer ? "Sign in to purchase a job, annual plan or company claim. Company access activates after payment; company ownership is verified separately." : "Create your candidate account with an email link, Google or an available password option."}
           </p>
           <p><Link href={employer ? "/login" : "/employer/login"}>{employer ? "Looking for a job? Candidate sign in" : "Hiring? Employer sign in"}</Link></p>
         </div>

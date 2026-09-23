@@ -13,6 +13,11 @@ import {
 
 export interface JobListFilters {
   cryptoPayment?: boolean;
+  workArrangement?: string;
+  language?: string;
+  eligibleCountry?: string;
+  eligibleUtc?: number;
+  skillIds?: string[];
   aggregatedOnly?: boolean;
   hidden?: boolean;
   q?: string;
@@ -52,6 +57,9 @@ export interface JobsStatement {
 }
 
 export interface JobListItem {
+  reviewRating?:number|null;
+  reviewCount?:number;
+  earlyAccessUntil?:string|null;
   salaryCurrency?:string|null;
   salaryPeriod?:string|null;
   hideSalary?:number;
@@ -87,7 +95,8 @@ export interface JobListResult {
 }
 
 export interface JobDetail {
-  requirements?: {requiredSkills:string[];preferredSkills:string[];languages:{code:string;level:string;kind:string}[];benefits:string[]};
+  earlyAccessUntil?:string|null;
+  requirements?: {requiredSkills:string[];preferredSkills:string[];languages:{code:string;level:string;kind:string}[];benefits:string[];eligibility?:import("@gaming/shared").Eligibility|null};
   salaryCurrency?:string|null;
   salaryPeriod?:string|null;
   hideSalary?:number;
@@ -263,7 +272,7 @@ function jobDetailQuery(where: string): string {
     JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
     WHERE j.tenant_id = ?
       AND ${where}
-      AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       AND c.listed = 1`;
 }
 
@@ -374,7 +383,7 @@ export async function listSitemapEntries(
       JOIN tenants t ON t.id = j.tenant_id
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
       WHERE t.slug = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
       ORDER BY j.slug`,
     )
@@ -399,7 +408,7 @@ export async function listSitemapEntries(
       JOIN jobs j ON j.id = jt.job_id
       JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       JOIN tenants t ON t.id = j.tenant_id
-      WHERE t.slug = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      WHERE t.slug = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jt.tag_slug
       HAVING total >= 5`,
     )
@@ -413,7 +422,7 @@ export async function listSitemapEntries(
       JOIN jobs j ON j.id = jl.job_id
       JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       JOIN tenants t ON t.id = j.tenant_id
-      WHERE t.slug = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      WHERE t.slug = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jl.location_slug
       HAVING total >= 5`,
     )
@@ -434,7 +443,7 @@ export async function listSitemapEntries(
       JOIN jobs j ON j.id = jb.job_id
       JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       JOIN tenants t ON t.id = j.tenant_id
-      WHERE t.slug = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      WHERE t.slug = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jb.benefit_slug
       HAVING total >= 5`,
     )
@@ -520,11 +529,17 @@ function buildJobsWhere(
   const joinBindings: unknown[] = [];
   const conditions = [
     "j.tenant_id = ?",
-    "j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))",
+    "j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))",
     "c.listed = 1",
   ];
   const whereBindings: unknown[] = [tenantId];
   if(filters.cryptoPayment)conditions.push('j.crypto_payment_available=1');
+  if(['remote','hybrid','onsite'].includes(filters.workArrangement??'')){conditions.push('j.remote=?');whereBindings.push(filters.workArrangement);}
+  if(filters.language){conditions.push('EXISTS(SELECT 1 FROM job_language_requirements lr WHERE lr.job_id=j.id AND lr.language_code=?)');whereBindings.push(filters.language);}
+  for(const skill of [...new Set(filters.skillIds??[])].slice(0,30)){conditions.push('EXISTS(SELECT 1 FROM job_skills js WHERE js.job_id=j.id AND js.skill_id=?)');whereBindings.push(skill);}
+  if(filters.eligibleCountry){conditions.push("EXISTS(SELECT 1 FROM job_remote_eligibility re,json_each(re.rules_json,'$.countryCodes') country WHERE re.job_id=j.id AND re.mode='geo' AND country.value=?)");whereBindings.push(filters.eligibleCountry.toUpperCase());}
+  if(Number.isFinite(filters.eligibleUtc)){conditions.push("EXISTS(SELECT 1 FROM job_remote_eligibility re WHERE re.job_id=j.id AND re.mode='timezone' AND CASE WHEN json_extract(re.rules_json,'$.utcFrom')<=json_extract(re.rules_json,'$.utcTo') THEN ? BETWEEN json_extract(re.rules_json,'$.utcFrom') AND json_extract(re.rules_json,'$.utcTo') ELSE ?>=json_extract(re.rules_json,'$.utcFrom') OR ?<=json_extract(re.rules_json,'$.utcTo') END)");whereBindings.push(filters.eligibleUtc,filters.eligibleUtc,filters.eligibleUtc);}
+
 
   const search = filters.q ? ftsQuery(filters.q) : "";
   if (search) {
@@ -651,6 +666,8 @@ export async function listJobs(
         j.title,
         j.company_id AS companyId,
         c.name AS companyName,
+        (SELECT AVG(overall) FROM company_reviews cr WHERE cr.company_id=c.id AND cr.status='published') AS reviewRating,
+        (SELECT COUNT(*) FROM company_reviews cr WHERE cr.company_id=c.id AND cr.status='published') AS reviewCount,
         c.name_norm AS companyNameNorm,
         CASE WHEN j.source='manual' THEN j.listing_logo_url ELSE c.logo_url END AS companyLogoUrl,
         j.location,
@@ -713,7 +730,7 @@ export async function countHiringCompanies(
       JOIN jobs j
         ON j.company_id = c.id
         AND j.tenant_id = c.tenant_id
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       WHERE c.tenant_id = ? AND c.listed = 1`,
     )
     .bind(tenantId)
@@ -740,7 +757,7 @@ export async function listCompanies(
       LEFT JOIN jobs j
         ON j.company_id = c.id
         AND j.tenant_id = c.tenant_id
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       WHERE c.tenant_id = ? AND c.listed = 1
       GROUP BY c.id, c.name, c.name_norm, c.domain
       ORDER BY jobCount DESC, c.name ASC`,
@@ -811,7 +828,7 @@ export async function listTopGrowingCompanies(
       JOIN jobs j
         ON j.company_id = c.id
         AND j.tenant_id = c.tenant_id
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND j.posted_at IS NOT NULL
       WHERE c.tenant_id = ? AND c.listed = 1
       GROUP BY c.id, c.name, c.name_norm
@@ -869,7 +886,7 @@ export async function listLocationJobCounts(
       FROM job_locations jl
       JOIN jobs j ON j.id = jl.job_id
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
-      WHERE j.tenant_id = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now')) AND c.listed = 1
+      WHERE j.tenant_id = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now')) AND c.listed = 1
       GROUP BY jl.location_slug
       ORDER BY jobCount DESC, jl.location_slug ASC`,
     )
@@ -914,7 +931,7 @@ export async function listCompanyTopTags(
       `SELECT jt.tag_slug AS slug, COUNT(*) AS count
       FROM job_tags jt
       JOIN jobs j ON j.id = jt.job_id
-      WHERE j.company_id = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      WHERE j.company_id = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jt.tag_slug
       ORDER BY count DESC, jt.tag_slug ASC
       LIMIT ?`,
@@ -934,7 +951,7 @@ export async function listCompanyLocations(
       `SELECT jl.location_slug AS slug, COUNT(*) AS count
       FROM job_locations jl
       JOIN jobs j ON j.id = jl.job_id
-      WHERE j.company_id = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      WHERE j.company_id = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jl.location_slug
       ORDER BY count DESC, jl.location_slug ASC`,
     )
@@ -960,7 +977,7 @@ export async function listTagLocationFacets(
       JOIN job_tags jt ON jt.job_id = j.id AND jt.tag_slug = ?
       JOIN job_locations jl ON jl.job_id = j.id
       WHERE j.tenant_id = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
       GROUP BY jl.location_slug
       ORDER BY jobCount DESC, jl.location_slug ASC`,
@@ -986,7 +1003,7 @@ export async function tagSalaryRange(
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
       JOIN job_tags jt ON jt.job_id = j.id AND jt.tag_slug = ?
       WHERE j.tenant_id = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
         AND ${SCRAPED_SALARY_SQL}`,
     )
@@ -1072,7 +1089,7 @@ async function listSalariedJobs(
       FROM jobs j
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
       WHERE j.tenant_id = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
         AND ${SCRAPED_SALARY_SQL}`,
     )
@@ -1160,7 +1177,7 @@ async function liveAggregateLocations(
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
       JOIN job_locations jl ON jl.job_id = j.id
       WHERE j.tenant_id = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
         AND ${SCRAPED_SALARY_SQL}
         AND jl.location_slug IN (${placeholders})
@@ -1270,7 +1287,7 @@ async function salariedJobsForTag(
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
       JOIN job_tags jt ON jt.job_id = j.id AND jt.tag_slug = ?
       WHERE j.tenant_id = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
         AND ${SCRAPED_SALARY_SQL}`,
     )

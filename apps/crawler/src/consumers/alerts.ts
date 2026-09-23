@@ -7,7 +7,7 @@ export async function handleAlert(alertId:string,env:AlertEnv):Promise<{action:'
  if(!alert||alert.last_sent_at&&alert.last_sent_at>dayAgo)return {action:'ack'};
  const claim=await env.DB.prepare('UPDATE job_alerts SET last_attempt_at=? WHERE id=? AND enabled=1 AND (last_attempt_at IS NULL OR last_attempt_at<?)').bind(at,alert.id,lockCutoff).run();
  if(!claim.meta.changes)return {action:'retry',delaySeconds:600};
- const filters=['j.tenant_id=?','j.listed=1','j.created_at>?',"(j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))"],values:unknown[]=[alert.tenant_id,alert.last_sent_at??alert.created_at];
+ const filters=['j.tenant_id=?','j.listed = 1 AND j.confidential = 0','j.created_at>?',"(j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))"],values:unknown[]=[alert.tenant_id,alert.last_sent_at??alert.created_at];
  if(alert.query){filters.push("j.title LIKE ? ESCAPE '\\'");values.push('%'+alert.query.replace(/[\\%_]/g,'\\$&')+'%');}
  if(alert.tag){filters.push('EXISTS(SELECT 1 FROM job_tags t WHERE t.job_id=j.id AND t.tag_slug=?)');values.push(alert.tag);}
  if(alert.remote_only)filters.push("j.remote='remote'");

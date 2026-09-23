@@ -1,3 +1,5 @@
+vi.mock('../../lib/product/flags',()=>({loadProductFlags:async()=>({PRODUCT_PROFILES_V2:false})}));
+vi.mock('../../lib/tenant',()=>({requireTenantId:async()=> 'tenant:gaming'}));
 vi.mock('@opennextjs/cloudflare',()=>({getCloudflareContext:async()=>({env:{TURNSTILE_SITE_KEY:process.env.TURNSTILE_SITE_KEY,GOOGLE_CLIENT_ID:'test',GOOGLE_CLIENT_SECRET:'test'}})}));
 import React, { type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";

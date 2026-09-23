@@ -1,0 +1,3 @@
+import Link from 'next/link';
+import type {ReactNode} from 'react';
+export default function AccountLayout({children}:{children:ReactNode}){return <><nav className="container" aria-label="Candidate account">{[['/account/profile','Profile'],['/account/applications','Applications'],['/account/invitations','Invitations'],['/account/saved','Saved jobs'],['/account/premium','Premium'],['/account/verification','Verification'],['/account/reviews','Reviews'],['/account/views','Profile views'],['/account/billing','Billing'],['/account/notifications','Preferences'],['/account/support','Support'],['/account/privacy','Privacy'],['/employer','Company dashboard']].map(([href,label])=><Link style={{marginRight:12}} key={href} href={href}>{label}</Link>)}</nav>{children}</>;}

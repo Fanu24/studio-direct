@@ -7,6 +7,7 @@ import {CheckoutStatus} from '../_components/checkout-status';
 import { redirect } from 'next/navigation';
 import { platform,currentUser } from '../../lib/platform';
 import { formatUsd } from '../../lib/billing/listing-catalog';
+import {ProductEmployerDashboard} from '../_components/product/employer-dashboard';
 export const dynamic='force-dynamic';
 export const metadata={title:'Employer dashboard',robots:{index:false,follow:false}};
 export default async function EmployerPage({searchParams}:{searchParams?:Promise<{order?:string}>}){
@@ -14,6 +15,7 @@ export default async function EmployerPage({searchParams}:{searchParams?:Promise
   const env=await platform(),user=await currentUser(env);
   if(!user)redirect('/employer/login?next=/employer');
   const product=await loadProductFlags(env.DB,await requireTenantId(env.DB),env);
+  if(product.PRODUCT_COMPANY_PLANS)return <ProductEmployerDashboard env={env} userId={user.id}/>;
   const account=await loadEmployer(env.DB,user.id,env);
   if(!account)redirect(employerOnboarding());
   const [orders,listings,credits,applications]=await Promise.all([

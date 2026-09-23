@@ -1,4 +1,5 @@
 import {pricing, publicHttpsUrl} from '@gaming/shared';
+import {COMPANY_MEMBER_ACCESS_SQL} from './job-access';
 import type {Database, Statement} from '../platform';
 import type {PaidSession} from '../billing/employer-orders';
 
@@ -7,6 +8,7 @@ export async function claimOrderById(db: Database, id: string) {
   return db.prepare('SELECT * FROM company_claim_orders WHERE id=?').bind(id).first<CompanyClaimOrder>();
 }
 export async function companyAccountActive(db: Database, tenantId: string, userId: string) {
+  if(await db.prepare(`SELECT j.company_id FROM company_members j WHERE j.user_id=? AND ${COMPANY_MEMBER_ACCESS_SQL}`).bind(userId,userId).first())return true;
   return !!await db.prepare(`SELECT id FROM company_purchase_entitlements WHERE tenant_id=? AND user_id=? AND status='active'
     UNION ALL SELECT id FROM employer_orders WHERE tenant_id=? AND user_id=? AND status='paid' AND offer_version=1 LIMIT 1`).bind(tenantId,userId,tenantId,userId).first();
 }
@@ -94,6 +96,11 @@ export async function approveCompanyClaim(db: Database, input: {claimId:string;t
     AND NOT EXISTS(SELECT 1 FROM company_claims other WHERE other.company_id=company_claims.company_id AND other.status='approved')`)
     .bind(input.adminId,now.toISOString(),input.reason.trim(),input.claimId,input.tenantId).run();
   if (result.meta?.changes !== 1) throw new Error('Claim unavailable, already processed or another owner has been verified.');
+  await db.batch([
+    db.prepare('DELETE FROM company_members WHERE company_id=(SELECT company_id FROM company_claims WHERE id=?)').bind(input.claimId),
+    db.prepare("UPDATE company_team_invitations SET status='revoked' WHERE company_id=(SELECT company_id FROM company_claims WHERE id=?) AND status='pending'").bind(input.claimId),
+  ]);
+  await db.prepare("INSERT OR IGNORE INTO company_members(company_id,user_id,role,created_at) SELECT company_id,user_id,'owner',? FROM company_claims WHERE id=? AND status='approved'").bind(now.toISOString(),input.claimId).run();
 }
 export async function reverseCompanyPurchase(db: Database, paymentIntent: string, eventId: string, now = new Date()) {
   await db.batch([

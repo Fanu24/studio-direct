@@ -8,6 +8,7 @@
     "nodejs_compat",
     "global_fetch_strictly_public"
   ],
+  "services": [{"binding":"PRODUCT_WEB","service":"nodework-web"}],
   "triggers": {
     "crons": [
       "*/5 * * * *",

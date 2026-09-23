@@ -150,3 +150,12 @@ export {careerDetailLinks} from './source-discovery.ts';
 
 export {MIN_SALARY_SAMPLE, annualUsdSalarySql, RELIABLE_SALARY_SQL, SCRAPED_JOB_SQL, SCRAPED_SALARY_SQL, publicSalaryStats} from "./product/salary-policy.ts";
 export {refreshFxRates,parseFxRates,FX_SOURCE,FX_ENDPOINT} from './product/fx-rates.ts';
+export {candidateCompleteness,containsDirectContact,publicCandidateText,eligibleForJob,matchScore,earlyAccessState} from './product/candidates.ts';
+export type {MatchJob,MatchProfile} from './product/candidates.ts';
+export {queueProductReminders} from './product/notifications.ts';
+export type {ProductDatabase,ProductStatement} from './product/notifications.ts';
+export {selectDailyFeatured,FEATURED_ELIGIBILITY_SQL} from './product/featured.ts';
+export {externalSalary,salaryDistribution,rebuildSalaryInsights} from './product/salary-insights.ts';
+export type {ExternalSalary,SalaryInsight} from './product/salary-insights.ts';
+
+export {enqueueSocialPosts,deliverSocialPosts,prepareWeeklyNewsletter,deliverWeeklyNewsletter,newsletterContent} from './product/distribution.ts';

@@ -61,6 +61,7 @@ export async function uploadCv(input: {
     return { status: 400, code: "too_large" };
   }
 
+  if(!body.byteLength||new TextDecoder().decode(body.slice(0,5))!=='%PDF-')return {status:400,code:'invalid_type'};
   const key = cvObjectKey(input.userId, crypto.randomUUID());
   await input.bucket.put(key, body, {
     httpMetadata: { contentType: CV_CONTENT_TYPE },

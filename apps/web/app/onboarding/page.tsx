@@ -1,3 +1,6 @@
+import {platform} from '../../lib/platform';
+import {loadProductFlags} from '../../lib/product/flags';
+import {requireTenantId} from '../../lib/tenant';
 import { TENANT_NAME } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
@@ -47,6 +50,7 @@ export default async function OnboardingPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next: nextParam } = await searchParams;
+  const productEnv=await platform();if((await loadProductFlags(productEnv.DB,await requireTenantId(productEnv.DB),productEnv)).PRODUCT_PROFILES_V2)redirect('/account/profile');
   const env = await onboardingEnv();
   const userId = await sessionUserId(env);
   const next = safeNextPath(nextParam) ?? "/";

@@ -61,6 +61,7 @@ export async function submitLoginMagicLink({
  * above the button in both DOM and visual order.
  */
 export function LoginForm({
+  passwordEnabled=false,
   localTesting=false,
   errorCallbackURL,
   callbackURL = "/",
@@ -68,6 +69,7 @@ export function LoginForm({
   newUserCallbackURL = "/onboarding",
   siteKey,
 }: {
+  passwordEnabled?:boolean;
   errorCallbackURL?: string;
   callbackURL?: string;
   children: ReactNode;
@@ -76,6 +78,7 @@ export function LoginForm({
   localTesting?: boolean;
 }) {
   const [pending,setPending]=useState(false);
+  const [method,setMethod]=useState<'magic'|'password'|'signup'|'reset'>('magic');
   const [ready,setReady]=useState(false);
   useEffect(()=>setReady(true),[]);
   const [message, setMessage] = useState<string | null>(null);
@@ -99,6 +102,14 @@ export function LoginForm({
 
     setError(null);setMessage(null);setPending(true);
     try {
+    if(method!=='magic'){
+      const fields=new FormData(form),password=String(fields.get('password')??''),fetchOptions={headers:{'x-captcha-response':token}};
+      const result=method==='signup'?await authClient.signUp.email({email,password,name:String(fields.get('name')??''),callbackURL:newUserCallbackURL,fetchOptions}):method==='reset'?await authClient.requestPasswordReset({email,redirectTo:'/reset-password',fetchOptions}):await authClient.signIn.email({email,password,callbackURL,fetchOptions});
+      if(result.error)setError(result.error.message??'Unable to complete this request.');
+      else if(method==='password')window.location.assign(callbackURL);
+      else setMessage(method==='signup'?'Check your email to verify your account.':'If this account exists, a password reset link has been sent.');
+      resetTurnstileWidget();return;
+    }
     const { error: sendError } = await submitLoginMagicLink({
       callbackURL,
       email,
@@ -144,9 +155,12 @@ export function LoginForm({
         </p>
       ) : null}
       <form className="auth-form" onSubmit={onSubmit}>
+        {passwordEnabled?<label>Sign-in method<select value={method} onChange={e=>setMethod(e.target.value as typeof method)}><option value="magic">Email sign-in link</option><option value="password">Email and password</option><option value="signup">Create account with password</option><option value="reset">Reset password</option></select></label>:null}
         {items}
+        {method==='signup'?<label>Your name<input name="name" autoComplete="name" required maxLength={100}/></label>:null}
+        {method==='password'||method==='signup'?<label>Password<input name="password" type="password" autoComplete={method==='signup'?'new-password':'current-password'} minLength={10} maxLength={128} required/></label>:null}
         <div className="auth-form__turnstile" ref={widget} />
-        {submit ? cloneElement(submit as ReactElement<{disabled:boolean}>,{disabled:!ready||!token||pending}) : null}
+        {method==='magic'?(submit ? cloneElement(submit as ReactElement<{disabled:boolean}>,{disabled:!ready||!token||pending}) : null):<button disabled={!ready||!token||pending}>{method==='password'?'Sign in':method==='signup'?'Create account':'Send reset link'}</button>}
       </form>
     </>
   );

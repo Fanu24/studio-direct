@@ -26,6 +26,7 @@ export type JobDraft = {
 };
 
 export type QueueMessage =
+  | {kind:'product';task:'ats'|'salary'|'tick'|'shortlist';id?:string}
   | {kind:'discover_catalog'}
   | {kind:'discover_source';sourceId:string}
   | {kind:'alert';alertId:string}
@@ -42,6 +43,7 @@ export function isQueueMessage(value: unknown): value is QueueMessage {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
   if (v.type !== undefined) return false;
+  if(v.kind==='product')return ['ats','salary','tick','shortlist'].includes(String(v.task))&&(v.id===undefined||typeof v.id==='string');
   if(v.kind==='discover_catalog')return true;
   if(v.kind==='discover_source')return typeof v.sourceId==='string'&&v.sourceId.length>0;
   if(v.kind==='alert')return typeof v.alertId==='string'&&v.alertId.length>0;

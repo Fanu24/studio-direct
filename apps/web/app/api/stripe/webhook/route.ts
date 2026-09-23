@@ -1,6 +1,7 @@
 import {resolveInvoice,recordPaidInvoice,stripeRead,recordSubscriptionState,invoiceNotification} from '../../../../lib/billing/invoices';
 import {reversePayment} from '../../../../lib/billing/reversals';
 import {fulfillCompanyClaim} from '../../../../lib/product/company-claims';
+import {handleProductStripeEvent} from '../../../../lib/product/billing';
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { fulfillEmployerOrder, type PaidSession } from '../../../../lib/billing/employer-orders';
 import type { Database } from '../../../../lib/platform';
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
   }
 
   const object = event.data?.object as Record<string, any> | undefined;
+  if(await handleProductStripeEvent(env.DB,env.STRIPE_SECRET_KEY,event))return Response.json({received:true});
   if(event.type==='charge.refunded'&&object?.refunded===true&&typeof object.payment_intent==='string'&&event.id){
     await reversePayment(env.DB,object.payment_intent,event.id);
   } else if (object?.metadata?.claimOrderId && ['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(event.type || '')) {
@@ -58,6 +60,7 @@ export async function POST(request: Request) {
     await expireMarketCheckout(env.DB,object.id,event.id);
   } else if(event.type==='checkout.session.expired'&&object?.metadata?.orderId){
     await env.DB.prepare("UPDATE employer_orders SET status='cancelled' WHERE id=? AND stripe_session_id=? AND status='pending' AND offer_version=2").bind(object.metadata.orderId,object.id).run();
+    await env.DB.prepare("UPDATE plan_credit_reservations SET status='released' WHERE order_id=? AND status='held' AND EXISTS(SELECT 1 FROM employer_orders WHERE id=? AND status='cancelled')").bind(object.metadata.orderId,object.metadata.orderId).run();
   } else if (object?.metadata?.orderId && ['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(event.type || '')) {
     if (!event.id) return Response.json({ code: 'invalid_event' }, { status: 400 });
     if(object.subscription){

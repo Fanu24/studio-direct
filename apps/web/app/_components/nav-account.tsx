@@ -17,7 +17,7 @@ export function NavAccount({ variant = "bar" }: { variant?: "bar" | "menu" }) {
   if (session?.user) {
     return (
       <div className={className}>
-        <Link className={`button button--ghost button--sm${block}`} href="/dashboard">
+        <Link className={`button button--ghost button--sm${block}`} href="/account/profile">
           Candidate dashboard
         </Link>
         <Link className={`button button--quiet button--sm${block}`} href="/employer">Employer dashboard</Link>

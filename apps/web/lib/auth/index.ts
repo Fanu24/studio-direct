@@ -58,12 +58,21 @@ function authBaseURL(env: AuthEnv): string | undefined {
 
 export function createAuth(env: AuthEnv) {
   const baseURL = authBaseURL(env);
+  const sendAccountLink=async(to:string,url:string,subject:string)=>{
+    if(env.LOCAL_MAIL==='true'&&process.env.NODE_ENV==='development'&&baseURL&&['localhost','127.0.0.1'].includes(new URL(baseURL).hostname)){console.info(`[LOCAL EMAIL] ${to}: ${url}`);return;}
+    if(env.EMAIL_ENABLED!=='true')throw Error('Email delivery is not configured');
+    await env.EMAIL.send({to,from:env.EMAIL_FROM,subject,text:subject+'\n\n'+url});
+  };
 
   return betterAuth({
     secret: env.BETTER_AUTH_SECRET,
     baseURL,
     trustedOrigins: baseURL ? [baseURL] : undefined,
     database: env.DB,
+    emailAndPassword:{enabled:true,requireEmailVerification:true,minPasswordLength:10,maxPasswordLength:128,revokeSessionsOnPasswordReset:true,
+      sendResetPassword:async({user,url})=>sendAccountLink(user.email,url,'Reset your Nodework password')},
+    emailVerification:{sendOnSignUp:true,sendOnSignIn:true,autoSignInAfterVerification:true,
+      sendVerificationEmail:async({user,url})=>sendAccountLink(user.email,url,'Verify your Nodework email')},
     user: {
       modelName: "users",
       fields: {

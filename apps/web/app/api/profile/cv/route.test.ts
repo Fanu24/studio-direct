@@ -77,7 +77,7 @@ function cvRequest(file: File | null) {
   const form = new FormData();
   if (file) form.set("cv", file);
   return new Request("http://localhost/api/profile/cv", {
-    method: "POST",
+    method: "POST", headers:{origin:"http://localhost"},
     body: form,
   });
 }

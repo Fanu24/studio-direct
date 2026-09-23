@@ -41,9 +41,10 @@ const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as {
 function createD1(database: MemoryDatabase): JobsDatabase {
   // These read-query fixtures intentionally omit unrelated commerce tables. Keep public projection columns current.
   const columns=new Set((database.prepare('PRAGMA table_info(jobs)').all() as {name:string}[]).map(row=>row.name));
-  for(const [name,type] of Object.entries({hide_salary:'INTEGER NOT NULL DEFAULT 0',salary_currency:'TEXT',salary_period:'TEXT',crypto_payment_available:'INTEGER NOT NULL DEFAULT 0',commercial_origin:"TEXT NOT NULL DEFAULT 'aggregated'",pinned_until:'TEXT',published_at:'TEXT',bumped_at:'TEXT',created_at:'TEXT'})) {
+  for(const [name,type] of Object.entries({confidential:'INTEGER NOT NULL DEFAULT 0',early_access_until:'TEXT',expires_at:'TEXT',hide_salary:'INTEGER NOT NULL DEFAULT 0',salary_currency:'TEXT',salary_period:'TEXT',crypto_payment_available:'INTEGER NOT NULL DEFAULT 0',commercial_origin:"TEXT NOT NULL DEFAULT 'aggregated'",pinned_until:'TEXT',published_at:'TEXT',bumped_at:'TEXT',created_at:'TEXT'})) {
     if(!columns.has(name))database.exec(`ALTER TABLE jobs ADD COLUMN ${name} ${type}`);
   }
+  database.exec("CREATE TABLE IF NOT EXISTS company_reviews(company_id TEXT,status TEXT,overall INTEGER)");
   database.exec('CREATE TABLE IF NOT EXISTS fx_rates(currency TEXT PRIMARY KEY,rate_to_usd REAL NOT NULL,updated_at TEXT,source TEXT)');
   database.exec('CREATE TABLE IF NOT EXISTS native_listing_details(job_id TEXT PRIMARY KEY,input_json TEXT,addons_json TEXT,updated_at TEXT)');
   return {

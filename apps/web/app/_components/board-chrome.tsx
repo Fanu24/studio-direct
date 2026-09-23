@@ -1,3 +1,4 @@
+import {JobSearchFilters} from './product/job-search-filters';
 import {
   NON_TECH_SALARY_ROLES as SHARED_NON_TECH_SALARY_ROLES,
   isSalaryRole,
@@ -121,7 +122,7 @@ export function BoardSearch({
         <SearchIcon className="search-bar__icon" size={18} />
         <SearchInput defaultQuery={defaultQuery} remoteActive={remoteActive} filters={searchFacets(filters)}/>
       </label>
-      {Object.entries({...searchFacets(filters), ...(remoteActive ? {remote: "1"} : {})}).map(([name, value]) => <input key={name} type="hidden" name={name} value={value}/>)}
+      {Object.entries({...searchFacets(filters), ...(remoteActive ? {remote: "1"} : {})}).filter(([name])=>!["arrangement","language","eligible_country","eligible_utc","skills"].includes(name)).map(([name, value]) => <input key={name} type="hidden" name={name} value={value}/>)}
       <button className="visually-hidden" type="submit">
         Search
       </button>
@@ -135,6 +136,7 @@ export function BoardSearch({
         Remote
       </Link>
       <Link role="switch" aria-checked={searchFacets(filters).crypto_payment==='1'} href={searchHref({...filters,...(remoteActive?{remote:'1'}:{})},{crypto_payment:searchFacets(filters).crypto_payment==='1'?undefined:'1'})}>Crypto payment</Link>
+      <JobSearchFilters values={searchFacets(filters)}/>
     </form>
   );
 }
