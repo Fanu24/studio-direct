@@ -29,7 +29,8 @@ import {
 } from "../../../lib/jobs/queries";
 import { requireTenantId } from "../../../lib/tenant";
 
-export const revalidate = 300;
+// Read live D1 data at request time; builds must not depend on a local database.
+export const dynamic = "force-dynamic";
 
 const PATH = "/web3-salaries/solana-vs-ethereum";
 const JOB_POSTING_LIMIT = 10;
@@ -124,8 +125,8 @@ export default async function SolanaVsEthereumSalaryPage() {
       resolveSalaryStats(db, tenantId, "role", "solana-developer"),
       resolveSalaryStats(db, tenantId, "role", "ethereum-developer"),
       resolveSalaryStats(db, tenantId, "role", "solidity-developer"),
-      listJobs(db, tenantId, { tag: "solana", orTitle: true, pageSize: COMBINED_JOBS }),
-      listJobs(db, tenantId, { tag: "ethereum", orTitle: true, pageSize: COMBINED_JOBS }),
+      listJobs(db, tenantId, { aggregatedOnly: true, tag: "solana", orTitle: true, pageSize: COMBINED_JOBS }),
+      listJobs(db, tenantId, { aggregatedOnly: true, tag: "ethereum", orTitle: true, pageSize: COMBINED_JOBS }),
       resolveSalaryBreakdown(db, tenantId, { tag: "solana" }, "seniority"),
       resolveSalaryBreakdown(db, tenantId, { tag: "ethereum" }, "seniority"),
       resolveSalaryBreakdown(db, tenantId, { tag: "solana" }, "country"),

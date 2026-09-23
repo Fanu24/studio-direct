@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ArrowRightIcon, LockIcon } from "../_components/icons";
+import { ArrowRightIcon } from "../_components/icons";
 import { JsonLd } from "../_components/json-ld";
 import { PageHeader } from "../_components/page-header";
 
 export const metadata: Metadata = {
   title: "Web3 jobs API access",
   description:
-    "How the Nodework jobs API will work: endpoint shape, filters for tag, location, remote and salary, an example response, and how to request early access.",
+    "Free Nodework jobs API: JSON and RSS, revocable API keys, job filters, full descriptions and pagination.",
   alternates: { canonical: "/web3-jobs-api" },
 };
 
 const RESPONSE_FIELDS = [
+  { field: "apply_url", desc: "Public URL of the listing on Nodework." },
+  { field: "description", desc: "HTML job description when show_description=true." },
   { field: "id", desc: "Internal job id." },
   { field: "slug", desc: "SEO slug used in the public job URL." },
   { field: "externalId", desc: "Source id from the feed this job was imported from, when it has one." },
@@ -21,7 +23,7 @@ const RESPONSE_FIELDS = [
   { field: "companySlug", desc: "Company slug, used in /web3-companies/:slug." },
   { field: "companyLogoUrl", desc: "Logo URL from the source feed, when one was provided." },
   { field: "location", desc: "Free-text location as published, or null." },
-  { field: "remote", desc: "\"remote\" or \"unknown\", set from the source listing." },
+  { field: "remote", desc: "Remote, hybrid, onsite or unknown, as stated in the listing." },
   { field: "salaryText", desc: "Salary as published in free text, when the source gave one." },
   { field: "salaryMin", desc: "Parsed minimum salary bound, or null." },
   { field: "salaryMax", desc: "Parsed maximum salary bound, or null." },
@@ -30,14 +32,17 @@ const RESPONSE_FIELDS = [
 ];
 
 const QUERY_PARAMS = [
+  { param: "show_description", desc: "true to include the full HTML description; false by default." },
+  { param: "country", desc: "Country slug; location also accepts city and region slugs." },
   { param: "tag", desc: "One tag slug, e.g. solidity or defi. Matches the /:tag-jobs pages." },
   { param: "location", desc: "A city slug from the location pages, e.g. new-york." },
-  { param: "remote", desc: "1 to only return jobs flagged remote." },
+  { param: "remote", desc: "true or 1 to only return jobs flagged remote." },
   { param: "seniority", desc: "Free-text match against the job title, e.g. senior or intern." },
-  { param: "salary_min", desc: "Only return jobs whose parsed salaryMax is at least this value." },
-  { param: "salary_max", desc: "Only return jobs whose parsed salaryMin is at most this value." },
+  { param: "crypto_payment", desc: "Set to 1 to return jobs offering payment in crypto." },
+  { param: "salary_min", desc: "Only return jobs whose annual salary maximum in USD is at least this value." },
+  { param: "salary_max", desc: "Only return jobs whose annual salary minimum in USD is at most this value." },
   { param: "page", desc: "1-based page number. Defaults to 1." },
-  { param: "page_size", desc: "Results per page. Will ship with a fixed maximum." },
+  { param: "page_size", desc: "Results per page: 1–100, default 20. Also accepts limit." },
 ];
 
 const SAMPLE_RESPONSE = `{
@@ -55,6 +60,7 @@ const SAMPLE_RESPONSE = `{
       "companyLogoUrl": "https://cdn.example.com/logos/acme-labs.png",
       "location": "Remote",
       "remote": "remote",
+      "apply_url": "https://YOUR_DOMAIN/jobs/senior-solidity-engineer-acme-labs",
       "salaryText": "$140k - $190k",
       "salaryMin": 140000,
       "salaryMax": 190000,
@@ -68,22 +74,22 @@ const FAQ = [
   {
     question: "Is the API live today?",
     answer:
-      "No. This page documents the response shape and filters we are building the API around, matched to the job model already running the site. There is no public endpoint yet.",
+      "Yes. Sign in with a verified email and generate a key to request the current public catalog. There is no API subscription charge.",
   },
   {
-    question: "Will the field names change before launch?",
+    question: "What are the usage limits?",
     answer:
-      "The response fields map directly to the job records Nodework already stores, so the shape above is stable. What is still open is authentication, rate limits, and pagination limits.",
+      "Each key allows 60 requests per minute and up to 100 results per response. A 429 response includes Retry-After. Use page for subsequent results.",
   },
   {
-    question: "How do I get access when it ships?",
+    question: "How do I get or revoke a key?",
     answer:
-      "Create a free Nodework account. There is no separate API waitlist form yet, so accounts are how we will identify who to email when keys open.",
+      "Sign in, open API keys and enter the website where you will use the feed. Copy the new key once; only its hash is stored. Revoke it from the same page if needed.",
   },
   {
-    question: "Can I scrape /jobs instead of waiting?",
+    question: "Does the API include candidate data?",
     answer:
-      "Please do not. Use the account route below and we will let you know when there is a supported way in.",
+      "No. The jobs API returns public listings only. Candidate profiles, contact details and CVs are not part of this API.",
   },
 ];
 
@@ -108,34 +114,26 @@ export default function Web3JobsApiPage() {
         {PageHeader({
           kicker: "Data access",
           title: "Web3 jobs API access",
-          lead: "The same job catalog that powers search and the tag, location and salary pages on Nodework, documented as a JSON API so partners can plan an integration before it opens.",
+          lead: "The same job catalog that powers search and the tag, location and salary pages on Nodework, available as JSON and RSS for integrations.",
         })}
       </div>
 
       <section aria-labelledby="api-status" className="marketing-section">
         <div className="container container--content stack">
           <h2 id="api-status">Where this stands today</h2>
-          <div className="marketing-notice">
-            <LockIcon size={18} />
-            <p>
-              There is no public API endpoint live yet. The shape below matches the job
-              records already stored for the web board, so it will not change out from
-              under an integration once access opens. Treat this as a preview of the
-              contract, not a live service.
-            </p>
-          </div>
+          <div className="marketing-notice"><p>Generate a free API key, then send it using the Authorization: Bearer header. JSON: /api/v1 or /api/v1/jobs. RSS: /api/v1.xml. A token query parameter is also supported for feed readers; keep these URLs private.</p></div>
         </div>
       </section>
 
       <section aria-labelledby="api-endpoint" className="band marketing-section">
         <div className="container container--content stack">
           <div className="section-head">
-            <span className="kicker">Planned shape</span>
+            <span className="kicker">Read-only API</span>
             <h2 id="api-endpoint">Endpoint and filters</h2>
             <p>
               One read endpoint returning paginated jobs, filtered the same way the job
               board itself is: by tag, location, remote flag, seniority text match and
-              salary bounds. Every job already carries a parsed salaryMin and salaryMax,
+              salary bounds. Every job already carries a annual salary minimum in USD and salaryMax,
               so range filtering is a real field, not a future addition.
             </p>
           </div>
@@ -145,6 +143,7 @@ export default function Web3JobsApiPage() {
             <code className="marketing-endpoint__path">/api/v1/jobs</code>
           </p>
 
+          <pre className="panel panel--well marketing-code">{'curl -H "Authorization: Bearer YOUR_API_KEY" "https://YOUR_DOMAIN/api/v1?tag=solidity&remote=true&limit=5&show_description=true"'}</pre>
           <div className="marketing-table-wrap">
             <table className="marketing-table">
               <thead>
@@ -200,16 +199,15 @@ export default function Web3JobsApiPage() {
         <div className="container container--content stack">
           <div className="section-head">
             <span className="kicker">Access</span>
-            <h2 id="api-access">Request early access</h2>
+            <h2 id="api-access">Get your API key</h2>
             <p>
-              Rate limits and authentication are not finalized, so we are not opening keys
-              to the public yet. Access is by request while that work lands, and it will
-              stay free to read the same public jobs anyone can already see on the board.
+              Sign in with a verified email to generate and revoke keys. API access is free.
+              Each key is limited to 60 requests per minute and each response to 100 jobs.
             </p>
           </div>
           <div className="cluster">
-            <Link className="button button--primary" href="/login">
-              Create a free account
+            <Link className="button button--primary" href="/api-access">
+              Manage API keys
             </Link>
             <Link className="text-link" href="/jobs">
               Browse the catalog first

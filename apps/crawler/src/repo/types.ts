@@ -21,6 +21,7 @@ export type JobRecord = {
   descriptionHtml: string;
   applyUrl: string;
   salaryText: string | null;
+  statedSalary?:{min:number;max:number;currency:string;period:'yearly'|'monthly'|'hourly'}|null;
   salaryMin: number | null;
   salaryMax: number | null;
   source: JobDraft["source"];
@@ -51,6 +52,7 @@ export type CareerJobCandidate = {
 };
 
 export interface JobsRepository {
+  isManagedCompany?(companyId:string):Promise<boolean>;
   findJobByCanonicalKey(
     tenantId: string,
     canonicalKey: string,

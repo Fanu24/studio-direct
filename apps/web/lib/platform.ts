@@ -1,6 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { headers } from 'next/headers';
 import { createAuth, type AuthEnv } from './auth/index';
+import type {ProductFlag} from '@gaming/shared';
 
 export interface Statement {
   bind(...values:unknown[]):Statement;
@@ -9,14 +10,17 @@ export interface Statement {
   run():Promise<{meta?:{changes?:number}}>;
 }
 export interface Database { prepare(sql:string):Statement; batch(statements:Statement[]):Promise<unknown[]>; }
-export type PlatformEnv = Omit<AuthEnv,'DB'> & {
+export type PlatformEnv = Omit<AuthEnv,'DB'> & Partial<Record<ProductFlag, string>> & {
   DB:Database; STRIPE_ENABLED?:string; STRIPE_SECRET_KEY?:string; STRIPE_WEBHOOK_SECRET?:string;
-  FILES:{put(key:string,value:ArrayBuffer,options?:unknown):Promise<unknown>;get(key:string):Promise<{body:ReadableStream;httpMetadata?:{contentType?:string}}|null>};
+  FILES:{put(key:string,value:ArrayBuffer,options?:unknown):Promise<unknown>;get(key:string):Promise<{body:ReadableStream;httpMetadata?:{contentType?:string}}|null>;delete?(key:string):Promise<unknown>};
+  PRODUCT_INTERNAL_SECRET?:string;SOCIAL_DELIVERY_ENABLED?:string;NEWSLETTER_DELIVERY_ENABLED?:string;X_USER_ACCESS_TOKEN?:string;LINKEDIN_ACCESS_TOKEN?:string;LINKEDIN_AUTHOR_URN?:string;LINKEDIN_VERSION?:string;TELEGRAM_BOT_TOKEN?:string;TELEGRAM_CHAT_ID?:string;
   ADMIN_EMAILS?:string;
 };
 export async function platform() {const {env}=await getCloudflareContext({async:true});return env as unknown as PlatformEnv;}
 export async function currentUser(env:PlatformEnv, request?:Request) {
-  return (await createAuth(env).api.getSession({headers:request?.headers ?? await headers()}))?.user ?? null;
+  const user=(await createAuth(env).api.getSession({headers:request?.headers ?? await headers()}))?.user ?? null;
+  if(user)await env.DB.prepare("UPDATE profiles SET last_active_at=? WHERE user_id=? AND (last_active_at IS NULL OR julianday(last_active_at)<julianday('now','-1 hour'))").bind(new Date().toISOString(),user.id).run();
+  return user;
 }
 export function sameOrigin(request:Request) {
   const origin=request.headers.get('origin');

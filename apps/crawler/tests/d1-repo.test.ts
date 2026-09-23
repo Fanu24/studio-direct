@@ -123,6 +123,13 @@ describe("D1JobsRepository", () => {
       title: "Senior Gameplay Engineer",
       updatedAt: "2026-09-02T01:00:00.000Z",
     });
+    // A hidden source must still age out and must not be revived by unmoderation.
+    await env.DB.prepare('UPDATE jobs SET moderation_hidden=1,listed=1 WHERE id=?').bind(job.id).run();
+    expect(await repo.listListedCareerJobs(companyId)).toContainEqual({jobId:job.id,lastSeenAt:'2026-09-02T00:00:00.000Z'});
+    await repo.unlistJobs([job.id],'2026-09-21');
+    expect(await repo.listListedCareerJobs(companyId)).toEqual([]);
+    expect(await env.DB.prepare('SELECT listed,moderation_restore_listed AS restore FROM jobs WHERE id=?').bind(job.id).first()).toEqual({listed:0,restore:0});
+
   });
 
   it("reads LinkedIn fetched stats for non-empty and empty successes", async () => {

@@ -50,7 +50,7 @@ function createD1(database: MemoryDatabase) {
 }
 
 function pdfFile(size: number, type = "application/pdf", name = "cv.pdf") {
-  return new File([new Uint8Array(size)], name, { type });
+  const bytes=new Uint8Array(size);if(size>=5)bytes.set(new TextEncoder().encode('%PDF-'));return new File([bytes], name, { type });
 }
 
 function createBucket() {
@@ -66,6 +66,7 @@ describe("uploadCv", () => {
     sqlite = new DatabaseSync(":memory:");
     sqlite.exec(`
       CREATE TABLE profiles (
+        product_profile_completed INTEGER NOT NULL DEFAULT 0,
         user_id TEXT PRIMARY KEY,
         display_name TEXT,
         target_role TEXT,

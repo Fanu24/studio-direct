@@ -26,6 +26,9 @@ export const NAV_MENUS: readonly NavMenu[] = [
       { href: "/web3-jobs-api", label: "Web3 jobs API" },
       { href: "/ads", label: "Advertise" },
       { href: "/pricing", label: "Pricing" },
+      { href: "/account/premium", label: "Candidate Premium" },
+      { href: "/featured", label: "Featured members" },
+      { href: "/dashboard/talent", label: "Talent Search" },
       { href: "/post-web3-job", label: "Post a job" },
     ],
   },
@@ -33,6 +36,7 @@ export const NAV_MENUS: readonly NavMenu[] = [
     href: "/web3-salaries",
     label: "Salaries",
     links: [
+      { href: "/salaries", label: "Salary insights" },
       { href: "/web3-salaries", label: "Developer salaries" },
       { href: "/web3-non-tech-salaries", label: "Non-tech salaries" },
       { href: "/highest-paying-web3-jobs", label: "Highest paying Web3 jobs" },

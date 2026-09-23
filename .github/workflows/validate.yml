@@ -1,0 +1,51 @@
+name: Validate platform
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test:portable
+      - name: Verify reference data and database upgrade
+        run: |
+          pnpm references:build
+          pnpm references:verify
+      - name: Install the browser for functional form checks
+        timeout-minutes: 5
+        run: pnpm --filter @gaming/web exec playwright install --with-deps chromium --only-shell
+      - name: Verify the product posting form in Chromium
+        timeout-minutes: 2
+        run: pnpm --filter @gaming/web exec node qa/product-posting-browser.mjs
+      - run: pnpm --filter @gaming/web cf:build
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+      - name: Bundle deployable Workers on Linux
+        run: |
+          pnpm --filter @gaming/web exec wrangler deploy --dry-run --outdir .worker-bundle
+          pnpm --filter @gaming/crawler exec wrangler deploy --dry-run --outdir .worker-bundle
+      - name: Package the tested Cloudflare worker
+        run: |
+          tar -czf nodework-worker.tgz -C apps/web .open-next .worker-bundle
+          tar -czf nodework-crawler.tgz -C apps/crawler .worker-bundle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nodework-worker-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            nodework-worker.tgz
+            nodework-crawler.tgz
+          retention-days: 7
+          if-no-files-found: error
+      - run: pnpm setup:local

@@ -21,7 +21,8 @@ import {
 } from "../../lib/jobs/queries";
 import { requireTenantId } from "../../lib/tenant";
 
-export const revalidate = 300;
+// Read live D1 data at request time; builds must not depend on a local database.
+export const dynamic = "force-dynamic";
 
 const PATH = "/highest-paying-web3-jobs";
 const JOB_POSTING_LIMIT = 10;

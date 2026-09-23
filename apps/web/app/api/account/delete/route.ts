@@ -58,6 +58,21 @@ export async function POST(request: Request) {
   }
 
   try {await prepareCommerceDeletion(env.DB,userId,env.STRIPE_SECRET_KEY);}catch{return Response.json({code:'billing_cancellation_failed',message:'Recurring billing could not be cancelled. Your account has been retained.'},{status:503});}
+  const applications=await (env.DB as Database).prepare('SELECT cv_r2_key FROM job_applications WHERE user_id=?').bind(userId).all<{cv_r2_key:string|null}>();
+  for(const application of applications.results)if(application.cv_r2_key)await env.FILES.delete(application.cv_r2_key);
+  await (env.DB as Database).prepare('DELETE FROM job_applications WHERE user_id=?').bind(userId).run();
+  const privateFiles=await (env.DB as Database).prepare('SELECT evidence_key AS key FROM candidate_verification_requests WHERE user_id=? UNION ALL SELECT r2_key AS key FROM review_work_evidence WHERE user_id=?').bind(userId,userId).all<{key:string|null}>();
+  for(const file of privateFiles.results)if(file.key)await env.FILES.delete(file.key);
+  await env.FILES.delete('profile-photos/'+userId);
+  await env.DB.batch([
+    (env.DB as Database).prepare('DELETE FROM support_tickets WHERE user_id=?').bind(userId),
+    (env.DB as Database).prepare('DELETE FROM support_replies WHERE user_id=?').bind(userId),
+    (env.DB as Database).prepare("UPDATE company_ats_jobs SET raw_json='{}',posting_json=NULL WHERE integration_id IN(SELECT i.id FROM company_ats_integrations i JOIN company_plans p ON p.company_id=i.company_id WHERE p.owner_user_id=?)").bind(userId),
+    (env.DB as Database).prepare("UPDATE candidate_verification_requests SET evidence_key=NULL,status='deleted',reason=NULL WHERE user_id=?").bind(userId),
+    (env.DB as Database).prepare('DELETE FROM company_reviews WHERE user_id=?').bind(userId),
+    (env.DB as Database).prepare("UPDATE product_orders SET payload_json='{}',status=CASE WHEN status='pending' THEN 'expired' ELSE status END WHERE user_id=?").bind(userId),
+    (env.DB as Database).prepare("UPDATE company_ats_integrations SET enabled=0 WHERE company_id IN(SELECT company_id FROM company_plans WHERE owner_user_id=?)").bind(userId),
+  ]);
   await deleteAccount({
     userId,
     db: env.DB,

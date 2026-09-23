@@ -1,3 +1,5 @@
+import {FeaturedMember} from './_components/product/featured-member';
+import {HiringNow} from './_components/product/company-benefits';
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -8,7 +10,7 @@ import { HomeMegaLinks } from "./_components/home-mega";
 import { JobBoard } from "./_components/job-board";
 import { TagChips } from "./_components/job-row";
 import { JsonLd, absoluteUrl } from "./_components/json-ld";
-import { LINKEDIN_EXCLUSIVITY_TOOLTIP, homepageSummary } from "../lib/copy";
+import { homepageSummary } from "../lib/copy";
 import { buildJobPostingJsonLd } from "../lib/jobs/jsonld";
 import {
   countHiringCompanies,
@@ -139,7 +141,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      <div className="home-sections">
+      <div className="home-sections"><div className="container"><HiringNow/><FeaturedMember/></div>
         {/* Job board: this is the page, per web3.career's own header row. */}
         <section className="home-section m-reveal" data-reveal data-reveal-delay="1">
           <div className="container">
@@ -156,7 +158,6 @@ export default async function HomePage({
                 It sits under the board rather than over it: it explains a badge
                 in the rows, and above them it was 51px between the search and
                 the first job. */}
-            <p className="small muted">{LINKEDIN_EXCLUSIVITY_TOOLTIP}</p>
           </div>
         </section>
 

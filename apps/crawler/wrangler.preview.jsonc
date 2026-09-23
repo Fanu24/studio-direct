@@ -1,0 +1,86 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nodework-crawler",
+  "account_id": "ff222c50c538a09ccd8d08f7d47e82e8",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-02",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "services": [{"binding":"PRODUCT_WEB","service":"nodework-web"}],
+  "triggers": {
+    "crons": [
+      "*/5 * * * *",
+      "0 */6 * * *"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nodework-jobs",
+      "database_id": "56265dff-9991-4a32-bd8e-8360f02ddafa",
+      "migrations_dir": "../../packages/db/migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "LOCKS",
+      "id": "e499a0f254084949ace29fca69ed03e0"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "nodework-files"
+    }
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL"
+    }
+  ],
+  "vars": {
+    "SOURCE_DISCOVERY_ENABLED": "true",
+    "EMAIL_FROM": "xavier@lcplocalizations.com",
+    "EMAIL_ENABLED": "true",
+    "ADMIN_EMAILS": "xavier@lcplocalizations.com",
+    "SITE_URL": "https://nodework-web.xavier-ff2.workers.dev",
+    "QUEUE_PREFIX": "nodework-crawl"
+  },
+  "queues": {
+    "producers": [
+      {
+        "binding": "CRAWL_CAREER",
+        "queue": "nodework-crawl-career"
+      },
+      {
+        "binding": "CRAWL_LINKEDIN",
+        "queue": "nodework-crawl-linkedin"
+      },
+      {
+        "binding": "CRAWL_INDEED",
+        "queue": "nodework-crawl-indeed"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "nodework-crawl-career",
+        "max_batch_size": 1,
+        "max_concurrency": 1,
+        "max_retries": 10,
+        "retry_delay": 60,
+        "dead_letter_queue": "nodework-crawl-career-failed"
+      },
+      {
+        "queue": "nodework-crawl-linkedin",
+        "max_batch_size": 1
+      },
+      {
+        "queue": "nodework-crawl-indeed",
+        "max_batch_size": 1
+      }
+    ]
+  },
+  "preview_urls": false
+}

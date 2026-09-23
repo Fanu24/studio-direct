@@ -142,7 +142,7 @@ async function companyCategoryMap(
       `SELECT j.company_id AS companyId, jt.tag_slug AS slug, COUNT(*) AS count
       FROM job_tags jt
       JOIN jobs j ON j.id = jt.job_id
-      WHERE j.tenant_id = ? AND j.listed = 1
+      WHERE j.tenant_id = ? AND j.listed = 1 AND j.confidential = 0
       GROUP BY j.company_id, jt.tag_slug
       ORDER BY j.company_id ASC, count DESC, jt.tag_slug ASC`,
     )
@@ -171,7 +171,7 @@ async function companyLastPostedMap(
     .prepare(
       `SELECT j.company_id AS companyId, MAX(${postedDateSql("j.posted_at")}) AS lastPostedAt
       FROM jobs j
-      WHERE j.tenant_id = ? AND j.listed = 1 AND j.posted_at IS NOT NULL AND j.posted_at <> ''
+      WHERE j.tenant_id = ? AND j.listed = 1 AND j.confidential = 0 AND j.posted_at IS NOT NULL AND j.posted_at <> ''
       GROUP BY j.company_id`,
     )
     .bind(tenantId)
@@ -266,7 +266,7 @@ export async function listMonthlyPostings(
     .prepare(
       `SELECT substr(${postedDateSql("posted_at")}, 1, 7) AS month, COUNT(*) AS count
       FROM jobs
-      WHERE tenant_id = ? AND listed = 1 AND posted_at IS NOT NULL AND posted_at <> ''
+      WHERE tenant_id = ? AND listed = 1 AND confidential = 0 AND posted_at IS NOT NULL AND posted_at <> ''
       GROUP BY month
       ORDER BY month ASC`,
     )
@@ -327,7 +327,7 @@ export async function listCompanyGrowth(
       JOIN jobs j
         ON j.company_id = c.id
         AND j.tenant_id = c.tenant_id
-        AND j.listed = 1
+        AND j.listed = 1 AND j.confidential = 0
         AND j.posted_at IS NOT NULL
         AND j.posted_at <> ''
       WHERE c.tenant_id = ? AND c.listed = 1

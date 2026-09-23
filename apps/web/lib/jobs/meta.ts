@@ -19,7 +19,7 @@ export function decodeEntities(text: string): string {
       const code = entity[1]?.toLowerCase() === "x"
         ? Number.parseInt(entity.slice(2), 16)
         : Number.parseInt(entity.slice(1), 10);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+      return Number.isInteger(code) && code >= 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : match;
     }
     return ENTITIES[entity.toLowerCase()] ?? match;
   });

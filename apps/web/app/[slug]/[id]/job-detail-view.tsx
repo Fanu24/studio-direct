@@ -1,3 +1,8 @@
+import {FeaturedMember} from '../../_components/product/featured-member';
+import {ProductApplyAction,JobProductDetails} from '../../_components/product/job-product-details';
+import {JobViewTracker} from '../../_components/product/view-tracker';
+import {JobRequirements} from '../../_components/product/job-requirements';
+import {jobTagHref} from '../../../lib/jobs/tag-links';
 import { formatSalaryRange, landingPath, tagLabel } from "@gaming/shared";
 import Link from "next/link";
 
@@ -58,7 +63,7 @@ export function postedAge(iso: string | null): string | null {
 }
 
 export function jobPlaceLabel(job: { remote: string; location: string | null }): string {
-  if (job.remote === "remote") return "Remote";
+  if (job.remote === "remote") return job.location || "Remote";
   return job.location || remoteLabel(job.remote) || "Location not listed";
 }
 
@@ -76,7 +81,7 @@ function companyMark(name: string) {
 }
 
 function tagHref(tag: string) {
-  return landingPath({ kind: "tag", tag, tags: [tag] });
+  return jobTagHref(tag);
 }
 
 function JobDetailRows({ jobs }: { jobs: JobListItem[] }) {
@@ -154,7 +159,7 @@ export function JobDetailBody({
   // the plain on-site form: the company's own apply link is only ever revealed by /api/unlock,
   // server-side, after login + onboarding + the weekly quota check - it never reaches this
   // markup. Every other listing keeps the always-available on-site apply form unchanged.
-  const gated = showBadge(job.exclusivity);
+  const gated = false;
 
   const tag = sections.primaryTag;
   const label = tag ? tagLabel(tag) : null;
@@ -189,6 +194,7 @@ export function JobDetailBody({
         ) : null}
         <ul aria-label="Role details" className="jd-meta">
           <li className="chip chip--on">{place}</li>
+          {job.cryptoPaymentAvailable ? <li className="chip">Crypto pay</li> : null}
           {salary ? (
             <li className="chip jd-meta__salary">Compensation: {salary}</li>
           ) : (
@@ -214,6 +220,7 @@ export function JobDetailBody({
             />
           </section>
 
+          <JobRequirements job={job}/><JobProductDetails jobId={job.id}/><JobViewTracker jobId={job.id}/>
           <div className="jd-apply-inline">
             {gated ? (
               <>
@@ -227,9 +234,7 @@ export function JobDetailBody({
             ) : (
               <>
                 <p className="jd-apply-inline__label">Apply for this role:</p>
-                <Link className="button button--primary" href={applyHref}>
-                  Apply now
-                </Link>
+                <ProductApplyAction jobId={job.id} href={applyHref}/>
               </>
             )}
           </div>
@@ -281,9 +286,7 @@ export function JobDetailBody({
               </div>
             ) : (
               <>
-                <Link className="button button--primary button--block" href={applyHref}>
-                  Apply now
-                </Link>
+                <ProductApplyAction jobId={job.id} href={applyHref}/>
                 <p className="small muted">
                   Your application stays on Nodework. We never hand a profile to a company, and
                   the recruiter talent pool is a separate opt-in that is off by default.
@@ -327,9 +330,7 @@ export function JobDetailBody({
             <LockIcon size={16} /> Unlock link
           </a>
         ) : (
-          <Link className="button button--primary jd-apply-fixed__btn" href={applyHref}>
-            Apply now
-          </Link>
+          <ProductApplyAction jobId={job.id} href={applyHref}/>
         )}
       </div>
 
@@ -363,7 +364,7 @@ export function JobDetailBody({
             {label} salary
           </h2>
           <p className="jd-panel__lead">
-            {sections.salary.count} listed {label} roles on Nodework publish a range, and
+            {sections.salary.count} externally scraped {label} roles publish a range, and
             together they span {roleRange}. Use it as a floor for the conversation, not a
             promise about this listing.
           </p>
@@ -415,7 +416,7 @@ export function JobDetailBody({
             Hiring {label}?
           </h2>
           <p className="jd-panel__lead">
-            We do not run a candidate database. See which companies are already advertising
+            Explore candidate profiles and see which companies are already advertising
             {" "}
             {label} work, then list your own role next to theirs.
           </p>
@@ -426,6 +427,7 @@ export function JobDetailBody({
           </p>
         </section>
       ) : null}
+      <FeaturedMember/>
     </>
   );
 }

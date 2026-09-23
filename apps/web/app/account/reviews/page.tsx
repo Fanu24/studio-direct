@@ -1,0 +1,6 @@
+import {redirect} from 'next/navigation';
+import {platform,currentUser} from '../../../lib/platform';
+import {ReviewForm} from '../../_components/product/company-reviews';
+export const dynamic='force-dynamic';
+export const metadata={title:'Your company reviews',robots:{index:false,follow:false}};
+export default async function Page(){const env=await platform(),user=await currentUser(env);if(!user)redirect('/login?next=/account/reviews');const reviews=await env.DB.prepare('SELECT r.*,c.name,e.reason,s.body AS response FROM company_reviews r JOIN companies c ON c.id=r.company_id LEFT JOIN review_work_evidence e ON e.review_id=r.id LEFT JOIN review_responses s ON s.review_id=r.id WHERE r.user_id=? ORDER BY r.created_at DESC').bind(user.id).all<Record<string,any>>();return <main className="container stack"><h1>Your company reviews</h1><p>Reports and company responses are sent to the moderators or author. Companies cannot delete reviews.</p>{reviews.results.map(r=><article className="panel" key={r.id}><h2>{r.name}</h2><p>{r.status}</p><p>{r.reason}</p><p>{r.body}</p>{r.response?<blockquote>Company response: {r.response}</blockquote>:null}{Date.parse(r.created_at)>Date.now()-30*86400000?<ReviewForm companyId={r.company_id} review={r}/>:null}</article>)}</main>;}

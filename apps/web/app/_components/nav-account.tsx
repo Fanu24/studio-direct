@@ -17,9 +17,10 @@ export function NavAccount({ variant = "bar" }: { variant?: "bar" | "menu" }) {
   if (session?.user) {
     return (
       <div className={className}>
-        <Link className={`button button--ghost button--sm${block}`} href="/dashboard">
-          Dashboard
+        <Link className={`button button--ghost button--sm${block}`} href="/account/profile">
+          Candidate dashboard
         </Link>
+        <Link className={`button button--quiet button--sm${block}`} href="/employer">Employer dashboard</Link>
         <button
           className={`button button--quiet button--sm${block}`}
           onClick={async () => {
@@ -42,8 +43,9 @@ export function NavAccount({ variant = "bar" }: { variant?: "bar" | "menu" }) {
         </Link>
       ) : null}
       <Link className={`button button--quiet button--sm${block}`} href="/login">
-        Login
+        Candidate login
       </Link>
+      <Link className={`button button--quiet button--sm${block}`} href="/employer/login">Employer login</Link>
     </div>
   );
 }

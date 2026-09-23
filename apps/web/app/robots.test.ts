@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import robots, { PRIVATE_PATHS, buildRobots, resolveRobotsSitemap } from "./robots";
+import robots, { buildRobots, resolveRobotsSitemap } from "./robots";
 
 describe("resolveRobotsSitemap", () => {
   it("points at /sitemap.xml on the SITE_URL origin", () => {
@@ -39,21 +39,14 @@ describe("resolveRobotsSitemap", () => {
 });
 
 describe("buildRobots", () => {
-  it("allows everything except the API and account routes", () => {
+  it("allows all crawlers on every path without exclusions", () => {
     const result = buildRobots("https://jobs.example.com");
     const rules = Array.isArray(result.rules) ? result.rules : [result.rules];
 
     expect(rules).toHaveLength(1);
     expect(rules[0]?.userAgent).toBe("*");
     expect(rules[0]?.allow).toBe("/");
-    expect(rules[0]?.disallow).toEqual([
-      "/api/",
-      "/dashboard",
-      "/profile",
-      "/settings",
-      "/onboarding",
-    ]);
-    expect(rules[0]?.disallow).toEqual([...PRIVATE_PATHS]);
+    expect(rules[0]?.disallow).toBeUndefined();
     expect(result.sitemap).toBe("https://jobs.example.com/sitemap.xml");
   });
 
@@ -70,6 +63,11 @@ describe("robots route", () => {
     vi.unstubAllEnvs();
   });
 
+  it("keeps the preview deployment out of search engines", () => {
+    vi.stubEnv("SITE_INDEXING_ENABLED", "false");
+    expect(robots()).toEqual({ rules: [{ userAgent: "*", disallow: "/" }] });
+  });
+
   it("reads SITE_URL from the environment", () => {
     vi.stubEnv("SITE_URL", "https://jobs.example.com");
     expect(robots().sitemap).toBe("https://jobs.example.com/sitemap.xml");
@@ -81,6 +79,7 @@ describe("robots route", () => {
     const rules = Array.isArray(result.rules) ? result.rules : [result.rules];
 
     expect(result.sitemap).toBe("/sitemap.xml");
-    expect(rules[0]?.disallow).toContain("/api/");
+    expect(rules[0]?.allow).toBe("/");
+    expect(rules[0]?.disallow).toBeUndefined();
   });
 });

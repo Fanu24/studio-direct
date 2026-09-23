@@ -20,7 +20,7 @@ FROM jobs j
 JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
 JOIN tenants t ON t.id = j.tenant_id
 WHERE t.slug = ?
-  AND j.listed = 1
+  AND j.listed = 1 AND j.confidential = 0
   AND c.listed = 1
   AND j.remote IN ('remote', 'hybrid')
   AND j.exclusivity = 'hidden_from_linkedin'

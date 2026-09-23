@@ -1,0 +1,5 @@
+import {platform,currentUser,sameOrigin} from '../../../../lib/platform';
+import {loadProductFlags} from '../../../../lib/product/flags';
+import {requireTenantId} from '../../../../lib/tenant';
+import {inviteCandidate} from '../../../../lib/product/talent';
+export async function POST(request:Request){if(!sameOrigin(request))return new Response('Forbidden',{status:403});const env=await platform(),user=await currentUser(env,request);if(!user?.emailVerified)return new Response('Verified login required',{status:401});if(!(await loadProductFlags(env.DB,await requireTenantId(env.DB),env)).PRODUCT_TALENT_SEARCH)return new Response('Unavailable',{status:404});try{const f=await request.formData(),source=f.get('source')==='shortlist'?'shortlist':'talent_search';await inviteCandidate(env.DB,user.id,String(f.get('jobId')),String(f.get('candidateId')),source,String(f.get('message')??''));return Response.redirect(new URL('/dashboard/talent?company='+encodeURIComponent(String(f.get('companyId')))+'&sent=1',request.url),303);}catch(error){return new Response(error instanceof Error?error.message:'Invitation failed',{status:400});}}

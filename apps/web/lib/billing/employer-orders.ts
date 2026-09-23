@@ -1,11 +1,15 @@
-import { slugTitle, normalizeCompanyName } from '@gaming/shared';
+import {listingFacets} from './listing-facets';
+import {listingTags} from './listing-benefits';
+import { listingPeriodStatements, slugTitle, normalizeCompanyName } from '@gaming/shared';
 import type { Database, Statement } from '../platform';
 import type { ListingInput } from './listing-input';
 import { quoteListing, type ListingSelection } from './listing-catalog';
+import {legacyCompanyClaimStatements} from '../product/company-claims';
+import {fulfillNativeOrder} from '../product/native-orders';
 
 export type EmployerOrder={id:string;tenant_id:string;user_id:string;kind:'job'|'bundle';payload_json:string;
   selection_json:string;total_cents:number;currency:string;status:string;stripe_session_id:string|null;
-  stripe_subscription_id:string|null;stripe_customer_id:string|null;created_at:string;paid_at:string|null};
+  stripe_subscription_id:string|null;stripe_customer_id:string|null;created_at:string;paid_at:string|null;offer_version?:number};
 export async function orderById(db:Database,id:string) {
   return db.prepare('SELECT * FROM employer_orders WHERE id=?').bind(id).first<EmployerOrder>();
 }
@@ -36,8 +40,8 @@ function listingStatements(db:Database,order:EmployerOrder,jobId:string,input:Li
       SELECT ?,?,?,?,?,? WHERE ${guard}`).bind(companyId,order.tenant_id,input.companyName,companyNorm,new URL(input.companyUrl).hostname,at,...guardValues),
     db.prepare(`INSERT OR IGNORE INTO jobs(id,tenant_id,company_id,canonical_key,title,title_norm,slug,location,remote,
       description_html,apply_url,salary_min,salary_max,source,featured_until,highlight,posted_at,created_at,updated_at,
-      listing_logo_url,highlight_color,expires_at)
-      SELECT ?,?,(${companyWhere}),?,?,?,?,?,?,?,?,?,?,'manual',?,?,?,?,?,?,?,? WHERE ${guard}`)
+      listing_logo_url,highlight_color,expires_at,commercial_origin,salary_currency,salary_period)
+      SELECT ?,?,(${companyWhere}),?,?,?,?,?,?,?,?,?,?,'manual',?,?,?,?,?,?,?,?,'native','USD','yearly' WHERE ${guard}`)
       .bind(jobId,order.tenant_id,order.tenant_id,companyNorm,`paid:${jobId}`,input.title,input.title.toLowerCase(),slug,
         input.location,input.remote,input.descriptionHtml,input.applyUrl||`/jobs/${slug}/apply`,input.salaryMin,input.salaryMax,
         options.stickyDays?addDays(now,options.stickyDays):null,options.highlight==='none'?0:1,at,at,at,
@@ -48,41 +52,49 @@ function listingStatements(db:Database,order:EmployerOrder,jobId:string,input:Li
         options.highlight==='custom'?options.color:options.highlight==='standard'?'#830846':null,
         options.logo?input.logoUrl:null,options.support?1:0,addDays(now,30),jobId),
   ];
-  for(const tag of input.tags){
+  statements.push(db.prepare(`INSERT OR IGNORE INTO listing_details(job_id,input_json,updated_at) SELECT ?,?,? WHERE EXISTS(SELECT 1 FROM jobs WHERE id=?)`)
+    .bind(jobId,JSON.stringify(input),at,jobId));
+  for(const tag of listingTags(input)){
     statements.push(db.prepare('INSERT OR IGNORE INTO tags(slug,label) VALUES(?,?)').bind(tag,tag.replaceAll('-',' ')));
     statements.push(db.prepare(`INSERT OR IGNORE INTO job_tags(job_id,tag_slug)
       SELECT ?,? WHERE EXISTS(SELECT 1 FROM jobs WHERE id=?)`).bind(jobId,tag,jobId));
   }
+  statements.push(...listingFacets(db,jobId,input));
   return statements;
 }
-export type PaidSession={id:string;payment_status:string;status?:string;currency:string;amount_subtotal:number;
-  amount_total:number;total_details?:{amount_discount?:number;amount_tax?:number};metadata?:{orderId?:string;purchaseId?:string};
+export type PaidSession={livemode?:boolean;id:string;payment_status:string;status?:string;currency:string;amount_subtotal:number;
+  amount_total:number;total_details?:{amount_discount?:number;amount_tax?:number};metadata?:{orderId?:string;purchaseId?:string;claimOrderId?:string};
   customer?:string;subscription?:string;payment_intent?:string};
 export async function fulfillEmployerOrder(db:Database,session:PaidSession,eventId:string,now=new Date()) {
   if(!['paid','no_payment_required'].includes(session.payment_status))return false;
   const order=await orderById(db,session.metadata?.orderId||'');
   if(!order||order.status!=='pending')return false;
+  if(order.offer_version===2)return fulfillNativeOrder(db,order,session,eventId,now);
   if(order.stripe_session_id&&order.stripe_session_id!==session.id)throw new Error('Checkout session mismatch');
   const discount=session.total_details?.amount_discount??0,tax=session.total_details?.amount_tax??0;
   if(session.currency!==order.currency||session.amount_subtotal!==order.total_cents||!Number.isSafeInteger(discount)
     ||discount<0||discount>order.total_cents||!Number.isSafeInteger(tax)||tax<0
     ||session.amount_total!==order.total_cents-discount+tax)throw new Error('Checkout amount mismatch');
   const options=JSON.parse(order.selection_json) as ListingSelection;
+  const paymentIntent=session.payment_intent??null;
+  const guard="EXISTS(SELECT 1 FROM employer_orders WHERE id=? AND status='pending' AND user_id IS NOT NULL) AND NOT EXISTS(SELECT 1 FROM payment_reversals WHERE payment_intent_id=?)";
+  const guardValues=[order.id,paymentIntent];
   const statements:Statement[]=[];
-  if(order.kind==='job')statements.push(...listingStatements(db,order,`paid:${order.id}`,JSON.parse(order.payload_json),options,now));
+  if(order.kind==='job')statements.push(...listingStatements(db,order,`paid:${order.id}`,JSON.parse(order.payload_json),options,now,guard,guardValues));
   else {
     const expiry=new Date(now);expiry.setUTCFullYear(expiry.getUTCFullYear()+2);
     for(let slot=0;slot<options.quantity;slot++)statements.push(db.prepare(`INSERT OR IGNORE INTO bundle_credits
-      (id,order_id,slot,user_id,selection_json,expires_at) VALUES(?,?,?,?,?,?)`)
-      .bind(`${order.id}:${slot}`,order.id,slot,order.user_id,order.selection_json,expiry.toISOString()));
+      (id,order_id,slot,user_id,selection_json,expires_at) SELECT ?,?,?,?,?,? WHERE ${guard}`)
+      .bind(`${order.id}:${slot}`,order.id,slot,order.user_id,order.selection_json,expiry.toISOString(),...guardValues));
   }
-  statements.push(db.prepare(`UPDATE employer_orders SET status='paid',paid_at=?,stripe_session_id=?,
+  statements.push(db.prepare(`UPDATE employer_orders SET status=CASE WHEN EXISTS(SELECT 1 FROM payment_reversals WHERE payment_intent_id=?) THEN 'refunded' ELSE 'paid' END,paid_at=?,stripe_session_id=?,
     stripe_customer_id=?,stripe_subscription_id=?,stripe_payment_intent_id=? WHERE id=? AND status='pending'`)
-    .bind(now.toISOString(),session.id,session.customer||null,session.subscription||null,session.payment_intent||null,order.id));
+    .bind(paymentIntent,now.toISOString(),session.id,session.customer||null,session.subscription||null,paymentIntent,order.id));
   statements.push(db.prepare(`INSERT OR IGNORE INTO billing_events(id,order_id,type,processed_at) VALUES(?,?,'checkout.paid',?)`)
     .bind(eventId,order.id,now.toISOString()));
+  statements.push(...legacyCompanyClaimStatements(db,order.id),...listingPeriodStatements(db,now));
   await db.batch(statements);
-  return true;
+  return (await orderById(db,order.id))?.status==='paid';
 }
 export async function redeemCredit(db:Database,userId:string,creditId:string,input:ListingInput,now=new Date()) {
   const credit=await db.prepare(`SELECT c.*,o.tenant_id FROM bundle_credits c JOIN employer_orders o ON o.id=c.order_id
@@ -94,10 +106,11 @@ export async function redeemCredit(db:Database,userId:string,creditId:string,inp
   const selection=JSON.parse(credit.selection_json) as ListingSelection;
   if(selection.logo&&!input.logoUrl)throw new Error('Upload the logo included in this credit');
   const jobId=`credit:${crypto.randomUUID()}`;
-  const guard=`EXISTS(SELECT 1 FROM bundle_credits WHERE id=? AND user_id=? AND job_id IS NULL AND expires_at>?)`;
+  const guard=`EXISTS(SELECT 1 FROM bundle_credits c JOIN employer_orders o ON o.id=c.order_id WHERE c.id=? AND c.user_id=? AND c.job_id IS NULL AND c.expires_at>? AND o.status='paid')`;
   const statements=listingStatements(db,order,jobId,input,JSON.parse(credit.selection_json),now,guard,[credit.id,userId,now.toISOString()]);
   statements.push(db.prepare(`UPDATE bundle_credits SET job_id=? WHERE id=? AND job_id IS NULL
     AND EXISTS(SELECT 1 FROM jobs WHERE id=?)`).bind(jobId,credit.id,jobId));
+  statements.push(...legacyCompanyClaimStatements(db,order.id));
   await db.batch(statements);
   const redeemed=await db.prepare('SELECT job_id FROM bundle_credits WHERE id=?').bind(credit.id).first<string>('job_id');
   if(redeemed!==jobId)throw new Error('Credit was already used');

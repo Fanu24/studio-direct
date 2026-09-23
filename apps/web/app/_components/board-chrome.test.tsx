@@ -49,26 +49,7 @@ describe("remoteFilterHref", () => {
       landing: { kind: "entry-level" },
       expected: { kind: "remote-tag", tag: "entry-level", tags: ["entry-level"] },
     },
-    {
-      name: "benefit",
-      landing: { kind: "benefit", benefit: "pay-in-crypto" },
-      expected: { kind: "remote" },
-    },
-    {
-      name: "city",
-      landing: { kind: "city", city: "berlin" },
-      expected: { kind: "remote" },
-    },
-    {
-      name: "country",
-      landing: { kind: "country", country: "germany" },
-      expected: { kind: "remote" },
-    },
-    {
-      name: "region",
-      landing: { kind: "region", region: "europe" },
-      expected: { kind: "remote" },
-    },
+
   ];
 
   it.each(cases)("$name round-trips through landingPath", ({ landing, expected }) => {

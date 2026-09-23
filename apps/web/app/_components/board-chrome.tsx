@@ -1,3 +1,4 @@
+import {JobSearchFilters} from './product/job-search-filters';
 import {
   NON_TECH_SALARY_ROLES as SHARED_NON_TECH_SALARY_ROLES,
   isSalaryRole,
@@ -7,6 +8,8 @@ import {
   type LandingKind,
 } from "@gaming/shared";
 import Link from "next/link";
+
+import {landingSearchState, searchFacets, searchHref, type SearchState} from '../../lib/jobs/search-state';
 
 import { SearchIcon } from "./icons";
 import {SearchInput} from './search-input';
@@ -34,25 +37,6 @@ export function catalogMonthLabel(date = new Date()): string {
   });
 }
 
-/**
- * Href for the "Remote" toggle in BoardSearch. Always resolved through
- * landingPath so every kind emits the one canonical URL shape (the "+" form
- * for tag combos) instead of a hand-built string that can drift from it.
- * Geo (city/country/region) and benefit landings have no combined
- * remote+facet LandingKind in the shipped URL space - parseLandingSegment
- * never emits one - so those fall through to the plain remote landing
- * rather than silently guessing an unresolvable URL.
- */
-/**
- * The remote control is drawn as a switch, so it has to behave like one: show
- * which way it is set, and turn back off. It used to be a one-way link -
- * `/remote-jobs` pointed at `/remote-jobs`, with no on state in the markup or
- * the CSS - so on a remote page it still looked off and clicking it did
- * nothing. A switch that cannot be switched reads as broken, and it was.
- *
- * `active` is whether the page being viewed is already filtered to remote;
- * `href` is where the switch goes from here, which is the opposite state.
- */
 export function remoteToggleState(landing?: LandingKind): {
   href: string;
   active: boolean;
@@ -86,7 +70,7 @@ export function remoteFilterHref(landing?: LandingKind): string {
     case "city":
     case "country":
     case "region":
-      return landingPath({ kind: "remote" });
+      return searchHref(landingSearchState(landing), {remote: "1"});
   }
 }
 
@@ -124,19 +108,21 @@ export function BoardSearch({
   remoteHref,
   remoteActive = false,
   defaultQuery,
+  filters,
 }: {
   remoteHref: string;
   remoteActive?: boolean;
   defaultQuery?: string;
+  filters?: SearchState;
 }) {
   return (
     <form action="/jobs" className="search-bar" method="get">
       <label className="field">
         <span className="visually-hidden">Search</span>
         <SearchIcon className="search-bar__icon" size={18} />
-        <SearchInput defaultQuery={defaultQuery} remoteActive={remoteActive}/>
+        <SearchInput defaultQuery={defaultQuery} remoteActive={remoteActive} filters={searchFacets(filters)}/>
       </label>
-      {remoteActive?<input type="hidden" name="remote" value="1"/>:null}
+      {Object.entries({...searchFacets(filters), ...(remoteActive ? {remote: "1"} : {})}).filter(([name])=>!["arrangement","language","eligible_country","eligible_utc","skills"].includes(name)).map(([name, value]) => <input key={name} type="hidden" name={name} value={value}/>)}
       <button className="visually-hidden" type="submit">
         Search
       </button>
@@ -149,6 +135,8 @@ export function BoardSearch({
         <span aria-hidden="true" className="remote-toggle__track" />
         Remote
       </Link>
+      <Link role="switch" aria-checked={searchFacets(filters).crypto_payment==='1'} href={searchHref({...filters,...(remoteActive?{remote:'1'}:{})},{crypto_payment:searchFacets(filters).crypto_payment==='1'?undefined:'1'})}>Crypto payment</Link>
+      <JobSearchFilters values={searchFacets(filters)}/>
     </form>
   );
 }

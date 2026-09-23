@@ -3,6 +3,8 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { createAuth, type AuthEnv } from "../../../../lib/auth/index";
 import { type CompletenessDatabase } from "../../../../lib/profile/completeness";
 import { uploadCv, type CvBucket } from "../../../../lib/profile/cv";
+import {sameOrigin,type Database} from '../../../../lib/platform';
+import {refreshCandidateCompleteness} from '../../../../lib/product/candidates';
 
 type CvRouteEnv = AuthEnv & {
   DB: CompletenessDatabase;
@@ -15,6 +17,7 @@ async function cvEnv(): Promise<CvRouteEnv> {
 }
 
 export async function POST(request: Request) {
+  if(!sameOrigin(request))return new Response('Forbidden',{status:403});
   const env = await cvEnv();
   const session = await createAuth(env).api.getSession({
     headers: request.headers,
@@ -37,5 +40,6 @@ export async function POST(request: Request) {
     return Response.json({ code: result.code }, { status: 400 });
   }
 
+  await refreshCandidateCompleteness(env.DB as Database,userId);
   return Response.redirect(new URL("/profile", request.url), 303);
 }

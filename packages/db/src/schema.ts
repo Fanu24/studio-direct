@@ -1,4 +1,5 @@
 import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+export * from './product-schema';
 
 export const tenants = sqliteTable("tenants", {
   id: text("id").primaryKey(),
@@ -8,6 +9,13 @@ export const tenants = sqliteTable("tenants", {
 });
 
 export const companies = sqliteTable("companies", {
+  description:text('description'),
+  lastCrawledAt:text('last_crawled_at'),
+  lastCrawlError:text('last_crawl_error'),
+  bannerUrl:text('banner_url'),
+  headquarters:text('headquarters'),
+  size:text('size'),
+
   id: text("id").primaryKey(),
   tenantId: text("tenant_id").notNull(),
   name: text("name").notNull(),
@@ -17,6 +25,9 @@ export const companies = sqliteTable("companies", {
   careerUrl: text("career_url"),
   atsType: text("ats_type"),
   atsSlug: text("ats_slug"),
+  companyXUrl: text('company_x_url'),
+  companyLinkedinUrl: text('company_linkedin_url'),
+  pendingPublication: integer('pending_publication').notNull().default(0),
   listed: integer("listed").notNull().default(1),
   createdAt: text("created_at").notNull(),
 });
@@ -38,6 +49,18 @@ export const jobs = sqliteTable(
     salaryText: text("salary_text"),
     salaryMin: integer("salary_min"),
     salaryMax: integer("salary_max"),
+    salaryCurrency: text('salary_currency'),
+    salaryPeriod: text('salary_period'),
+    hideSalary: integer('hide_salary').notNull().default(0),
+    cryptoPaymentAvailable: integer('crypto_payment_available').notNull().default(0),
+    commercialOrigin: text('commercial_origin').notNull().default('aggregated'),
+    descriptionText: text('description_text'),
+    publishedAt: text('published_at'),
+    bumpedAt: text('bumped_at'),
+    pinnedUntil: text('pinned_until'),
+    earlyAccessUntil: text('early_access_until'),
+    confidential: integer('confidential').notNull().default(0),
+    jobRoleId: text('job_role_id'),
     source: text("source").notNull().default("career_page"),
     externalId: text("external_id"),
     featuredUntil: text("featured_until"),
@@ -121,6 +144,8 @@ export const verification = sqliteTable("verification", {
 });
 
 export const profiles = sqliteTable("profiles", {
+  handle:text('handle'),photoUrl:text('photo_url'),cityId:integer('city_id'),countryCode:text('country_code'),utcOffset:integer('utc_offset'),availability:text('availability').notNull().default('open_to_work'),openToCrypto:integer('open_to_crypto').notNull().default(0),featuredOptIn:integer('featured_opt_in').notNull().default(1),verifiedAt:text('verified_at'),lastActiveAt:text('last_active_at'),productProfileCompleted:integer('product_profile_completed').notNull().default(0),
+  publicProfile:integer('public_profile').notNull().default(0),bio:text('bio'),website:text('website'),languages:text('languages'),experienceYears:integer('experience_years'),talentExportOptIn:integer('talent_export_opt_in').notNull().default(0),
   userId: text("user_id").primaryKey(),
   displayName: text("display_name"),
   headline: text("headline"),
@@ -210,6 +235,7 @@ export const jobLocations = sqliteTable("job_locations", {
 export const benefits = sqliteTable("benefits", {
   slug: text("slug").primaryKey(),
   label: text("label").notNull(),
+  aliasesJson: text('aliases_json').notNull().default('[]'),
 });
 
 export const jobBenefits = sqliteTable("job_benefits", {
@@ -228,6 +254,7 @@ export const salaryRollups = sqliteTable("salary_rollups", {
 });
 
 export const jobApplications = sqliteTable("job_applications", {
+  userId:text('user_id'),cvR2Key:text('cv_r2_key'),status:text('status').notNull().default('new'),employerNote:text('employer_note').notNull().default(''),updatedAt:text('updated_at'),profileSnapshotJson:text('profile_snapshot_json'),matchScore:integer('match_score'),scoreBreakdownJson:text('score_breakdown_json'),invited:integer('invited').notNull().default(0),
   id: text("id").primaryKey(),
   tenantId: text("tenant_id").notNull(),
   jobId: text("job_id").notNull(),

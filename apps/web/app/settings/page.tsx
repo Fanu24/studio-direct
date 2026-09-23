@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import {loadProductFlags} from '../../lib/product/flags';
+import {requireTenantId} from '../../lib/tenant';
+import type {Database} from '../../lib/platform';
 import { TENANT_NAME } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
@@ -46,6 +49,7 @@ export default async function SettingsPage() {
     redirect("/login?next=/settings");
   }
 
+  if((await loadProductFlags(env.DB as unknown as Database,await requireTenantId(env.DB as unknown as Database))).PRODUCT_PROFILES_V2)redirect('/account/privacy');
   const optedIn = await loadTalentPoolOptIn(env.DB, userId);
 
   return (

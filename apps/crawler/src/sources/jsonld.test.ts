@@ -77,10 +77,12 @@ describe("CareerJobSource JSON-LD fallback", () => {
       companyId: "company:pixelworks",
     });
 
-    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl).toHaveBeenNthCalledWith(1,'https://pixelworks.example/robots.txt',expect.any(Object));
     expect(fetchImpl).toHaveBeenCalledWith(PAGE_URL, {
-      method: "GET",
-      headers: { "User-Agent": PRODUCT_USER_AGENT },
+      headers: { "user-agent": 'NodeworkBot/1.0' },
+      redirect: 'manual',
+      signal: expect.any(AbortSignal),
     });
     expect(drafts).toHaveLength(2);
   });

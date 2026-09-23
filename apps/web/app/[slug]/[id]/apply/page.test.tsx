@@ -11,9 +11,11 @@ type TestElement = ReactElement<
 const applyUrl = "https://studio.example/careers/secret-apply";
 
 const mocks = vi.hoisted(() => ({
+  currentUser: vi.fn(),
   getCloudflareContext: vi.fn(),
   getJobByExternalId: vi.fn(),
 }));
+vi.mock('../../../../lib/platform',()=>({currentUser:mocks.currentUser}));
 
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: mocks.getCloudflareContext,
@@ -77,6 +79,7 @@ const job = {
 describe("On-site apply page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.currentUser.mockResolvedValue({id:'candidate',email:'candidate@example.test',name:'Candidate'});
     mocks.getCloudflareContext.mockResolvedValue({ env: { DB: {} } });
     mocks.getJobByExternalId.mockResolvedValue(job);
   });
@@ -90,7 +93,7 @@ describe("On-site apply page", () => {
       .map((element) => element.props.href)
       .filter((href): href is string => typeof href === "string");
 
-    expect(form?.props).toMatchObject({ jobId: "job-1" });
+    expect(form?.props).toMatchObject({ jobId: "job-1",email:'candidate@example.test' });
     expect(hrefs).toContain("/solidity-engineer-alpha-991/991");
     expect(hrefs).not.toContain(applyUrl);
     expect(text(page)).not.toContain(applyUrl);
@@ -113,5 +116,10 @@ describe("On-site apply page", () => {
     expect(metadata.alternates?.canonical).toBe(
       "/solidity-engineer-alpha-991/991/apply",
     );
+  });
+  it('requires candidate authentication before displaying the form',async()=>{
+    mocks.currentUser.mockResolvedValue(null);
+    const {default:ApplyPage}=await import('./page');
+    await expect(ApplyPage({params,searchParams})).rejects.toThrow('NEXT_REDIRECT');
   });
 });

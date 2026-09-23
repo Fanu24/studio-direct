@@ -13,6 +13,8 @@ const SECTIONS = [
   { id: "operator", label: "Who operates this site" },
   { id: "job-board", label: "Job-board product" },
   { id: "talent-pool", label: "Recruiter talent pool" },
+  { id: "applications", label: "Applications and withdrawal" },
+  { id: "advertising", label: "Advertising" },
 ] as const;
 
 export default function PrivacyPage() {
@@ -45,6 +47,15 @@ export default function PrivacyPage() {
           <section aria-labelledby="talent-pool-title" id="talent-pool">
             <h2 id="talent-pool-title">Recruiter talent pool</h2>
             <p>{PRIVACY_COPY.recruiterOptInPurpose}</p>
+            <p>{PRIVACY_COPY.recruiterExports}</p>
+          </section>
+          <section aria-labelledby="applications-title" id="applications">
+            <h2 id="applications-title">Applications and withdrawal</h2>
+            <p>{PRIVACY_COPY.applications}</p>
+          </section>
+          <section aria-labelledby="advertising-title" id="advertising">
+            <h2 id="advertising-title">Advertising</h2>
+            <p>{PRIVACY_COPY.advertising}</p>
           </section>
         </article>
       </div>

@@ -64,6 +64,5 @@ export async function verifyTurnstile({
 }
 
 export function isEmailAuthPath(pathname: string): boolean {
-  return pathname === "/api/auth/sign-in/magic-link"
-    || pathname.endsWith("/sign-in/magic-link");
+  return ['/sign-in/magic-link','/sign-in/email','/sign-up/email','/request-password-reset','/send-verification-email'].some(path=>pathname.endsWith(path));
 }

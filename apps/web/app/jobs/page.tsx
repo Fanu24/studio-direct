@@ -1,4 +1,4 @@
-import { SENIORITY_SLUGS, tagLabel } from "@gaming/shared";
+import { tagLabel } from "@gaming/shared";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -15,7 +15,7 @@ import {
 import { JobBoard } from "../_components/job-board";
 import { TagChips } from "../_components/job-row";
 import { JsonLd } from "../_components/json-ld";
-import { LINKEDIN_EXCLUSIVITY_TOOLTIP } from "../../lib/copy";
+import {searchFacets} from "../../lib/jobs/search-state";
 import { buildLandingDescription, buildLandingTitle } from "../../lib/jobs/landing-meta";
 import {
   countNewJobs,
@@ -26,7 +26,8 @@ import {
 } from "../../lib/jobs/queries";
 import { requireTenantId } from "../../lib/tenant";
 
-export const revalidate = 300;
+// Read live D1 data at request time; builds must not depend on a local database.
+export const dynamic = "force-dynamic";
 
 type SearchValue = string | string[] | undefined;
 type JobsSearchParams = Record<string, SearchValue>;
@@ -54,6 +55,7 @@ const loadJobsData = cache(
     remoteOnly: boolean,
     source: string | undefined,
     hidden: boolean,
+    facetsJson: string,
     page: number | undefined,
     pageSize: number | undefined,
   ) => {
@@ -70,6 +72,7 @@ const loadJobsData = cache(
       hidden,
       page,
       pageSize,
+      ...JSON.parse(facetsJson),
     };
     const result = await listJobs(db, tenantId, filters);
     // One query for every row's detail, not one per row: the board needs them all to
@@ -90,14 +93,11 @@ function loadJobs(params: JobsSearchParams) {
     first(params.remote) === "1",
     first(params.source),
     first(params.hidden) === "1",
+    JSON.stringify({workArrangement:first(params.arrangement),language:first(params.language),eligibleCountry:first(params.eligible_country),eligibleUtc:first(params.eligible_utc)?Number(first(params.eligible_utc)):undefined,skillIds:first(params.skills)?.split(',').filter(Boolean).slice(0,30),cryptoPayment:first(params.crypto_payment)==='1',locationSlug:first(params.location),benefit:first(params.benefit),tags:first(params.tags)?.split(',').filter(Boolean).slice(0,10),salaryMin:positiveNumber(params.salary_min),salaryMax:positiveNumber(params.salary_max)}),
     positiveNumber(params.page),
     positiveNumber(params.pageSize),
   );
 }
-
-/** Seniority chips: the fixed, enumerable facet - unlike company, which is open-ended and
- * only ever shown as an already-active, removable chip in the filter ribbon below. */
-const SENIORITY_OPTIONS = SENIORITY_SLUGS.map((slug) => ({ slug, label: tagLabel(slug) }));
 
 /**
  * Toggle one query param on `/jobs`, preserving every other filter and dropping `page`
@@ -109,7 +109,7 @@ function toggleFilterHref(searchParams: JobsSearchParams, key: string, value: st
   const isActive = first(searchParams[key]) === value;
 
   for (const [k, v] of Object.entries(searchParams)) {
-    if (k === "page" || k === key || v === undefined) continue;
+    if (k === "page" || k === "job" || k === key || v === undefined) continue;
     for (const item of Array.isArray(v) ? v : [v]) params.append(k, item);
   }
   if (!isActive) params.set(key, value);
@@ -140,7 +140,7 @@ export async function generateMetadata({
     description,
     alternates: { canonical: "/jobs" },
     robots:
-      page > 1 ? { index: false, follow: true } : { index: true, follow: true },
+      page > 1 || Object.values(params).some(Boolean) ? { index: false, follow: true } : { index: true, follow: true },
   };
 }
 
@@ -181,7 +181,7 @@ function withoutFilter(searchParams: JobsSearchParams, drop: string) {
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(searchParams)) {
-    if (key === drop || key === "page" || value === undefined) continue;
+    if (key === drop || key === "page" || key === "job" || value === undefined) continue;
     for (const item of Array.isArray(value) ? value : [value]) {
       params.append(key, item);
     }
@@ -206,8 +206,12 @@ export default async function JobsPage({
     filters.seniority ? { key: "seniority", label: `Title: ${tagLabel(filters.seniority)}` } : null,
     filters.tag ? { key: "tag", label: `Tag: ${filters.tag}` } : null,
     filters.remoteOnly ? { key: "remote", label: "Remote" } : null,
-    filters.source ? { key: "source", label: "Direct from career pages" } : null,
-    filters.hidden ? { key: "hidden", label: "Not on LinkedIn" } : null,
+    filters.tags?.length ? {key: "tags", label: filters.tags.map(tagLabel).join(' + ')} : null,
+    filters.locationSlug ? {key: "location", label: tagLabel(filters.locationSlug)} : null,
+    filters.benefit ? {key: "benefit", label: tagLabel(filters.benefit)} : null,
+    filters.cryptoPayment ? {key: "crypto_payment",label:"Crypto payment"} : null,
+    filters.salaryMin ? {key: "salary_min", label: `Salary from $${filters.salaryMin.toLocaleString('en-US')}`} : null,
+    filters.salaryMax ? {key: "salary_max", label: `Salary to $${filters.salaryMax.toLocaleString('en-US')}`} : null,
   ].filter((chip): chip is { key: string; label: string } => chip !== null);
 
   return (
@@ -232,37 +236,8 @@ export default async function JobsPage({
           <span className="jobs-num">{result.total.toLocaleString("en-US")}</span>{" "}
           {result.total === 1 ? "job found" : "jobs found"}
         </p>
-        <BoardSearch defaultQuery={filters.q} remoteActive={filters.remoteOnly} remoteHref={toggleFilterHref(params,'remote','1')} />
-        <div
-          aria-label="Filter by seniority, source or LinkedIn visibility"
-          className="jobs-chip-track"
-          role="group"
-        >
-          {SENIORITY_OPTIONS.map((option) => (
-            <Link
-              className={`chip${filters.seniority === option.slug ? " chip--active" : ""}`}
-              href={toggleFilterHref(params, "seniority", option.slug)}
-              key={option.slug}
-            >
-              {option.label}
-            </Link>
-          ))}
-          <span aria-hidden="true" className="jobs-chip-track__sep" />
-          <Link
-            className={`chip${filters.source === "career_page" ? " chip--active" : ""}`}
-            href={toggleFilterHref(params, "source", "career_page")}
-          >
-            Direct from career pages
-          </Link>
-          <Link
-            className={`chip${filters.hidden ? " chip--active" : ""}`}
-            href={toggleFilterHref(params, "hidden", "1")}
-            title={LINKEDIN_EXCLUSIVITY_TOOLTIP}
-          >
-            Not on LinkedIn
-          </Link>
-        </div>
-        <TagChips active={filters.tag} />
+        <BoardSearch filters={searchFacets(params)} defaultQuery={filters.q} remoteActive={filters.remoteOnly} remoteHref={toggleFilterHref(params,'remote','1')} />
+        <TagChips active={filters.tags ?? filters.tag} remote={filters.remoteOnly} filters={params} />
       </header>
 
       {activeChips.length > 0 ? (

@@ -1,0 +1,2 @@
+import type {JobListItem} from '../../../lib/jobs/queries';
+export function ProductJobBadges({job}:{job:Pick<JobListItem,'earlyAccessUntil'|'reviewRating'|'reviewCount'>}){return <>{job.earlyAccessUntil&&Date.parse(job.earlyAccessUntil)>Date.now()?<span className="badge">Early Access · Premium</span>:null}{job.reviewCount?<span className="badge" title="Verified employee reviews">★ {Number(job.reviewRating).toFixed(1)} ({job.reviewCount})</span>:null}</>;}

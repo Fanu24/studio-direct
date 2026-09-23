@@ -1,0 +1,37 @@
+{
+  "downloadedAt": "2026-09-22T16:11:21.633Z",
+  "attribution": "GeoNames",
+  "license": "CC BY 4.0",
+  "files": [
+    {
+      "name": "cities15000.zip",
+      "url": "https://download.geonames.org/export/dump/cities15000.zip",
+      "bytes": 3359366,
+      "sha256": "4337eb85ddef43a7d6164ba4d49379c1ef866ce5ceacda0fb1378abfc8cea2dd"
+    },
+    {
+      "name": "admin1CodesASCII.txt",
+      "url": "https://download.geonames.org/export/dump/admin1CodesASCII.txt",
+      "bytes": 151583,
+      "sha256": "1da92a6323a5fec3176f3f743bf4cf4040fd56a876da55e46fbca23c863aa60a"
+    },
+    {
+      "name": "countryInfo.txt",
+      "url": "https://download.geonames.org/export/dump/countryInfo.txt",
+      "bytes": 31678,
+      "sha256": "93bafc525813f22e4711ff9ed6d626343094ce48c26388dc7c49189b3d7d5512"
+    },
+    {
+      "name": "iso-languagecodes.txt",
+      "url": "https://download.geonames.org/export/dump/iso-languagecodes.txt",
+      "bytes": 137908,
+      "sha256": "cb0d34f492775deec8ec5713da6efa4463dad99b5e7ba2172bd094cfdcb76571"
+    },
+    {
+      "name": "readme.txt",
+      "url": "https://download.geonames.org/export/dump/readme.txt",
+      "bytes": 8843,
+      "sha256": "b1957379b6c1242c700c98ac9a8aa0a09f56c3c0a50ee72175527005f48ef2c5"
+    }
+  ]
+}

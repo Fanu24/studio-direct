@@ -213,6 +213,7 @@ describe("loadProfileCompleteness", () => {
     sqlite = new DatabaseSync(":memory:");
     sqlite.exec(`
       CREATE TABLE profiles (
+        product_profile_completed INTEGER NOT NULL DEFAULT 0,
         user_id TEXT PRIMARY KEY,
         display_name TEXT,
         target_role TEXT,
@@ -286,6 +287,7 @@ describe("profile experience and skills", () => {
       CREATE TABLE users (id TEXT PRIMARY KEY);
       INSERT INTO users (id) VALUES ('user-1');
       CREATE TABLE profiles (
+        product_profile_completed INTEGER NOT NULL DEFAULT 0,
         user_id TEXT PRIMARY KEY,
         display_name TEXT,
         target_role TEXT,

@@ -37,7 +37,7 @@ function fakeDb(fixtures: Record<string, unknown[]>): JobsDatabase {
 }
 
 const COMPANY_ROWS = [
-  { id: "a", name: "Alpha Studio", nameNorm: "alpha-studio", domain: "alpha.xyz", jobCount: 5, lastPostedAt: "2026-09-01T00:00:00Z" },
+  { id: "a", name: "Alpha Studio", nameNorm: "alpha-studio", avgSalary: 140000, domain: "alpha.xyz", jobCount: 5, lastPostedAt: "2026-09-01T00:00:00Z" },
   { id: "b", name: "Beta Forge", nameNorm: "beta-forge", domain: null, jobCount: 2, lastPostedAt: null },
   { id: "c", name: "Gamma Labs", nameNorm: "gamma-labs", domain: null, jobCount: 0, lastPostedAt: null },
 ];

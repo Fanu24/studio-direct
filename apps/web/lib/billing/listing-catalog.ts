@@ -1,11 +1,9 @@
-// Public configurator observed 2026-09-16: https://web3.career/post-web3-job
-export const BASE_CENTS = 29900;
-export const STICKY_CENTS = { 0: 0, 1: 4900, 3: 9900, 7: 14900, 14: 19900, 30: 29900 } as const;
-export const HIGHLIGHT_CENTS = { none: 0, standard: 9900, custom: 14900 } as const;
-// Discrete quantity ladder recorded in the reference audit; never interpolate percentages.
-export const BUNDLE_LADDER = [[2,20],[4,29],[6,30],[8,31],[10,32],[12,33],[14,34],[16,35],
-  [18,36],[20,37],[22,38],[24,39],[26,40],[28,41],[30,42],[31,43],[32,44],[33,45],
-  [34,46],[35,47],[36,48],[37,49],[38,50],[39,51],[40,55]] as const;
+import {pricing} from '@gaming/shared';
+// Retain historical selections and credits while the new offer is rolled out.
+export const BASE_CENTS = pricing.legacy.jobBase;
+export const STICKY_CENTS = pricing.legacy.sticky;
+export const HIGHLIGHT_CENTS = pricing.legacy.highlight;
+export const BUNDLE_LADDER = pricing.legacy.bundles;
 export type ListingSelection = {
   stickyDays: keyof typeof STICKY_CENTS;
   highlight: keyof typeof HIGHLIGHT_CENTS;
@@ -29,13 +27,13 @@ export function parseSelection(raw: unknown, kind: 'job' | 'bundle'): ListingSel
   }
   if (typeof r.color !== 'string' || !/^#[0-9a-f]{6}$/i.test(r.color)) throw new Error('Invalid highlight color');
   const quantity = kind === 'job' ? 1 : r.quantity;
-  if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1 || quantity > 40
+  if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1 || quantity > 50
     || (kind === 'bundle' && !BUNDLE_LADDER.some(([n])=>n===quantity))) throw new Error('Invalid bundle quantity');
   return {...r, quantity, autoRenew: kind === 'job' && r.autoRenew} as ListingSelection;
 }
 export function quoteListing(selection: ListingSelection) {
   const unitCents = BASE_CENTS + STICKY_CENTS[selection.stickyDays] + HIGHLIGHT_CENTS[selection.highlight]
-    + (selection.logo ? 4900 : 0) + (selection.support ? 9900 : 0);
+    + (selection.logo ? pricing.legacy.logo : 0) + (selection.support ? pricing.legacy.support : 0);
   const percent = selection.quantity > 1 ? BUNDLE_LADDER.find(([n])=>n===selection.quantity)?.[1] ?? 0 : 0;
   const subtotalCents = unitCents * selection.quantity;
   // Reference bundle UI charges whole dollars (24 × $695 × 61% -> $10,175).

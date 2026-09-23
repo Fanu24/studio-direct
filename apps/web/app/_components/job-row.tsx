@@ -1,3 +1,5 @@
+import {ProductJobBadges} from './product/job-badges';
+import {jobTagHref} from '../../lib/jobs/tag-links';
 import {
   countryForCity,
   formatSalaryRange,
@@ -109,7 +111,7 @@ export function JobRow({
         ) : null}
         <div className="job-row__chips">
           {job.tags.slice(0, 4).map((tag) => (
-            <Link className="chip" href={`/${tag}-jobs`} key={tag}>
+            <Link className="chip" href={jobTagHref(tag)} key={tag}>
               {tagLabel(tag)}
             </Link>
           ))}
@@ -123,6 +125,7 @@ export function JobRow({
         ) : null}
         {remote ? <span className="small">{remote}</span> : null}
         <LocationPins location={job.location} />
+        <ProductJobBadges job={job}/>{job.cryptoPaymentAvailable ? <span className="badge">Crypto pay</span> : null}
         {salary ? <span className="job-row__salary mono">{salary}</span> : null}
       </div>
     </article>

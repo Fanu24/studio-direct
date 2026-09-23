@@ -1,3 +1,5 @@
+vi.mock('../../lib/product/flags',()=>({loadProductFlags:async()=>({PRODUCT_PROFILES_V2:false})}));
+vi.mock('../../lib/tenant',()=>({requireTenantId:async()=> 'tenant:gaming'}));
 import React, { type ReactElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

@@ -1,0 +1,17 @@
+import Link from 'next/link';
+import {redirect} from 'next/navigation';
+import {platform,currentUser} from '../../../lib/platform';
+import {companyPlan,companyMembership} from '../../../lib/product/company-plans';
+import {EmployerShell} from '../../_components/employer-shell';
+import {pricing} from '@gaming/shared';
+export const dynamic='force-dynamic';
+export const metadata={title:'Company team',robots:{index:false,follow:false}};
+export default async function Page({searchParams}:{searchParams:Promise<{company?:string;invitation?:string}>}){
+ const env=await platform(),user=await currentUser(env);if(!user)redirect('/employer/login?next=/employer/team');const query=await searchParams;
+ const invitation=query.invitation?await env.DB.prepare("SELECT i.id,c.name FROM company_team_invitations i JOIN companies c ON c.id=i.company_id WHERE i.id=? AND i.email=? AND i.status='pending' AND i.expires_at>?").bind(query.invitation,user.email.toLowerCase(),new Date().toISOString()).first<{id:string;name:string}>():null;
+ const companies=await env.DB.prepare('SELECT c.id,c.name FROM companies c JOIN company_members m ON m.company_id=c.id WHERE m.user_id=?').bind(user.id).all<{id:string;name:string}>(),company=query.company??companies.results[0]?.id;
+ if(!company)return <EmployerShell title="Your team">{invitation?<form method="post" action="/api/product/company"><p>Join {invitation.name}</p><input type="hidden" name="invitation" value={invitation.id}/><button name="action" value="accept">Accept invitation</button></form>:<p>Verify company ownership before adding your team.</p>}</EmployerShell>;
+ const member=await companyMembership(env.DB,user.id,company),plan=await companyPlan(env.DB,company);if(!member)return <EmployerShell title="Your team"><p>Verified company access required.</p></EmployerShell>;
+ const members=await env.DB.prepare('SELECT m.user_id,m.role,u.name,u.email FROM company_members m JOIN users u ON u.id=m.user_id WHERE m.company_id=?').bind(company).all<{user_id:string;role:string;name:string;email:string}>(),invites=await env.DB.prepare("SELECT id,email FROM company_team_invitations WHERE company_id=? AND status='pending' AND expires_at>?").bind(company,new Date().toISOString()).all<{id:string;email:string}>();
+ return <EmployerShell title="Your team"><nav>{companies.results.map(c=><Link key={c.id} href={'/employer/team?company='+c.id}>{c.name}</Link>)}</nav><p>{members.results.length} members · {plan?(pricing.plans[plan.tier].seats??'Unlimited'):'Owner only'} seats</p>{members.results.map(m=><article key={m.user_id}><p>{m.name} · {m.email} · {m.role}</p>{member.role==='owner'&&m.role==='member'?<form method="post" action="/api/product/company"><input type="hidden" name="companyId" value={company}/><input type="hidden" name="member" value={m.user_id}/><button name="action" value="remove-member">Remove member</button></form>:null}</article>)}{member.role==='owner'?<><form action="/api/product/company" method="post"><input type="hidden" name="companyId" value={company}/><label>Teammate email<input name="email" type="email" required/></label><button name="action" value="invite">Invite teammate</button></form>{invites.results.map(i=><form key={i.id} action="/api/product/company" method="post"><p>{i.email} · pending</p><input type="hidden" name="companyId" value={company}/><input type="hidden" name="invitation" value={i.id}/><button name="action" value="cancel-invite">Cancel invitation</button></form>)}</>:null}</EmployerShell>;
+}

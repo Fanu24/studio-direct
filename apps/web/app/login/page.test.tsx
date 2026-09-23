@@ -1,3 +1,5 @@
+vi.mock('../../lib/product/flags',()=>({loadProductFlags:async()=>({PRODUCT_PROFILES_V2:false})}));
+vi.mock('../../lib/tenant',()=>({requireTenantId:async()=> 'tenant:gaming'}));
 vi.mock('@opennextjs/cloudflare',()=>({getCloudflareContext:async()=>({env:{TURNSTILE_SITE_KEY:process.env.TURNSTILE_SITE_KEY,GOOGLE_CLIENT_ID:'test',GOOGLE_CLIENT_SECRET:'test'}})}));
 import React, { type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -76,7 +78,7 @@ describe("LoginPage", () => {
     });
   });
 
-  it("falls back to the homepage for an unsafe or absent next param", async () => {
+  it("falls back to the candidate dashboard for an unsafe or absent next param", async () => {
     vi.stubEnv("TURNSTILE_SITE_KEY", "1x00000000000000000000AA");
     const { default: LoginPage } = await import("./page");
     const { LoginForm } = await import("./login-form");
@@ -87,8 +89,8 @@ describe("LoginPage", () => {
     const loginForm = elements(page).find((element) => element.type === LoginForm);
 
     expect(loginForm?.props).toMatchObject({
-      callbackURL: "/",
-      newUserCallbackURL: "/onboarding",
+      callbackURL: "/dashboard",
+      newUserCallbackURL: "/onboarding?next=%2Fdashboard",
     });
   });
 

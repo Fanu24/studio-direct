@@ -1,0 +1,3 @@
+import {talentProfileAccess} from '../../../../../../lib/product/talent';
+import {platform,currentUser} from '../../../../../../lib/platform';
+export async function GET(request:Request,{params}:{params:Promise<{id:string}>}){const env=await platform(),{id}=await params,user=await currentUser(env,request);const profile=await talentProfileAccess(env.DB,user?.id??'',id);if(!profile)return new Response('Not found',{status:404});const file=await env.FILES.get('profile-photos/'+id);return file?new Response(file.body,{headers:{'Content-Type':file.httpMetadata?.contentType??'application/octet-stream','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}}):new Response('Not found',{status:404});}

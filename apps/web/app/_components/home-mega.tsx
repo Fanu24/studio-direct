@@ -160,7 +160,7 @@ const MEGA_SECTIONS = [
   {
     title: "Hire Web3 Developers",
     intro:
-      "See which companies are already hiring a skill on Nodework. This is not a talent directory.",
+      "Find Web3 candidates by skill and location. Verified recruiters can access profiles shared with the talent pool.",
     links: footerLinks("Hire Web3 Talent"),
   },
   {

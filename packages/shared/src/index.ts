@@ -1,4 +1,18 @@
 export const PACKAGE_NAME = "@gaming/shared";
+export {validatePostingDraft, PostingValidationError, publicHttpsUrl} from './product/posting';
+export type {PostingDraft, PostingErrors} from './product/posting';
+export {buildReferenceRegions} from './product/regions';
+export type {ReferenceCountry, ReferenceRegion} from './product/regions';
+export {resolveJobRole,SKILL_SEEDS} from './product/taxonomy';
+export {pricing, money, DEFAULT_JOB_ADDONS, parseJobAddons, quoteJob} from './product/pricing.ts';
+export type {CompanyPlanTier, PinDays, JobAddons, JobQuoteContext, QuoteLine} from './product/pricing.ts';
+export {PRODUCT_FLAGS, FLAG_DEPENDENCIES, effectiveProductFlags} from './product/flags.ts';
+export type {ProductFlag, ProductFlags} from './product/flags.ts';
+export {SALARY_CURRENCIES, SALARY_PERIODS, LANGUAGE_LEVELS, WORK_ARRANGEMENTS, UTC_OFFSETS, formatUtcOffset, eligibilitySatisfied} from './product/fields.ts';
+export type {SalaryCurrency, SalaryPeriod, LanguageLevel, WorkArrangement, LanguageRequirement, Eligibility, GeoEligibility, TimezoneEligibility, ReferenceCity, ReferenceOption} from './product/fields.ts';
+export {coinMarketCapSeeds,defiLlamaSeeds,cryptoPortfolioSeeds,discoverCompany,createSiteReader,publicHttps,robotsAllowed,atsBoard,boardMatchesCompany,extractLinks} from './source-discovery.ts';
+export type {SourceSeed,SourceCandidate} from './source-discovery.ts';
+export {CURATED_WEB3_COMPANIES} from './web3-companies.ts';
 
 export {
   HUB_ROLE_SLUGS,
@@ -128,5 +142,20 @@ export type {
   DigestRecipient,
   DigestRecipientRow,
 } from "./digest.ts";
+export {deliverNotifications} from './notifications.ts';
+export {listingPeriodStatements,reconcileListingPeriods} from './listing-periods.ts';
 
+export {resolveJobLocations} from './job-locations.ts';
+export {careerDetailLinks} from './source-discovery.ts';
 
+export {MIN_SALARY_SAMPLE, annualUsdSalarySql, RELIABLE_SALARY_SQL, SCRAPED_JOB_SQL, SCRAPED_SALARY_SQL, publicSalaryStats} from "./product/salary-policy.ts";
+export {refreshFxRates,parseFxRates,FX_SOURCE,FX_ENDPOINT} from './product/fx-rates.ts';
+export {candidateCompleteness,containsDirectContact,publicCandidateText,eligibleForJob,matchScore,earlyAccessState} from './product/candidates.ts';
+export type {MatchJob,MatchProfile} from './product/candidates.ts';
+export {queueProductReminders} from './product/notifications.ts';
+export type {ProductDatabase,ProductStatement} from './product/notifications.ts';
+export {selectDailyFeatured,FEATURED_ELIGIBILITY_SQL} from './product/featured.ts';
+export {externalSalary,salaryDistribution,rebuildSalaryInsights} from './product/salary-insights.ts';
+export type {ExternalSalary,SalaryInsight} from './product/salary-insights.ts';
+
+export {enqueueSocialPosts,deliverSocialPosts,prepareWeeklyNewsletter,deliverWeeklyNewsletter,newsletterContent} from './product/distribution.ts';

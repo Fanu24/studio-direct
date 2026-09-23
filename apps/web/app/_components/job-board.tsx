@@ -1,3 +1,6 @@
+import {ProductJobBadges} from './product/job-badges';
+import {JobRequirements} from './product/job-requirements';
+import {jobTagHref} from '../../lib/jobs/tag-links';
 import { formatSalaryRange, tagLabel } from "@gaming/shared";
 import Link from "next/link";
 import {Fragment,type ReactNode } from "react";
@@ -13,6 +16,7 @@ import {
 import { sanitizeJobDescriptionHtml } from "../../lib/jobs/sanitize-description";
 import { formatPosted, remoteLabel } from "./job-card";
 import {SaveJob} from './save-job';
+import {NetworkAd} from './network-ad';
 import {SponsorBanner} from './sponsor-banner';
 
 function companyMark(name: string) {
@@ -139,6 +143,7 @@ export function JobBoard({
     <div className="board m-reveal" data-reveal>
       <section aria-label="Job listings" className="board__list">
         <SponsorBanner slot={1}/>
+        <NetworkAd/>
         <table
           className={`board-table${
             rankOffset !== undefined
@@ -233,13 +238,14 @@ export function JobBoard({
                     ) : null}
                   </td>
                   <td className="board-col-pay">
+        <ProductJobBadges job={job}/>{job.cryptoPaymentAvailable ? <span className="badge">Crypto pay</span> : null}
                     {salary ? <span className="board-row__pay">{salary}</span> : null}
                   </td>
                   <td className="board-col-tags">
                     {job.tags.length > 0 ? (
                       <span className="board-row__tags">
                         {job.tags.slice(0, 4).map((tag) => (
-                          <Link className="chip" href={`/${tag}-jobs`} key={tag}>
+                          <Link className="chip" href={jobTagHref(tag)} key={tag}>
                             {tagLabel(tag)}
                           </Link>
                         ))}
@@ -275,6 +281,7 @@ export function JobBoard({
                   <TitleTag className="board-apply__title">{active.title}</TitleTag>
                   <p className="board-apply__place">
                     {selectedPlace}
+                    {active?.cryptoPaymentAvailable ? <span className="badge">Crypto pay</span> : null}
                     {selectedSalary ? ` / ${selectedSalary}` : ""}
                   </p>
                   {showBadge(active.exclusivity) ? (
@@ -291,6 +298,7 @@ export function JobBoard({
                 Apply
               </Link>
             </div>
+            <JobRequirements job={active}/>
             <div
               className="board-body jd-body"
               dangerouslySetInnerHTML={{ __html: descriptionHtml }}
@@ -299,7 +307,7 @@ export function JobBoard({
             {active.tags.length > 0 ? (
               <nav className="board-pane-tags">
                 {active.tags.map((tag) => (
-                  <Link className="chip" href={`/${tag}-jobs`} key={tag}>
+                  <Link className="chip" href={jobTagHref(tag)} key={tag}>
                     {tagLabel(tag)}
                   </Link>
                 ))}

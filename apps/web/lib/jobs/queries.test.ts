@@ -39,6 +39,14 @@ const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as {
 };
 
 function createD1(database: MemoryDatabase): JobsDatabase {
+  // These read-query fixtures intentionally omit unrelated commerce tables. Keep public projection columns current.
+  const columns=new Set((database.prepare('PRAGMA table_info(jobs)').all() as {name:string}[]).map(row=>row.name));
+  for(const [name,type] of Object.entries({confidential:'INTEGER NOT NULL DEFAULT 0',early_access_until:'TEXT',expires_at:'TEXT',hide_salary:'INTEGER NOT NULL DEFAULT 0',salary_currency:'TEXT',salary_period:'TEXT',crypto_payment_available:'INTEGER NOT NULL DEFAULT 0',commercial_origin:"TEXT NOT NULL DEFAULT 'aggregated'",pinned_until:'TEXT',published_at:'TEXT',bumped_at:'TEXT',created_at:'TEXT'})) {
+    if(!columns.has(name))database.exec(`ALTER TABLE jobs ADD COLUMN ${name} ${type}`);
+  }
+  database.exec("CREATE TABLE IF NOT EXISTS company_reviews(company_id TEXT,status TEXT,overall INTEGER)");
+  database.exec('CREATE TABLE IF NOT EXISTS fx_rates(currency TEXT PRIMARY KEY,rate_to_usd REAL NOT NULL,updated_at TEXT,source TEXT)');
+  database.exec('CREATE TABLE IF NOT EXISTS native_listing_details(job_id TEXT PRIMARY KEY,input_json TEXT,addons_json TEXT,updated_at TEXT)');
   return {
     prepare(query: string) {
       let bindings: unknown[] = [];
@@ -667,6 +675,7 @@ describe("listJobs", () => {
         companyId: "studio-a",
         title: `Solidity ${i}`,
         remote: "remote",
+        salaryMin: 80000, salaryMax:120000,
       });
       sqlite.exec(`
         INSERT INTO job_tags VALUES ('solidity-${i}', 'solidity');
@@ -686,6 +695,7 @@ describe("listJobs", () => {
       INSERT INTO job_benefits VALUES ('thin-tag', 'pto');
       INSERT INTO salary_rollups VALUES
         ('role', 'solidity-developer', 120000, 80000, 180000, 5, '2026-09-01'),
+        ('company', 'alpha', 120000, 80000, 180000, 6, '2026-09-01'),
         ('role', 'thin-role', 90000, 70000, 110000, 4, '2026-09-01');
     `);
 
@@ -693,8 +703,11 @@ describe("listJobs", () => {
       tagSlugs: ["solidity"],
       geoSlugs: ["berlin"],
       benefitSlugs: ["pay-in-crypto"],
-      salarySlugs: ["solidity-developer"],
+      salarySlugs: ["berlin", "solidity-developer"],
+      remoteTagSlugs: ["solidity"],
     });
+    sqlite.exec("UPDATE jobs SET remote='onsite' WHERE id='solidity-0'");
+    await expect(listSitemapEntries(db, "gaming")).resolves.toMatchObject({tagSlugs:["solidity"],remoteTagSlugs:[]});
   });
 });
 
@@ -819,7 +832,7 @@ describe("listCompanies", () => {
     ]);
   });
 
-  it("degrades avgSalary to null when salary_rollups is empty, and reads it when present", async () => {
+  it("does not display stale stored company salaries without live salary data", async () => {
     insertJob(sqlite, { id: "a1", companyId: "studio-a", title: "Artist", remote: "remote" });
     sqlite.exec(
       `INSERT INTO salary_rollups VALUES ('company', 'alpha', 150000, 120000, 180000, 1, '2026-09-01')`,
@@ -827,7 +840,7 @@ describe("listCompanies", () => {
 
     const companies = await listCompanies(db, "gaming");
 
-    expect(companies.find((c) => c.slug === "alpha")?.avgSalary).toBe(150000);
+    expect(companies.find((c) => c.slug === "alpha")?.avgSalary).toBeNull();
     expect(companies.find((c) => c.slug === "betaforge")?.avgSalary).toBeNull();
   });
 
@@ -1136,7 +1149,7 @@ describe("salary filters and stats", () => {
     expect(either.jobs.map((job) => job.id).sort()).toEqual(["tagged", "titled"]);
   });
 
-  it("prefers stored rollups over live aggregation", async () => {
+  it("suppresses a stale large rollup when the live cohort drops below five", async () => {
     insertJob(sqlite, {
       id: "live",
       companyId: "studio-a",
@@ -1153,12 +1166,7 @@ describe("salary filters and stats", () => {
 
     await expect(
       resolveSalaryStats(db, "gaming", "role", "solidity-developer"),
-    ).resolves.toMatchObject({
-      avg: 180000,
-      min: 150000,
-      max: 210000,
-      jobCount30d: 9,
-    });
+    ).resolves.toBeNull();
   });
 
   it("aggregates missing city stats from job_locations", async () => {
@@ -1172,13 +1180,17 @@ describe("salary filters and stats", () => {
     });
     sqlite.exec(`INSERT INTO job_locations VALUES ('berlin-pay', 'berlin')`);
 
+    for(let i=0;i<4;i++){
+      insertJob(sqlite,{id:`berlin-extra-${i}`,companyId:'studio-a',title:'Berlin Engineer',remote:'onsite',salaryMin:90000,salaryMax:110000});
+      sqlite.prepare('INSERT INTO job_locations VALUES (?,?)').run(`berlin-extra-${i}`,'berlin');
+    }
     await expect(resolveSalaryStats(db, "gaming", "city", "berlin")).resolves.toEqual({
       dimension: "city",
       slug: "berlin",
       avg: 100000,
       min: 90000,
       max: 110000,
-      jobCount30d: 1,
+      jobCount30d: 5,
     });
   });
 
@@ -1201,6 +1213,7 @@ describe("salary filters and stats", () => {
     });
     sqlite.exec(`INSERT INTO job_tags VALUES ('tagged', 'solidity')`);
 
+    for(let i=0;i<3;i++)insertJob(sqlite,{id:`role-extra-${i}`,companyId:'studio-a',title:'Solidity Engineer',remote:'remote',salaryMin:90000,salaryMax:130000});
     await expect(
       resolveSalaryStats(db, "gaming", "role", "solidity-developer"),
     ).resolves.toEqual({
@@ -1209,7 +1222,7 @@ describe("salary filters and stats", () => {
       avg: 110000,
       min: 80000,
       max: 140000,
-      jobCount30d: 2,
+      jobCount30d: 5,
     });
   });
 
@@ -1343,8 +1356,8 @@ describe("hire facets, salary breakdown, and getSalaryRollup dimensions", () => 
       { slug: "london", jobCount: 1 },
     ]);
     await expect(tagSalaryRange(db, "gaming", "solidity")).resolves.toEqual({
-      min: 90000,
-      max: 140000,
+      min: null,
+      max: null,
       count: 2,
     });
   });
@@ -1389,10 +1402,17 @@ describe("hire facets, salary breakdown, and getSalaryRollup dimensions", () => 
         ('de-senior', 'germany'), ('de-junior', 'germany'), ('us-senior', 'united-states');
     `);
 
+    await expect(resolveSalaryBreakdown(db,'gaming',{tag:'solidity'},'country')).resolves.toEqual([]);
+    for(const [name,title,low,high,country] of [['de-senior','Senior Solidity Engineer',120000,160000,'germany'],['de-junior','Junior Solidity Engineer',60000,80000,'germany'],['us-senior','Senior Solidity Engineer',140000,200000,'united-states']] as const){
+      for(let i=1;i<5;i++){
+        const id=`${name}-${i}`;insertJob(sqlite,{id,companyId:'studio-a',title,remote:'onsite',salaryMin:low,salaryMax:high});
+        sqlite.prepare('INSERT INTO job_tags VALUES (?,?)').run(id,'solidity');sqlite.prepare('INSERT INTO job_locations VALUES (?,?)').run(id,country);
+      }
+    }
     const byCountry = await resolveSalaryBreakdown(db, "gaming", { tag: "solidity" }, "country");
     expect(byCountry).toEqual([
-      { slug: "united-states", min: 140000, avg: 170000, max: 200000, count: 1 },
-      { slug: "germany", min: 60000, avg: 105000, max: 160000, count: 2 },
+      { slug: "united-states", min: 140000, avg: 170000, max: 200000, count: 5 },
+      { slug: "germany", min: 60000, avg: 105000, max: 160000, count: 10 },
     ]);
 
     const bySeniority = await resolveSalaryBreakdown(db, "gaming", { tag: "solidity" }, "seniority");
@@ -1411,8 +1431,8 @@ describe("hire facets, salary breakdown, and getSalaryRollup dimensions", () => 
   it("reads getSalaryRollup for the city and company dimensions, and returns null cleanly when absent", async () => {
     sqlite.exec(`
       INSERT INTO salary_rollups VALUES
-        ('city', 'berlin', 110000, 90000, 130000, 4, '2026-09-01'),
-        ('company', 'alpha', 150000, 120000, 180000, 2, '2026-09-01');
+        ('city', 'berlin', 110000, 90000, 130000, 5, '2026-09-01'),
+        ('company', 'alpha', 150000, 120000, 180000, 5, '2026-09-01');
     `);
 
     await expect(getSalaryRollup(db, "city", "berlin")).resolves.toMatchObject({

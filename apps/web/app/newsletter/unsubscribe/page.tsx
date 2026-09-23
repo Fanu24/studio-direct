@@ -1,0 +1,3 @@
+export const dynamic='force-dynamic';
+export const metadata={title:'Newsletter preferences',robots:{index:false,follow:false}};
+export default async function Unsubscribe({searchParams}:{searchParams:Promise<{token?:string;done?:string}>}){const {token,done}=await searchParams;return <main className="container"><h1>Newsletter preferences</h1>{done?<p>You are unsubscribed.</p>:token?<form action="/api/product/newsletter" method="post"><input type="hidden" name="token" value={token}/><p>Stop receiving the weekly jobs newsletter.</p><button>Unsubscribe</button></form>:<p>Open the unsubscribe link from your newsletter, or manage preferences in your account.</p>}</main>;}

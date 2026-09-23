@@ -8,14 +8,6 @@ import type { MetadataRoute } from "next";
  */
 const RESERVED_ORIGINS = ["https://studio-direct.example", "https://placeholder.example"];
 
-export const PRIVATE_PATHS = [
-  "/api/",
-  "/dashboard",
-  "/profile",
-  "/settings",
-  "/onboarding",
-] as const;
-
 export const dynamic = "force-dynamic";
 
 /**
@@ -47,7 +39,6 @@ export function buildRobots(siteUrl: string | null | undefined): MetadataRoute.R
       {
         userAgent: "*",
         allow: "/",
-        disallow: [...PRIVATE_PATHS],
       },
     ],
     sitemap: resolveRobotsSitemap(siteUrl),
@@ -55,5 +46,8 @@ export function buildRobots(siteUrl: string | null | undefined): MetadataRoute.R
 }
 
 export default function robots(): MetadataRoute.Robots {
+  if (process.env.SITE_INDEXING_ENABLED === "false") {
+    return { rules: [{ userAgent: "*", disallow: "/" }] };
+  }
   return buildRobots(process.env.SITE_URL);
 }

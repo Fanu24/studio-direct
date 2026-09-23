@@ -19,9 +19,10 @@ const TERMS_TOPICS = [
 ];
 
 const PRIVACY_TOPICS = [
-  "The job-board purpose: account, profile, unlocks, CV and billing data",
+  "The job-board purpose: account, profile, applications, CV and billing data",
   "The separate, opt-in recruiter talent pool purpose",
   "That applying for a job does not opt you into anything else",
+  "Separate permission for recruiter exports and how withdrawal works",
 ];
 
 export default function LegalPage() {

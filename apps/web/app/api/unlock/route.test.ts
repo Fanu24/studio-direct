@@ -79,7 +79,7 @@ function authEnv(DB: unknown) {
 function unlockRequest(jobId = "job-1") {
   return new Request("http://localhost/api/unlock", {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
+    headers: { origin:"http://localhost", "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       jobId,
       next: "/jobs/gameplay-engineer",
@@ -95,9 +95,9 @@ describe("POST /api/unlock onboarding gate", () => {
     mocks.getCloudflareContext.mockResolvedValue({
       env: {
         DB: {
-          prepare: vi.fn(() => ({
+          prepare: vi.fn((query:string) => ({
             bind: vi.fn(() => ({
-              first: mocks.first,
+              first: query.includes("SELECT slug,confidential")?vi.fn(async()=>null):mocks.first,
             })),
           })),
         },
@@ -158,6 +158,7 @@ describe("POST /api/unlock quota", () => {
     sqlite = new DatabaseSync(":memory:");
     sqlite.exec(`
       CREATE TABLE profiles (
+        product_profile_completed INTEGER NOT NULL DEFAULT 0,
         user_id TEXT PRIMARY KEY,
         display_name TEXT,
         target_role TEXT,
@@ -177,7 +178,7 @@ describe("POST /api/unlock quota", () => {
         skill TEXT NOT NULL,
         PRIMARY KEY (user_id, skill)
       );
-      CREATE TABLE jobs (
+      CREATE TABLE jobs (slug TEXT,confidential INTEGER DEFAULT 0,commercial_origin TEXT DEFAULT 'aggregated',
  listing_logo_url TEXT, highlight_color TEXT, expires_at TEXT,
         id TEXT PRIMARY KEY,
         apply_url TEXT NOT NULL,

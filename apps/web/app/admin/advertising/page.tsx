@@ -1,0 +1,10 @@
+import Link from 'next/link';
+import {notFound} from 'next/navigation';
+import {platform} from '../../../lib/platform';
+import {adminUser} from '../../../lib/admin';
+import {advertisingConfig} from '../../../lib/advertising';
+export const dynamic='force-dynamic';
+export const metadata={title:'Advertising network settings',robots:{index:false,follow:false}};
+export default async function Advertising(){const env=await platform();if(!await adminUser(env))notFound();const config=await advertisingConfig(env.DB);
+ return <main className="container stack"><h1>Advertising network</h1><Link href="/admin">Administration</Link><p>AdSense monetizes eligible job-board traffic. Revenue and payment reports are managed by Google. Direct sponsored placements have priority and are managed separately.</p><p>Before enabling: obtain site approval, create a responsive display unit, publish the Google Privacy &amp; messaging consent message (EU and applicable US regulations), and copy its script URL. Configure manual ads; do not enable Auto ads over paid sponsor positions.</p><form className="commerce-form" method="post" action="/api/admin/advertising"><label>Mode<select name="mode" defaultValue={config.mode}><option value="off">Off</option><option value="test">Test ads</option><option value="live">Live ads</option></select></label><label>Publisher ID<input name="publisher" placeholder="ca-pub-…" defaultValue={config.publisher}/></label><label>Responsive ad-unit ID<input name="slot" defaultValue={config.slot}/></label><label>Google consent script URL<input name="cmpUrl" type="url" defaultValue={config.cmpUrl}/></label><label><input name="cmpPublished" type="checkbox" value="1"/>The consent message is published and configured for this site</label><button>Save</button></form><p><Link href="/ads.txt">Check ads.txt</Link> · <Link href="/jobs">Check job-board placement</Link></p><p>Disabled or unconfigured networks make no third-party ad requests. Live approval, delivery and revenue can only be verified with the publisher account and production domain.</p></main>;
+}

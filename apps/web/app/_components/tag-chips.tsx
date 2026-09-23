@@ -1,4 +1,5 @@
 import { FEATURED_TAG_CHIPS, landingPath, tagLabel } from "@gaming/shared";
+import {searchHref, type SearchState} from '../../lib/jobs/search-state';
 import Link from "next/link";
 
 export const COMPACT_TAG_CHIPS = [
@@ -28,15 +29,17 @@ export const EXTRA_TAG_CHIPS = FEATURED_TAG_CHIPS.filter((tag) => !COMPACT.has(t
 export function TagChips({
   active,
   remote = false,
+  filters,
 }: {
   active?: string | string[];
   remote?: boolean;
+  filters?: SearchState;
 }) {
   const activeTags = new Set(
     Array.isArray(active) ? active : active ? [active] : [],
   );
-  const hrefFor = (tag: string) =>
-    landingPath(
+  const hrefFor = (tag: string) => filters && Object.keys(filters).some(key=> !['tag','tags','remote'].includes(key))
+    ? searchHref(filters,{tag,tags:undefined,...(remote?{remote:'1'}:{})}) : landingPath(
       remote
         ? { kind: "remote-tag", tag, tags: [tag] }
         : { kind: "tag", tag, tags: [tag] },

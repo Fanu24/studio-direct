@@ -1,5 +1,7 @@
+import {MIN_SALARY_SAMPLE, SCRAPED_JOB_SQL, SCRAPED_SALARY_SQL, publicSalaryStats} from '@gaming/shared';
+import {PUBLIC_SALARY_SQL,PUBLIC_HIGHLIGHT_SQL,PUBLIC_PIN_SQL,PUBLIC_REQUIREMENTS_SQL,DEFAULT_JOB_ORDER_SQL,annualUsdSalarySql} from '../product/job-projection';
 import {
-  averageSalary,
+  SALARY_ROLES,
   isCitySlug,
   isCountrySlug,
   isRegionSlug,
@@ -10,6 +12,13 @@ import {
 } from "@gaming/shared";
 
 export interface JobListFilters {
+  cryptoPayment?: boolean;
+  workArrangement?: string;
+  language?: string;
+  eligibleCountry?: string;
+  eligibleUtc?: number;
+  skillIds?: string[];
+  aggregatedOnly?: boolean;
   hidden?: boolean;
   q?: string;
   company?: string;
@@ -27,6 +36,8 @@ export interface JobListFilters {
   seniority?: string;
   source?: string;
   hasSalary?: boolean;
+  salaryMin?: number;
+  salaryMax?: number;
   orderBy?: "posted" | "salary";
   /** With `tag`, also match titles that contain the tag stem (salary role pages). */
   orTitle?: boolean;
@@ -46,6 +57,14 @@ export interface JobsStatement {
 }
 
 export interface JobListItem {
+  reviewRating?:number|null;
+  reviewCount?:number;
+  earlyAccessUntil?:string|null;
+  salaryCurrency?:string|null;
+  salaryPeriod?:string|null;
+  hideSalary?:number;
+  cryptoPaymentAvailable?:number;
+  commercialOrigin?:string;
   id: string;
   slug: string;
   externalId: string | null;
@@ -76,6 +95,13 @@ export interface JobListResult {
 }
 
 export interface JobDetail {
+  earlyAccessUntil?:string|null;
+  requirements?: {requiredSkills:string[];preferredSkills:string[];languages:{code:string;level:string;kind:string}[];benefits:string[];eligibility?:import("@gaming/shared").Eligibility|null};
+  salaryCurrency?:string|null;
+  salaryPeriod?:string|null;
+  hideSalary?:number;
+  cryptoPaymentAvailable?:number;
+  commercialOrigin?:string;
   id: string;
   slug: string;
   externalId: string | null;
@@ -113,6 +139,7 @@ export interface SitemapEntries {
   jobs: SitemapJob[];
   companySlugs: string[];
   tagSlugs: string[];
+  remoteTagSlugs: string[];
   geoSlugs: string[];
   salarySlugs: string[];
   benefitSlugs: string[];
@@ -219,7 +246,7 @@ export async function getJobForListItem(
   return getJobBySlug(db, tenantId, job.slug);
 }
 
-type JobDetailRow = JobDetail & { companyNameNorm: string; tagCsv: string | null };
+type JobDetailRow = JobDetail & { companyNameNorm: string; tagCsv: string | null; requirementsJson:string|null };
 
 /** Shared SELECT for loadJob/loadJobs - a `where` fragment is ANDed on. */
 function jobDetailQuery(where: string): string {
@@ -234,10 +261,9 @@ function jobDetailQuery(where: string): string {
       j.location,
       j.remote,
       j.description_html AS descriptionHtml,
-      j.salary_text AS salaryText,
-      j.salary_min AS salaryMin,
-      j.salary_max AS salaryMax,
-      j.highlight,
+      ${PUBLIC_REQUIREMENTS_SQL},
+      ${PUBLIC_SALARY_SQL},
+      ${PUBLIC_HIGHLIGHT_SQL},
       j.highlight_color AS highlightColor,
       j.exclusivity,
       j.posted_at AS postedAt,
@@ -246,16 +272,17 @@ function jobDetailQuery(where: string): string {
     JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
     WHERE j.tenant_id = ?
       AND ${where}
-      AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       AND c.listed = 1`;
 }
 
 function mapJobDetailRow(row: JobDetailRow): JobDetail {
-  const { companyNameNorm, tagCsv, ...job } = row;
+  const { companyNameNorm, tagCsv, requirementsJson, ...job } = row;
   return {
     ...job,
     companySlug: slugTitle(companyNameNorm),
     tags: mapTags(tagCsv),
+    ...(requirementsJson?{requirements:JSON.parse(requirementsJson) as JobDetail['requirements']}:{}),
   };
 }
 
@@ -356,7 +383,7 @@ export async function listSitemapEntries(
       JOIN tenants t ON t.id = j.tenant_id
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
       WHERE t.slug = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
       ORDER BY j.slug`,
     )
@@ -376,43 +403,47 @@ export async function listSitemapEntries(
 
   const tags = await db
     .prepare(
-      `SELECT jt.tag_slug AS slug, COUNT(*) AS total
+      `SELECT jt.tag_slug AS slug, COUNT(*) AS total, SUM(j.remote='remote') AS remoteTotal
       FROM job_tags jt
       JOIN jobs j ON j.id = jt.job_id
+      JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       JOIN tenants t ON t.id = j.tenant_id
-      WHERE t.slug = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      WHERE t.slug = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jt.tag_slug
       HAVING total >= 5`,
     )
     .bind(tenantSlug)
-    .all<{ slug: string }>();
+    .all<{ slug: string; remoteTotal: number }>();
 
   const geo = await db
     .prepare(
       `SELECT jl.location_slug AS slug, COUNT(*) AS total
       FROM job_locations jl
       JOIN jobs j ON j.id = jl.job_id
+      JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       JOIN tenants t ON t.id = j.tenant_id
-      WHERE t.slug = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      WHERE t.slug = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jl.location_slug
       HAVING total >= 5`,
     )
     .bind(tenantSlug)
     .all<{ slug: string }>();
 
-  const salaries = await db
-    .prepare(
-      `SELECT slug FROM salary_rollups WHERE job_count_30d >= 5 ORDER BY slug`,
-    )
-    .all<{ slug: string }>();
+  const tenant = await db.prepare('SELECT id FROM tenants WHERE slug=?').bind(tenantSlug).first<{id:string}>();
+  const salaryRows = tenant ? [
+    ...await listResolvedSalaryStats(db, tenant.id, 'role', SALARY_ROLES),
+    ...await listResolvedSalaryStats(db, tenant.id, 'location', geo.results.map(row=>row.slug)),
+    ...await listResolvedSalaryStats(db, tenant.id, 'seniority', SENIORITY_SLUGS),
+  ] : [];
 
   const benefits = await db
     .prepare(
       `SELECT jb.benefit_slug AS slug, COUNT(*) AS total
       FROM job_benefits jb
       JOIN jobs j ON j.id = jb.job_id
+      JOIN companies c ON c.id=j.company_id AND c.tenant_id=j.tenant_id AND c.listed=1
       JOIN tenants t ON t.id = j.tenant_id
-      WHERE t.slug = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      WHERE t.slug = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jb.benefit_slug
       HAVING total >= 5`,
     )
@@ -426,8 +457,9 @@ export async function listSitemapEntries(
     })),
     companySlugs: companies.results.map(({ nameNorm }) => slugTitle(nameNorm)),
     tagSlugs: tags.results.map((row) => row.slug),
+    remoteTagSlugs: tags.results.filter(row=>row.remoteTotal>=5).map(row=>row.slug),
     geoSlugs: geo.results.map((row) => row.slug),
-    salarySlugs: salaries.results.map((row) => row.slug),
+    salarySlugs: [...new Set(salaryRows.filter(row=>row.jobCount30d>=5).map(row=>row.slug))].sort(),
     benefitSlugs: benefits.results.map((row) => row.slug),
   };
 }
@@ -497,10 +529,17 @@ function buildJobsWhere(
   const joinBindings: unknown[] = [];
   const conditions = [
     "j.tenant_id = ?",
-    "j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))",
+    "j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))",
     "c.listed = 1",
   ];
   const whereBindings: unknown[] = [tenantId];
+  if(filters.cryptoPayment)conditions.push('j.crypto_payment_available=1');
+  if(['remote','hybrid','onsite'].includes(filters.workArrangement??'')){conditions.push('j.remote=?');whereBindings.push(filters.workArrangement);}
+  if(filters.language){conditions.push('EXISTS(SELECT 1 FROM job_language_requirements lr WHERE lr.job_id=j.id AND lr.language_code=?)');whereBindings.push(filters.language);}
+  for(const skill of [...new Set(filters.skillIds??[])].slice(0,30)){conditions.push('EXISTS(SELECT 1 FROM job_skills js WHERE js.job_id=j.id AND js.skill_id=?)');whereBindings.push(skill);}
+  if(filters.eligibleCountry){conditions.push("EXISTS(SELECT 1 FROM job_remote_eligibility re,json_each(re.rules_json,'$.countryCodes') country WHERE re.job_id=j.id AND re.mode='geo' AND country.value=?)");whereBindings.push(filters.eligibleCountry.toUpperCase());}
+  if(Number.isFinite(filters.eligibleUtc)){conditions.push("EXISTS(SELECT 1 FROM job_remote_eligibility re WHERE re.job_id=j.id AND re.mode='timezone' AND CASE WHEN json_extract(re.rules_json,'$.utcFrom')<=json_extract(re.rules_json,'$.utcTo') THEN ? BETWEEN json_extract(re.rules_json,'$.utcFrom') AND json_extract(re.rules_json,'$.utcTo') ELSE ?>=json_extract(re.rules_json,'$.utcFrom') OR ?<=json_extract(re.rules_json,'$.utcTo') END)");whereBindings.push(filters.eligibleUtc,filters.eligibleUtc,filters.eligibleUtc);}
+
 
   const search = filters.q ? ftsQuery(filters.q) : "";
   if (search) {
@@ -574,8 +613,15 @@ function buildJobsWhere(
     whereBindings.push(containsPattern(filters.seniority.trim()));
   }
 
+  if(filters.aggregatedOnly)conditions.push(SCRAPED_JOB_SQL);
   if (filters.hasSalary) {
     conditions.push("j.salary_min IS NOT NULL AND j.salary_max IS NOT NULL");
+  }
+  if (Number.isFinite(filters.salaryMin)) {
+    conditions.push(`${annualUsdSalarySql('max')} >= ?`);whereBindings.push(filters.salaryMin!);
+  }
+  if (Number.isFinite(filters.salaryMax)) {
+    conditions.push(`${annualUsdSalarySql('min')} <= ?`);whereBindings.push(filters.salaryMax!);
   }
 
   const fromSql = `
@@ -605,14 +651,11 @@ export async function listJobs(
   const orderSql =
     filters.orderBy === "salary"
       ? `ORDER BY
-        j.salary_max DESC,
-        j.salary_min DESC,
+        ${annualUsdSalarySql('max')} DESC,
+        ${annualUsdSalarySql('min')} DESC,
         j.posted_at DESC,
         j.id ASC`
-      : `ORDER BY
-        CASE WHEN julianday(j.featured_until) > julianday('now') THEN 0 ELSE 1 END,
-        j.posted_at DESC,
-        j.id ASC`;
+      : DEFAULT_JOB_ORDER_SQL;
 
   const rows = await db
     .prepare(
@@ -623,16 +666,16 @@ export async function listJobs(
         j.title,
         j.company_id AS companyId,
         c.name AS companyName,
+        (SELECT AVG(overall) FROM company_reviews cr WHERE cr.company_id=c.id AND cr.status='published') AS reviewRating,
+        (SELECT COUNT(*) FROM company_reviews cr WHERE cr.company_id=c.id AND cr.status='published') AS reviewCount,
         c.name_norm AS companyNameNorm,
         CASE WHEN j.source='manual' THEN j.listing_logo_url ELSE c.logo_url END AS companyLogoUrl,
         j.location,
         j.remote,
-        j.salary_text AS salaryText,
-        j.salary_min AS salaryMin,
-        j.salary_max AS salaryMax,
-        j.highlight,
+        ${PUBLIC_SALARY_SQL},
+        ${PUBLIC_HIGHLIGHT_SQL},
       j.highlight_color AS highlightColor,
-        j.featured_until AS featuredUntil,
+        ${PUBLIC_PIN_SQL},
         j.exclusivity,
         j.posted_at AS postedAt,
         (SELECT GROUP_CONCAT(tag_slug, ',') FROM job_tags WHERE job_id = j.id) AS tagCsv
@@ -687,7 +730,7 @@ export async function countHiringCompanies(
       JOIN jobs j
         ON j.company_id = c.id
         AND j.tenant_id = c.tenant_id
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       WHERE c.tenant_id = ? AND c.listed = 1`,
     )
     .bind(tenantId)
@@ -707,12 +750,14 @@ export async function listCompanies(
         c.name_norm AS nameNorm,
         c.domain AS domain,
         COUNT(j.id) AS jobCount,
-        MAX(j.posted_at) AS lastPostedAt
+        MAX(j.posted_at) AS lastPostedAt,
+        CASE WHEN SUM(CASE WHEN ${SCRAPED_SALARY_SQL} THEN 1 ELSE 0 END)>=${MIN_SALARY_SAMPLE}
+          THEN AVG(CASE WHEN ${SCRAPED_SALARY_SQL} THEN (${annualUsdSalarySql('min')}+${annualUsdSalarySql('max')})/2.0 END) END AS avgSalary
       FROM companies c
       LEFT JOIN jobs j
         ON j.company_id = c.id
         AND j.tenant_id = c.tenant_id
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       WHERE c.tenant_id = ? AND c.listed = 1
       GROUP BY c.id, c.name, c.name_norm, c.domain
       ORDER BY jobCount DESC, c.name ASC`,
@@ -725,12 +770,8 @@ export async function listCompanies(
       domain: string | null;
       jobCount: number | null;
       lastPostedAt: string | null;
+      avgSalary: number | null;
     }>();
-
-  // salary_rollups is empty until the crawler's rollup job runs - this
-  // degrades every avgSalary to null rather than erroring or NaN-ing.
-  const companyRollups = await listSalaryRollups(db, "company");
-  const avgBySlug = new Map(companyRollups.map((row) => [row.slug, row.avg]));
 
   return rows.results.map((row) => {
     const slug = slugTitle(row.nameNorm);
@@ -741,7 +782,7 @@ export async function listCompanies(
       domain: row.domain ?? null,
       jobCount: Number(row.jobCount ?? 0),
       lastPostedAt: row.lastPostedAt ?? null,
-      avgSalary: avgBySlug.get(slug) ?? null,
+      avgSalary: row.avgSalary == null ? null : Math.round(row.avgSalary),
     };
   });
 }
@@ -787,7 +828,7 @@ export async function listTopGrowingCompanies(
       JOIN jobs j
         ON j.company_id = c.id
         AND j.tenant_id = c.tenant_id
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND j.posted_at IS NOT NULL
       WHERE c.tenant_id = ? AND c.listed = 1
       GROUP BY c.id, c.name, c.name_norm
@@ -845,7 +886,7 @@ export async function listLocationJobCounts(
       FROM job_locations jl
       JOIN jobs j ON j.id = jl.job_id
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
-      WHERE j.tenant_id = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now')) AND c.listed = 1
+      WHERE j.tenant_id = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now')) AND c.listed = 1
       GROUP BY jl.location_slug
       ORDER BY jobCount DESC, jl.location_slug ASC`,
     )
@@ -890,7 +931,7 @@ export async function listCompanyTopTags(
       `SELECT jt.tag_slug AS slug, COUNT(*) AS count
       FROM job_tags jt
       JOIN jobs j ON j.id = jt.job_id
-      WHERE j.company_id = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      WHERE j.company_id = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jt.tag_slug
       ORDER BY count DESC, jt.tag_slug ASC
       LIMIT ?`,
@@ -910,7 +951,7 @@ export async function listCompanyLocations(
       `SELECT jl.location_slug AS slug, COUNT(*) AS count
       FROM job_locations jl
       JOIN jobs j ON j.id = jl.job_id
-      WHERE j.company_id = ? AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+      WHERE j.company_id = ? AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
       GROUP BY jl.location_slug
       ORDER BY count DESC, jl.location_slug ASC`,
     )
@@ -936,7 +977,7 @@ export async function listTagLocationFacets(
       JOIN job_tags jt ON jt.job_id = j.id AND jt.tag_slug = ?
       JOIN job_locations jl ON jl.job_id = j.id
       WHERE j.tenant_id = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
       GROUP BY jl.location_slug
       ORDER BY jobCount DESC, jl.location_slug ASC`,
@@ -955,23 +996,22 @@ export async function tagSalaryRange(
   const row = await db
     .prepare(
       `SELECT
-        MIN(j.salary_min) AS min,
-        MAX(j.salary_max) AS max,
+        MIN(${annualUsdSalarySql('min')}) AS min,
+        MAX(${annualUsdSalarySql('max')}) AS max,
         COUNT(*) AS count
       FROM jobs j
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
       JOIN job_tags jt ON jt.job_id = j.id AND jt.tag_slug = ?
       WHERE j.tenant_id = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
-        AND j.salary_min IS NOT NULL
-        AND j.salary_max IS NOT NULL`,
+        AND ${SCRAPED_SALARY_SQL}`,
     )
     .bind(tag, tenantId)
     .first<{ min: number | null; max: number | null; count: number | null }>();
   return {
-    min: row?.min ?? null,
-    max: row?.max ?? null,
+    min: Number(row?.count??0)>=MIN_SALARY_SAMPLE ? row?.min??null : null,
+    max: Number(row?.count??0)>=MIN_SALARY_SAMPLE ? row?.max??null : null,
     count: Number(row?.count ?? 0),
   };
 }
@@ -982,9 +1022,9 @@ export async function listSalaryRollups(
 ): Promise<SalaryRollupRow[]> {
   const sql = dimension
     ? `SELECT dimension, slug, avg, min, max, job_count_30d AS jobCount30d
-       FROM salary_rollups WHERE dimension = ? ORDER BY avg DESC`
+       FROM salary_rollups WHERE dimension = ? AND job_count_30d>=${MIN_SALARY_SAMPLE} ORDER BY avg DESC`
     : `SELECT dimension, slug, avg, min, max, job_count_30d AS jobCount30d
-       FROM salary_rollups ORDER BY dimension, avg DESC`;
+       FROM salary_rollups WHERE job_count_30d>=${MIN_SALARY_SAMPLE} ORDER BY dimension, avg DESC`;
   const statement = db.prepare(sql);
   const rows = dimension
     ? await statement.bind(dimension).all<SalaryRollupRow>()
@@ -1007,7 +1047,7 @@ export async function getSalaryRollup(
   return db
     .prepare(
       `SELECT dimension, slug, avg, min, max, job_count_30d AS jobCount30d
-       FROM salary_rollups WHERE dimension = ? AND slug = ? LIMIT 1`,
+       FROM salary_rollups WHERE dimension = ? AND slug = ? AND job_count_30d>=${MIN_SALARY_SAMPLE} LIMIT 1`,
     )
     .bind(dimension, slug)
     .first<SalaryRollupRow>();
@@ -1042,17 +1082,16 @@ async function listSalariedJobs(
   const rows = await db
     .prepare(
       `SELECT
-        j.salary_min AS min,
-        j.salary_max AS max,
+        ${annualUsdSalarySql('min')} AS min,
+        ${annualUsdSalarySql('max')} AS max,
         j.title,
         (SELECT GROUP_CONCAT(tag_slug, ',') FROM job_tags WHERE job_id = j.id) AS tagCsv
       FROM jobs j
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
       WHERE j.tenant_id = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
-        AND j.salary_min IS NOT NULL
-        AND j.salary_max IS NOT NULL`,
+        AND ${SCRAPED_SALARY_SQL}`,
     )
     .bind(tenantId)
     .all<SalariedJobRow>();
@@ -1064,7 +1103,7 @@ function statsFromRows(
   slug: string,
   rows: readonly { min: number | null; max: number | null }[],
 ): SalaryStatsRow | null {
-  const stats = averageSalary(rows);
+  const stats = publicSalaryStats(rows);
   if (!stats) return null;
   return {
     dimension,
@@ -1072,7 +1111,7 @@ function statsFromRows(
     avg: stats.avg,
     min: stats.min,
     max: stats.max,
-    jobCount30d: rows.filter((row) => row.min != null && row.max != null).length,
+    jobCount30d: stats.count,
   };
 }
 
@@ -1115,6 +1154,14 @@ async function liveAggregateLocations(
   dimension: string,
   slugs: readonly string[],
 ): Promise<Map<string, SalaryStatsRow>> {
+  // D1 limits bound parameters per statement; large location catalogs are chunked.
+  if(slugs.length>80){
+    const merged=new Map<string,SalaryStatsRow>();
+    for(let offset=0;offset<slugs.length;offset+=80){
+      for(const [key,value] of await liveAggregateLocations(db,tenantId,dimension,slugs.slice(offset,offset+80)))merged.set(key,value);
+    }
+    return merged;
+  }
   const map = new Map<string, SalaryStatsRow>();
   if (slugs.length === 0) return map;
   const placeholders = slugs.map(() => "?").join(", ");
@@ -1122,18 +1169,17 @@ async function liveAggregateLocations(
     .prepare(
       `SELECT
         jl.location_slug AS slug,
-        AVG((j.salary_min + j.salary_max) / 2.0) AS avg,
-        MIN(j.salary_min) AS min,
-        MAX(j.salary_max) AS max,
+        AVG((${annualUsdSalarySql('min')} + ${annualUsdSalarySql('max')}) / 2.0) AS avg,
+        MIN(${annualUsdSalarySql('min')}) AS min,
+        MAX(${annualUsdSalarySql('max')}) AS max,
         COUNT(*) AS jobCount30d
       FROM jobs j
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
       JOIN job_locations jl ON jl.job_id = j.id
       WHERE j.tenant_id = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
-        AND j.salary_min IS NOT NULL
-        AND j.salary_max IS NOT NULL
+        AND ${SCRAPED_SALARY_SQL}
         AND jl.location_slug IN (${placeholders})
       GROUP BY jl.location_slug`,
     )
@@ -1148,7 +1194,7 @@ async function liveAggregateLocations(
 
   for (const row of rows.results) {
     const count = Number(row.jobCount30d ?? 0);
-    if (count === 0 || row.avg == null || row.min == null || row.max == null) continue;
+    if (count < MIN_SALARY_SAMPLE || row.avg == null || row.min == null || row.max == null) continue;
     map.set(row.slug, {
       dimension,
       slug: row.slug,
@@ -1184,20 +1230,17 @@ function asStatsRow(row: SalaryRollupRow | SalaryStatsRow): SalaryStatsRow {
   };
 }
 
-/** Rollups first, then live aggregation for any taxonomy slug still missing. */
+/** Current visible vacancies, aggregated in one query per dimension. */
 export async function listResolvedSalaryStats(
   db: JobsDatabase,
   tenantId: string,
   dimension: string,
   slugs: readonly string[],
 ): Promise<SalaryStatsRow[]> {
-  const stored = await listSalaryRollups(db, dimension);
-  const storedBySlug = new Map(stored.map((row) => [row.slug, asStatsRow(row)]));
-  const missing = slugs.filter((slug) => !storedBySlug.has(slug));
-  const live = await liveAggregateMany(db, tenantId, dimension, missing);
-  return slugs.map(
-    (slug) => storedBySlug.get(slug) ?? live.get(slug) ?? emptySalaryStats(dimension, slug),
-  );
+  // Stored summaries can outlive expired, moderated or refunded vacancies.
+  // Public statistics always reflect the currently visible tenant catalog.
+  const live = await liveAggregateMany(db, tenantId, dimension, slugs);
+  return slugs.map(slug => live.get(slug) ?? emptySalaryStats(dimension, slug));
 }
 
 export async function resolveSalaryStats(
@@ -1236,18 +1279,17 @@ async function salariedJobsForTag(
   const rows = await db
     .prepare(
       `SELECT
-        j.salary_min AS min,
-        j.salary_max AS max,
+        ${annualUsdSalarySql('min')} AS min,
+        ${annualUsdSalarySql('max')} AS max,
         j.title,
         (SELECT GROUP_CONCAT(location_slug, ',') FROM job_locations WHERE job_id = j.id) AS locationCsv
       FROM jobs j
       JOIN companies c ON c.id = j.company_id AND c.tenant_id = j.tenant_id
       JOIN job_tags jt ON jt.job_id = j.id AND jt.tag_slug = ?
       WHERE j.tenant_id = ?
-        AND j.listed = 1 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
+        AND j.listed = 1 AND j.confidential = 0 AND (j.expires_at IS NULL OR julianday(j.expires_at)>julianday('now'))
         AND c.listed = 1
-        AND j.salary_min IS NOT NULL
-        AND j.salary_max IS NOT NULL`,
+        AND ${SCRAPED_SALARY_SQL}`,
     )
     .bind(tag, tenantId)
     .all<{ min: number; max: number; title: string; locationCsv: string | null }>();
@@ -1298,7 +1340,7 @@ export async function resolveSalaryBreakdown(
 
   const results: SalaryBreakdownRow[] = [];
   for (const [slug, rows] of buckets) {
-    const stats = averageSalary(rows);
+    const stats = publicSalaryStats(rows);
     if (!stats) continue;
     results.push({ slug, min: stats.min, avg: stats.avg, max: stats.max, count: rows.length });
   }

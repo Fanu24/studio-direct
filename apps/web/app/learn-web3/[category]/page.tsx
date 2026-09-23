@@ -21,7 +21,8 @@ import {
 import { LEARN_COPY } from "../copy";
 import { resourceCountForCategory, resourcesForCategory } from "../resources";
 
-export const revalidate = 300;
+// Read live D1 data at request time; builds must not depend on a local database.
+export const dynamic = "force-dynamic";
 
 type LearnCategoryParams = Promise<{ category: string }>;
 

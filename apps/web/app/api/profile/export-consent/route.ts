@@ -1,0 +1,4 @@
+import {platform,currentUser,sameOrigin} from '../../../../lib/platform';
+export async function POST(request:Request){if(!sameOrigin(request))return new Response('Forbidden',{status:403});const env=await platform(),user=await currentUser(env,request);if(!user)return new Response('Sign in',{status:401});const form=await request.formData(),value=form.get('talent_export_opt_in')==='1'?1:0;
+ await env.DB.batch([env.DB.prepare('INSERT INTO profiles(user_id,talent_export_opt_in) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET talent_export_opt_in=excluded.talent_export_opt_in').bind(user.id,value),env.DB.prepare('INSERT INTO consent_events(id,user_id,kind,value,created_at) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),user.id,'talent_export',String(value),new Date().toISOString())]);return Response.redirect(new URL('/profile/visibility',request.url),303);
+}

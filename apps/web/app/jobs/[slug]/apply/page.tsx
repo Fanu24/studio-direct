@@ -12,8 +12,10 @@ import {
   type JobsDatabase,
 } from "../../../../lib/jobs/queries";
 import { requireTenantId } from "../../../../lib/tenant";
+import {currentUser, type PlatformEnv} from '../../../../lib/platform';
 
 import { applicationDestination } from '../../../../lib/jobs/application-destination';
+import {ProductApplyPanel} from '../../../_components/product/apply-panel';
 export const dynamic = 'force-dynamic';
 
 type ApplyParams = Promise<{ slug: string }>;
@@ -58,11 +60,14 @@ export default async function LegacyApplyPage({
 
   const {env}=await getCloudflareContext({async:true});
   const db=(env as unknown as {DB:JobsDatabase}).DB;
+  if(job.commercialOrigin&&job.commercialOrigin!=='aggregated')return <ProductApplyPanel env={env as unknown as PlatformEnv} tenantId={await requireTenantId(db)} jobId={job.id} user={await currentUser(env as unknown as PlatformEnv)}/>;
   const destination=await applicationDestination(db,await requireTenantId(db),job.id);
   if(!destination)notFound();
   if(destination.mode==='external')redirect(destination.url);
   const search = await searchParams;
   const next = jobApplyHref(job);
+  const user=await currentUser(env as unknown as PlatformEnv);
+  if(!user)redirect('/login?next='+encodeURIComponent(next));
 
   return (
     <main className="surface surface--data board-main apply-main">
@@ -83,7 +88,10 @@ export default async function LegacyApplyPage({
         </p>
       </header>
       <JobApplyForm
+        email={user.email}
+        name={user.name}
         error={search.error === "1"}
+        withdrawn={search.error === "withdrawn"}
         jobId={job.id}
         next={next}
         sent={search.sent === "1"}

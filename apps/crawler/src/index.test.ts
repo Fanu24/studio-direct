@@ -58,3 +58,9 @@ describe.each([
     });
   },
 );
+
+it('routes renamed deployment queues without silently acknowledging their messages',async()=>{
+ const handlers=createHandlers(),{batch,message}=createBatch('nodework-crawl-career',{kind:'career',companyId:'c'});
+ await routeQueueBatch(batch,{QUEUE_PREFIX:'nodework-crawl'} as Env,handlers);
+ expect(handlers.career).toHaveBeenCalledOnce();expect(message.ack).toHaveBeenCalledOnce();expect(batch.ackAll).not.toHaveBeenCalled();
+});

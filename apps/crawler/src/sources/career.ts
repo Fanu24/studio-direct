@@ -1,13 +1,10 @@
-import type { JobDraft, JobSource, QueueMessage } from "@gaming/shared";
+import {createSiteReader,careerDetailLinks,type JobDraft,type JobSource,type QueueMessage} from "@gaming/shared";
 
-import { fetchPublicText } from "../http/public-fetch";
 import { fetchGreenhouseBoard } from "./greenhouse";
 import { parseJobPostingJsonLd } from "./jsonld";
 import { fetchLeverPostings } from "./lever";
 import { fetchAshbyPostings } from './ashby';
-
-const PRODUCT_USER_AGENT =
-  "StudioDirectBot/1.0 (+https://studio-direct.example/bot; jobs@studio-direct.example)";
+import {RateLimitedError,parseRetryAfter} from '../http/public-fetch';
 
 export interface CareerCompany {
   id: string;
@@ -73,11 +70,13 @@ export class CareerJobSource implements JobSource {
       throw new Error(`Company has no career URL: ${company.id}`);
     }
 
-    const response = await fetchPublicText(
-      company.career_url,
-      this.fetchImpl,
-      PRODUCT_USER_AGENT,
-    );
+    const fetchImpl = this.fetchImpl;
+    const reader = createSiteReader(async(input,init)=>{
+      const result=await fetchImpl(input,init);
+      if(result.status===403||result.status===429)throw new RateLimitedError(result.status,parseRetryAfter(result.headers.get('Retry-After')));
+      return result;
+    });
+    const response = await reader.read(company.career_url);
 
     if (response.status < 200 || response.status >= 300) {
       throw new Error(
@@ -88,10 +87,21 @@ export class CareerJobSource implements JobSource {
     const drafts = parseJobPostingJsonLd(
       response.body,
       company.name,
-      company.career_url,
+      response.url,
     );
+    if(!drafts.length){
+      const links=careerDetailLinks(response.body,response.url);
+      // A partial snapshot must never close vacancies not reached by this crawl.
+      if(links.length>25)throw new Error('Career index exceeds 25 detail pages; configure a dedicated adapter');
+      for(const link of links){
+        const page=await reader.read(link.url);
+        const parsed=parseJobPostingJsonLd(page.body,company.name,page.url);
+        if(!parsed.length)throw new Error('Career detail lacks JobPosting data; retain existing listings for review');
+        drafts.push(...parsed);
+      }
+    }
     // An empty HTML extraction can mean a JS page or changed markup, not zero vacancies.
     if(!drafts.length)throw new Error('No JobPosting data found; retain existing listings for review');
-    return drafts;
+    return [...new Map(drafts.map(draft=>[draft.applyUrl,draft])).values()];
   }
 }

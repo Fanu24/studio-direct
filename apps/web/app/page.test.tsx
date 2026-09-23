@@ -228,11 +228,11 @@ describe("HomePage", () => {
     expect(rendered).not.toMatch(/Salary data from real jobs/);
   });
 
-  it("states what the 'Not on LinkedIn' badge means as visible text, not just a title attribute", async () => {
+  it("does not make an unsupported blanket LinkedIn exclusivity claim", async () => {
     const { default: HomePage } = await import("./page");
     const page = await HomePage({ searchParams: Promise.resolve({}) });
 
-    expect(text(page)).toContain(LINKEDIN_EXCLUSIVITY_TOOLTIP);
+    expect(text(page)).not.toContain(LINKEDIN_EXCLUSIVITY_TOOLTIP);
   });
 });
 

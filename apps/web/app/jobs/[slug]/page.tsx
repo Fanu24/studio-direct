@@ -1,3 +1,4 @@
+import {ListingExtras} from "../../_components/listing-extras";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -23,7 +24,8 @@ import {
 } from "../../../lib/jobs/queries";
 import { requireTenantId } from "../../../lib/tenant";
 
-export const revalidate = 300;
+// Read live D1 data at request time; builds must not depend on a local database.
+export const dynamic = "force-dynamic";
 
 type JobParams = Promise<{ slug: string }>;
 
@@ -129,6 +131,7 @@ export default async function JobPage({ params }: { params: JobParams }) {
       />
 
       {JobDetailBody({ job, sections })}
+      <ListingExtras jobId={job.id}/>
       <RelatedBrowseLinks tag={sections.primaryTag ?? undefined} />
     </main>
   );

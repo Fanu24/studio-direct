@@ -35,10 +35,11 @@ describe("Web3JobsApiPage", () => {
     expect(copy).toContain("salaryMax");
     expect(copy).toContain("tags");
     expect(copy).toContain("companySlug");
-    expect(copy.toLowerCase()).toContain("no public api endpoint live yet");
+    expect(copy).toContain("Authorization: Bearer");
+    expect(copy).toContain("/api/v1.xml");
   });
 
-  it("frames access as a request, not a live public tier, and links to /login", async () => {
+  it("documents usage limits and links to key management", async () => {
     const { default: Web3JobsApiPage } = await import("./page");
     const page = Web3JobsApiPage();
     const copy = text(page);
@@ -46,8 +47,8 @@ describe("Web3JobsApiPage", () => {
       .filter((element) => typeof element.props.href === "string")
       .map((element) => element.props.href as string);
 
-    expect(copy.toLowerCase()).toContain("request early access");
-    expect(hrefs).toContain("/login");
+    expect(copy).toContain("60 requests per minute");
+    expect(hrefs).toContain("/api-access");
     expect(hrefs).toContain("/jobs");
     expect(copy).not.toMatch(/\$\d+\s*\/\s*(month|year|call)/i);
     expect(copy).not.toMatch(/unlimited requests/i);

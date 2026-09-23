@@ -8,6 +8,7 @@ import {
 } from "cloudflare:test";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import worker from "../src/index";
+import {FX_ENDPOINT,SALARY_CURRENCIES} from '@gaming/shared';
 
 declare module "cloudflare:test" {
   interface ProvidedEnv {
@@ -49,14 +50,20 @@ describe("crawler scheduled handler", () => {
   });
 
   it("enqueues configured career sources without a competitor API token", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async url=>{
+      expect(String(url)).toBe(FX_ENDPOINT);
+      return Response.json({result:'success',base_code:'USD',time_last_update_unix:Math.floor(Date.now()/1000),rates:{...Object.fromEntries(SALARY_CURRENCIES.map(currency=>[currency,2])),USD:1}});
+    });
+    // Observe dispatch without running queued career consumers in this scheduler test.
+    const queue={send:vi.fn(),sendBatch:vi.fn()};
+    const bindings={...env,CRAWL_CAREER:queue as unknown as typeof env.CRAWL_CAREER};
     const controller = createScheduledController({
       cron: "0 */6 * * *",
       scheduledTime: Date.now(),
     });
     const ctx = createExecutionContext();
 
-    await worker.scheduled(controller, env, ctx);
+    await worker.scheduled(controller, bindings, ctx);
     await waitOnExecutionContext(ctx);
 
     const row = await env.DB.prepare(
@@ -67,6 +74,10 @@ describe("crawler scheduled handler", () => {
       ok: 1,
       stats_json: expect.stringContaining("enqueuedApi"),
     });
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(queue.sendBatch.mock.calls[0]?.[0]).toHaveLength(5);
+    expect(await env.DB.prepare('SELECT COUNT(*) n FROM fx_rates').first('n')).toBe(20);
+    const second=createExecutionContext();await worker.scheduled(controller,bindings,second);await waitOnExecutionContext(second);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });

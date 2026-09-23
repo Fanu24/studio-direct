@@ -21,7 +21,9 @@ export async function enqueueCronWork(
     const page=await env.DB.prepare(`SELECT id FROM companies WHERE listed=1 AND id>?
       AND ((ats_type IN ('greenhouse','lever','ashby') AND ats_slug IS NOT NULL AND ats_slug!='')
        OR (ats_type IS NULL AND career_url IS NOT NULL AND career_url!='')) ORDER BY id LIMIT 100`).bind(after).all<{id:string}>();
-    for(const company of page.results){await send(env.CRAWL_CAREER,{kind:'career',companyId:company.id});enqueuedCareer++;}
+    // Spread a catalog sweep so shared ATS hosts are not hit by a burst of hundreds of boards.
+    if(page.results.length)await env.CRAWL_CAREER.sendBatch(page.results.map((company,index)=>({body:{kind:'career',companyId:company.id},delaySeconds:Math.min((enqueuedCareer+index)*3,3600)})));
+    enqueuedCareer+=page.results.length;
     if(page.results.length<100)break;
     after=page.results[page.results.length-1].id;
   }

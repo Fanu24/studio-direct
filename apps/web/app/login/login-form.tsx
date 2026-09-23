@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { Children, cloneElement, useRef, useState, type FormEvent, type ReactNode, type ReactElement } from "react";
+import { Children, cloneElement, useEffect, useRef, useState, type FormEvent, type ReactNode, type ReactElement } from "react";
 
 import { authClient } from "../../lib/auth/client";
 
@@ -26,11 +26,13 @@ export function resetTurnstileWidget(
 }
 
 export async function submitLoginMagicLink({
+  errorCallbackURL,
   callbackURL = "/",
   email,
   newUserCallbackURL = "/onboarding",
   token,
 }: {
+  errorCallbackURL?: string;
   callbackURL?: string;
   email: string;
   newUserCallbackURL?: string;
@@ -41,6 +43,7 @@ export async function submitLoginMagicLink({
       email,
       callbackURL,
       newUserCallbackURL,
+      ...(errorCallbackURL ? {errorCallbackURL} : {}),
       fetchOptions: {
         headers: {
           "x-captcha-response": token,
@@ -58,18 +61,26 @@ export async function submitLoginMagicLink({
  * above the button in both DOM and visual order.
  */
 export function LoginForm({
+  passwordEnabled=false,
   localTesting=false,
+  errorCallbackURL,
   callbackURL = "/",
   children,
   newUserCallbackURL = "/onboarding",
   siteKey,
 }: {
+  passwordEnabled?:boolean;
+  errorCallbackURL?: string;
   callbackURL?: string;
   children: ReactNode;
   newUserCallbackURL?: string;
   siteKey: string;
   localTesting?: boolean;
 }) {
+  const [pending,setPending]=useState(false);
+  const [method,setMethod]=useState<'magic'|'password'|'signup'|'reset'>('magic');
+  const [ready,setReady]=useState(false);
+  useEffect(()=>setReady(true),[]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [token,setToken]=useState(localTesting?'XXXX.DUMMY.TOKEN.XXXX':'');
@@ -84,19 +95,29 @@ export function LoginForm({
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if(pending)return;
     const form = event.currentTarget;
     const email = String(new FormData(form).get("email") ?? "");
     if(!token){setError('Please wait for the security check to finish.');return;}
 
-    setError(null);
+    setError(null);setMessage(null);setPending(true);
+    try {
+    if(method!=='magic'){
+      const fields=new FormData(form),password=String(fields.get('password')??''),fetchOptions={headers:{'x-captcha-response':token}};
+      const result=method==='signup'?await authClient.signUp.email({email,password,name:String(fields.get('name')??''),callbackURL:newUserCallbackURL,fetchOptions}):method==='reset'?await authClient.requestPasswordReset({email,redirectTo:'/reset-password',fetchOptions}):await authClient.signIn.email({email,password,callbackURL,fetchOptions});
+      if(result.error)setError(result.error.message??'Unable to complete this request.');
+      else if(method==='password')window.location.assign(callbackURL);
+      else setMessage(method==='signup'?'Check your email to verify your account.':'If this account exists, a password reset link has been sent.');
+      resetTurnstileWidget();return;
+    }
     const { error: sendError } = await submitLoginMagicLink({
       callbackURL,
       email,
       newUserCallbackURL,
       token,
+      errorCallbackURL,
     });
 
-    if(!localTesting)setToken('');
     if (sendError) {
       setError(
         sendError.message
@@ -108,6 +129,8 @@ export function LoginForm({
     setMessage(
       "Check your email for a sign-in link. You can send another magic link from this page if the email does not arrive.",
     );
+    } catch {setError("Could not connect. Please try sending the magic link again.");}
+    finally {if(!localTesting)setToken('');setPending(false);}
   }
 
   return (
@@ -132,36 +155,36 @@ export function LoginForm({
         </p>
       ) : null}
       <form className="auth-form" onSubmit={onSubmit}>
+        {passwordEnabled?<label>Sign-in method<select value={method} onChange={e=>setMethod(e.target.value as typeof method)}><option value="magic">Email sign-in link</option><option value="password">Email and password</option><option value="signup">Create account with password</option><option value="reset">Reset password</option></select></label>:null}
         {items}
+        {method==='signup'?<label>Your name<input name="name" autoComplete="name" required maxLength={100}/></label>:null}
+        {method==='password'||method==='signup'?<label>Password<input name="password" type="password" autoComplete={method==='signup'?'new-password':'current-password'} minLength={10} maxLength={128} required/></label>:null}
         <div className="auth-form__turnstile" ref={widget} />
-        {submit ? cloneElement(submit as ReactElement<{disabled:boolean}>,{disabled:!token}) : null}
+        {method==='magic'?(submit ? cloneElement(submit as ReactElement<{disabled:boolean}>,{disabled:!ready||!token||pending}) : null):<button disabled={!ready||!token||pending}>{method==='password'?'Sign in':method==='signup'?'Create account':'Send reset link'}</button>}
       </form>
     </>
   );
 }
 
 export function GoogleSignInButton({
+  errorCallbackURL,
   callbackURL = "/",
   children,
   newUserCallbackURL = "/onboarding",
 }: {
+  errorCallbackURL?: string;
   callbackURL?: string;
   children: ReactNode;
   newUserCallbackURL?: string;
 }) {
-  return (
-    <button
-      className="button button--ghost button--block"
-      type="button"
-      onClick={() => {
-        void authClient.signIn.social({
-          provider: "google",
-          callbackURL,
-          newUserCallbackURL,
-        });
-      }}
-    >
-      {children}
-    </button>
-  );
+  const [error,setError]=useState<string|null>(null),[pending,setPending]=useState(false);
+  async function signIn() {
+    setError(null);setPending(true);
+    try {
+      const result=await authClient.signIn.social({provider:'google',callbackURL,newUserCallbackURL,...(errorCallbackURL?{errorCallbackURL}:{})});
+      if(result.error){setError(result.error.message??'Google sign-in failed. Please try again.');setPending(false);}
+    } catch {setError('Could not connect to Google. Please try again.');setPending(false);}
+  }
+  return <><button className="button button--ghost button--block" type="button" disabled={pending} onClick={()=>void signIn()}>{children}</button>
+    {error?<p role="alert" className="notice notice--danger">{error}</p>:null}</>;
 }

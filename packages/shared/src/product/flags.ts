@@ -1,0 +1,35 @@
+export const PRODUCT_FLAGS = [
+  'PRODUCT_POSTING_V2', 'PRODUCT_COMPANY_CLAIMS', 'PRODUCT_PROFILES_V2', 'PRODUCT_EARLY_ACCESS',
+  'PRODUCT_COMPANY_PLANS', 'PRODUCT_CANDIDATE_PREMIUM', 'PRODUCT_FEATURED_MEMBERS',
+  'PRODUCT_REVIEWS', 'PRODUCT_SALARY_INSIGHTS', 'PRODUCT_TALENT_SEARCH',
+  'PRODUCT_SOCIAL_SHARING', 'PRODUCT_NEWSLETTER', 'PRODUCT_CONFIDENTIAL_POSTS',
+  'PRODUCT_ATS_INTEGRATIONS', 'EARLY_ACCESS_FREE_FIRST_POST',
+] as const;
+export type ProductFlag = typeof PRODUCT_FLAGS[number];
+export type ProductFlags = Record<ProductFlag, boolean>;
+export const FLAG_DEPENDENCIES: Partial<Record<ProductFlag, readonly ProductFlag[]>> = {
+  PRODUCT_COMPANY_CLAIMS: ['PRODUCT_POSTING_V2'],
+  PRODUCT_EARLY_ACCESS: ['PRODUCT_POSTING_V2', 'PRODUCT_PROFILES_V2'],
+  PRODUCT_COMPANY_PLANS: ['PRODUCT_POSTING_V2', 'PRODUCT_COMPANY_CLAIMS'],
+  PRODUCT_CANDIDATE_PREMIUM: ['PRODUCT_PROFILES_V2'],
+  PRODUCT_FEATURED_MEMBERS: ['PRODUCT_CANDIDATE_PREMIUM'],
+  PRODUCT_REVIEWS: ['PRODUCT_CANDIDATE_PREMIUM', 'PRODUCT_COMPANY_CLAIMS'],
+  PRODUCT_SALARY_INSIGHTS: ['PRODUCT_POSTING_V2'],
+  PRODUCT_TALENT_SEARCH: ['PRODUCT_COMPANY_PLANS', 'PRODUCT_PROFILES_V2'],
+  PRODUCT_SOCIAL_SHARING: ['PRODUCT_POSTING_V2'],
+  PRODUCT_NEWSLETTER: ['PRODUCT_POSTING_V2'],
+  PRODUCT_CONFIDENTIAL_POSTS: ['PRODUCT_COMPANY_PLANS', 'PRODUCT_PROFILES_V2'],
+  PRODUCT_ATS_INTEGRATIONS: ['PRODUCT_COMPANY_PLANS'],
+  EARLY_ACCESS_FREE_FIRST_POST: ['PRODUCT_EARLY_ACCESS'],
+};
+
+/** Missing and unknown flags are disabled. Disabling a dependency also disables its dependents. */
+export function effectiveProductFlags(values: Partial<Record<ProductFlag, boolean>>): ProductFlags {
+  const flags = Object.fromEntries(PRODUCT_FLAGS.map(name => [name, values[name] === true])) as ProductFlags;
+  for (let pass = 0; pass < PRODUCT_FLAGS.length; pass++) {
+    for (const name of PRODUCT_FLAGS) {
+      if (FLAG_DEPENDENCIES[name]?.some(dependency => !flags[dependency])) flags[name] = false;
+    }
+  }
+  return flags;
+}

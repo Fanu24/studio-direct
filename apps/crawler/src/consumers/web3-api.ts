@@ -1,5 +1,6 @@
 import {
   countryForCity,
+  resolveJobLocations,
   isCitySlug,
   isCountrySlug,
   isJobTag,
@@ -159,28 +160,9 @@ export async function attachTaxonomy(
       .run();
   }
 
-  const locationSlug = locationSlugFromDraft(draft);
-  if (locationSlug) {
-    const kind = isCitySlug(locationSlug)
-      ? "city"
-      : isCountrySlug(locationSlug)
-        ? "country"
-        : "region";
-
-    for (const level of locationHierarchy(locationSlug, kind)) {
-      await db
-        .prepare(
-          `INSERT OR IGNORE INTO locations (slug, kind, label) VALUES (?, ?, ?)`,
-        )
-        .bind(level.slug, level.kind, tagLabel(level.slug))
-        .run();
-      await db
-        .prepare(
-          `INSERT OR IGNORE INTO job_locations (job_id, location_slug) VALUES (?, ?)`,
-        )
-        .bind(jobId, level.slug)
-        .run();
-    }
+  for (const level of resolveJobLocations(draft.location)) {
+    await db.prepare('INSERT OR IGNORE INTO locations(slug,kind,label) VALUES(?,?,?)').bind(level.slug,level.kind,tagLabel(level.slug)).run();
+    await db.prepare('INSERT OR IGNORE INTO job_locations(job_id,location_slug) VALUES(?,?)').bind(jobId,level.slug).run();
   }
 }
 

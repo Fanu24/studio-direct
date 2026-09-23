@@ -1,8 +1,9 @@
 import type {Database,Statement} from '../platform';
+import {pricing} from '@gaming/shared';
 import type {PaidSession} from './employer-orders';
-export const SPONSOR_PRICES={1:499900,2:399900,3:299900,4:199900} as const;
+export const SPONSOR_PRICES=pricing.legacy.sponsors;
 export type SponsorInput={slot:1|2|3|4;title:string;subtitle:string;url:string;color:string};
-export type MarketOrder={id:string;user_id:string|null;kind:'sponsor'|'recruiter';payload_json:string;total_cents:number;status:string;stripe_session_id:string|null;expires_at:string|null};
+export type MarketOrder={id:string;user_id:string|null;kind:'sponsor'|'recruiter';payload_json:string;total_cents:number;status:string;stripe_session_id:string|null;expires_at:string|null;created_at:string};
 export function parseSponsor(raw:unknown):SponsorInput{
  const r=raw as Partial<SponsorInput>|null;
  if(!r||!Number.isInteger(r.slot)||!Object.hasOwn(SPONSOR_PRICES,r.slot!))throw new Error('Choose an advertising slot');
@@ -19,6 +20,7 @@ export async function createMarketOrder(db:Database,input:{id:string;userId:stri
  await db.prepare(`INSERT OR IGNORE INTO marketplace_orders(id,user_id,kind,payload_json,total_cents,created_at) VALUES(?,?,?,?,?,?)`).bind(input.id,input.userId,input.kind,payload,price,new Date().toISOString()).run();
  const order=await marketOrder(db,input.id);
  if(!order||order.user_id!==input.userId||order.kind!==input.kind||order.payload_json!==payload)throw new Error('Submission ID already used');
+ if(order.status==='expired')throw new Error('Checkout expired. Start a new order');
  if(order.status!=='pending')throw new Error('Order already processed');
  if(input.sponsor){await db.prepare('UPDATE sponsor_slots SET order_id=? WHERE slot=? AND (order_id IS NULL OR order_id=?)').bind(order.id,input.sponsor.slot,order.id).run();const reserved=await db.prepare('SELECT order_id FROM sponsor_slots WHERE slot=?').bind(input.sponsor.slot).first<string>('order_id');if(reserved!==order.id)throw new Error('This slot is already reserved. Choose another slot');}
  return order;
@@ -32,8 +34,9 @@ export async function fulfillMarketOrder(db:Database,session:PaidSession&{paymen
  if(order.kind==='sponsor'){const slot=await db.prepare('SELECT slot FROM sponsor_slots WHERE order_id=?').bind(order.id).first();if(!slot)throw new Error('Advertising reservation missing');}
  const expiry=new Date(now.getTime()+30*86400000).toISOString();
  await db.batch([
- db.prepare(`UPDATE marketplace_orders SET status='paid',paid_at=?,expires_at=?,stripe_session_id=?,stripe_customer_id=?,stripe_payment_intent_id=? WHERE id=? AND status='pending'`).bind(now.toISOString(),expiry,session.id,session.customer??null,session.payment_intent??null,order.id),
- db.prepare("INSERT OR IGNORE INTO marketplace_events(id,order_id,type,created_at) VALUES(?,?,'checkout.paid',?)").bind(eventId,order.id,now.toISOString())]);return true;
+ db.prepare(`UPDATE marketplace_orders SET status=CASE WHEN EXISTS(SELECT 1 FROM payment_reversals WHERE payment_intent_id=?) THEN 'refunded' ELSE 'paid' END,paid_at=?,expires_at=?,stripe_session_id=?,stripe_customer_id=?,stripe_payment_intent_id=? WHERE id=? AND status='pending' AND user_id IS NOT NULL`).bind(session.payment_intent??null,now.toISOString(),expiry,session.id,session.customer??null,session.payment_intent??null,order.id),
+ db.prepare("UPDATE sponsor_slots SET order_id=NULL WHERE order_id=? AND EXISTS(SELECT 1 FROM marketplace_orders WHERE id=? AND status='refunded')").bind(order.id,order.id),
+ db.prepare("INSERT OR IGNORE INTO marketplace_events(id,order_id,type,created_at) VALUES(?,?,'checkout.paid',?)").bind(eventId,order.id,now.toISOString())]);return (await marketOrder(db,order.id))?.status==='paid';
 }
 export async function expireMarketCheckout(db:Database,sessionId:string,eventId:string){
  const order=await db.prepare("SELECT * FROM marketplace_orders WHERE stripe_session_id=? AND status='pending'").bind(sessionId).first<MarketOrder>();if(!order)return;

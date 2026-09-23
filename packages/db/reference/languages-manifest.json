@@ -1,0 +1,8 @@
+{
+  "source": "https://raw.githubusercontent.com/meikidd/iso-639-1/master/src/data.js",
+  "sourceSha256": "17eb5b7e8071c132588156cf76a5375a22ab84ebed606e27a22ac701bba31a64",
+  "outputSha256": "e9c44c1107c47b27c482db74f85f64d85ff3b3c3e91c321568142bb8b0bd36ca",
+  "count": 183,
+  "retrieved_at": "2026-09-22T16:26:24.695Z",
+  "extraction": "TypeScript AST: literal data only; no downloaded code executed"
+}

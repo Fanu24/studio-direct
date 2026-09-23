@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
   getCloudflareContext: vi.fn(),
   listLandingJobs: vi.fn(),
   getJobForListItem: vi.fn(),
-  getSalaryRollup: vi.fn(),
+  resolveSalaryStats: vi.fn(),
   countNewJobs: vi.fn(),
   headers: vi.fn(async () => new Headers({ host: "jobs.example.com" })),
 }));
@@ -49,7 +49,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("../../lib/jobs/queries", () => ({
   listLandingJobs: mocks.listLandingJobs,
   getJobForListItem: mocks.getJobForListItem,
-  getSalaryRollup: mocks.getSalaryRollup,
+  resolveSalaryStats: mocks.resolveSalaryStats,
   countNewJobs: mocks.countNewJobs,
   landingIndexable: (total: number) => total >= 5,
   jobPublicHref: (job: { slug: string; externalId?: string | null }) =>
@@ -111,7 +111,7 @@ describe("LandingPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCloudflareContext.mockResolvedValue({ env: { DB: db } });
-    mocks.getSalaryRollup.mockResolvedValue(null);
+    mocks.resolveSalaryStats.mockResolvedValue(null);
     mocks.countNewJobs.mockResolvedValue(0);
     mocks.listLandingJobs.mockResolvedValue({
       jobs: [SOLANA_JOB],
@@ -241,14 +241,14 @@ describe("LandingPage", () => {
       params: Promise.resolve({ slug: "dev+senior-jobs" }),
       searchParams: Promise.resolve({}),
     });
-    expect(mocks.getSalaryRollup).not.toHaveBeenCalled();
+    expect(mocks.resolveSalaryStats).not.toHaveBeenCalled();
 
-    mocks.getSalaryRollup.mockClear();
+    mocks.resolveSalaryStats.mockClear();
     await LandingPage({
       params: Promise.resolve({ slug: "web3-jobs-berlin" }),
       searchParams: Promise.resolve({}),
     });
-    expect(mocks.getSalaryRollup).toHaveBeenCalledWith(db, "city", "berlin");
+    expect(mocks.resolveSalaryStats).toHaveBeenCalledWith(db, "tenant-gaming", "city", "berlin");
   });
 
   it("wires the numbered pager and honest count formatting", async () => {
@@ -280,7 +280,7 @@ describe("LandingPage", () => {
   });
 
   it("renders the by-the-numbers block from the slice stats and the rollup", async () => {
-    mocks.getSalaryRollup.mockResolvedValue({
+    mocks.resolveSalaryStats.mockResolvedValue({
       dimension: "role",
       slug: "solana-developer",
       avg: 140000,
@@ -394,7 +394,7 @@ describe("LandingPage generateMetadata", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCloudflareContext.mockResolvedValue({ env: { DB: db } });
-    mocks.getSalaryRollup.mockResolvedValue(null);
+    mocks.resolveSalaryStats.mockResolvedValue(null);
     mocks.countNewJobs.mockResolvedValue(0);
     mocks.listLandingJobs.mockResolvedValue({
       jobs: [SOLANA_JOB],

@@ -1,0 +1,4 @@
+'use client';
+import {useState,type FormEvent} from 'react';
+import {authClient} from '../../lib/auth/client';
+export function ResetPasswordForm({token}:{token:string}){const [message,setMessage]=useState(''),[busy,setBusy]=useState(false);async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);try{const result=await authClient.resetPassword({token,newPassword:String(new FormData(e.currentTarget).get('password'))});setMessage(result.error?.message??'Password changed. You can sign in with your new password.');}catch{setMessage('Unable to reset your password. Request a new link.');}finally{setBusy(false);}}return <form onSubmit={submit}><label>New password<input name="password" type="password" minLength={10} maxLength={128} autoComplete="new-password" required/></label><button disabled={busy}>Set password</button><p role="status">{message}</p><a href="/login">Sign in</a></form>;}

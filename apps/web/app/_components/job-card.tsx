@@ -1,3 +1,4 @@
+import {ProductJobBadges} from './product/job-badges';
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -71,6 +72,7 @@ export function JobCard({
             Not on LinkedIn
           </span>
         ) : null}
+        <ProductJobBadges job={job}/>{job.cryptoPaymentAvailable ? <span className="badge">Crypto pay</span> : null}
         {job.salaryText ? <span className="job-card__salary">{job.salaryText}</span> : null}
       </div>
     </article>

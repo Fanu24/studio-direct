@@ -1,0 +1,32 @@
+-- Existing privacy choices are preserved; only new explicit onboarding uses public defaults.
+ALTER TABLE profiles ADD COLUMN handle TEXT;
+ALTER TABLE profiles ADD COLUMN photo_url TEXT;
+ALTER TABLE profiles ADD COLUMN city_id INTEGER REFERENCES reference_cities(id);
+ALTER TABLE profiles ADD COLUMN country_code TEXT REFERENCES reference_countries(code);
+ALTER TABLE profiles ADD COLUMN utc_offset INTEGER;
+ALTER TABLE profiles ADD COLUMN availability TEXT NOT NULL DEFAULT 'open_to_work';
+ALTER TABLE profiles ADD COLUMN open_to_crypto INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN featured_opt_in INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE profiles ADD COLUMN verified_at TEXT;
+ALTER TABLE profiles ADD COLUMN last_active_at TEXT;
+ALTER TABLE profiles ADD COLUMN product_profile_completed INTEGER NOT NULL DEFAULT 0;
+CREATE UNIQUE INDEX idx_profile_handle ON profiles(handle) WHERE handle IS NOT NULL;
+CREATE TABLE candidate_skills(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,skill_id TEXT NOT NULL REFERENCES skills(id),PRIMARY KEY(user_id,skill_id));
+CREATE TABLE candidate_languages(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,language_code TEXT NOT NULL REFERENCES reference_languages(code),level TEXT NOT NULL CHECK(level IN ('A1','A2','B1','B2','C1','C2','Native')),PRIMARY KEY(user_id,language_code));
+CREATE TABLE candidate_links(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,kind TEXT NOT NULL CHECK(kind IN ('github','x','linkedin','portfolio')),url TEXT NOT NULL,PRIMARY KEY(user_id,kind));
+INSERT OR IGNORE INTO candidate_skills SELECT p.user_id,s.id FROM profile_skills p JOIN skills s ON s.slug=p.skill AND s.status='active';
+CREATE TABLE notification_preferences(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,kind TEXT NOT NULL,email_enabled INTEGER NOT NULL DEFAULT 1,in_app_enabled INTEGER NOT NULL DEFAULT 1,PRIMARY KEY(user_id,kind));
+CREATE TABLE candidate_subscriptions(user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,plan TEXT NOT NULL CHECK(plan IN ('monthly','annual')),status TEXT NOT NULL,provider_ref TEXT UNIQUE,customer_id TEXT,renews_at TEXT NOT NULL,cancel_at_period_end INTEGER NOT NULL DEFAULT 0,updated_at TEXT NOT NULL);
+CREATE TABLE application_stage_history(id TEXT PRIMARY KEY,application_id TEXT NOT NULL REFERENCES job_applications(id) ON DELETE CASCADE,stage TEXT NOT NULL,changed_by TEXT REFERENCES users(id) ON DELETE SET NULL,created_at TEXT NOT NULL);
+ALTER TABLE job_applications ADD COLUMN profile_snapshot_json TEXT;
+ALTER TABLE job_applications ADD COLUMN match_score INTEGER;
+ALTER TABLE job_applications ADD COLUMN score_breakdown_json TEXT;
+ALTER TABLE job_applications ADD COLUMN invited INTEGER NOT NULL DEFAULT 0;
+-- This separate key enforces new authenticated uniqueness without rewriting historical anonymous records.
+CREATE TABLE authenticated_applications(job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,application_id TEXT UNIQUE REFERENCES job_applications(id) ON DELETE CASCADE,PRIMARY KEY(job_id,user_id));
+INSERT OR IGNORE INTO authenticated_applications SELECT job_id,user_id,id FROM job_applications WHERE user_id IS NOT NULL ORDER BY created_at;
+CREATE TABLE early_access_reminders(job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,created_at TEXT NOT NULL,notified_at TEXT,PRIMARY KEY(job_id,user_id));
+CREATE TABLE product_invitations(id TEXT PRIMARY KEY,company_id TEXT NOT NULL REFERENCES companies(id),job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,candidate_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,sent_by TEXT REFERENCES users(id) ON DELETE SET NULL,source TEXT NOT NULL CHECK(source IN ('shortlist','talent_search')),message TEXT NOT NULL DEFAULT '',sent_at TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'sent',UNIQUE(job_id,candidate_id));
+CREATE TABLE job_events(id TEXT PRIMARY KEY,job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,type TEXT NOT NULL CHECK(type IN ('view','apply_click','application')),referrer_group TEXT,session_hash TEXT,created_at TEXT NOT NULL);
+CREATE INDEX idx_job_event_time ON job_events(job_id,created_at,type);
+ALTER TABLE notification_outbox ADD COLUMN recipient_email TEXT;

@@ -30,8 +30,9 @@ describe("crawler wrangler", () => {
 
     expect(config.queues.producers.map(({ queue }: { queue: string }) => queue)).toEqual(queueNames);
     expect(config.queues.consumers).toEqual(
-      queueNames.map((queue) => ({ queue, max_batch_size: 1 })),
+      queueNames.map((queue) => expect.objectContaining({ queue, max_batch_size: 1 })),
     );
+    expect(config.queues.consumers[0]).toMatchObject({max_concurrency:1,max_retries:10,dead_letter_queue:'crawl-career-failed'});
   });
 
   it("uses node compatibility without forbidden configuration", () => {
